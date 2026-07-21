@@ -25,7 +25,9 @@
       {%- for selector in bundle.selectors -%}
         {%- assign first_option = selector.options.first -%}
         <fieldset class="sb__component" data-component>
-          <legend class="sb__legend">{{ selector.label | default: selector.productTitle | escape }}</legend>
+          <legend class="sb__legend{% if selector.options.size == 1 and first_option.title == 'Default Title' %} sb__visually-hidden{% endif %}">
+            {{- selector.label | default: selector.productTitle | escape -}}
+          </legend>
           <div class="sb__component-body">
             {%- if first_option.imageUrl != blank -%}
               {% # theme-check-disable RemoteAsset %}
@@ -42,28 +44,34 @@
             {%- endif -%}
             <div class="sb__choice">
               <span class="sb__product-title">{{ selector.productTitle | escape }}</span>
-              <label class="sb__visually-hidden" for="sb-{{ block.id }}-{{ forloop.index }}">
-                Choose a variant for {{ selector.productTitle | escape }}
-              </label>
-              <select
-                id="sb-{{ block.id }}-{{ forloop.index }}"
-                class="sb__select"
-                data-selector
-                data-selector-key="{{ selector.key | json | escape }}"
-                required
-              >
-                <option value="">Choose a variant</option>
-                {%- for option in selector.options -%}
-                  <option
-                    value="{{ option.id | escape }}"
-                    data-image-url="{{ option.imageUrl | default: '' | escape }}"
-                    {% if option.available == false %}disabled{% endif %}
-                  >
-                    {{- option.title | escape -}}
-                    {%- if option.available == false %} - Sold out{% endif -%}
-                  </option>
-                {%- endfor -%}
-              </select>
+              {%- if selector.options.size == 1 and first_option.title == 'Default Title' -%}
+                <select hidden data-selector data-selector-key="{{ selector.key | json | escape }}">
+                  {%- if first_option.available == false -%}
+                    <option value="" selected></option>
+                  {%- else -%}
+                    <option value="{{ first_option.id | escape }}" selected></option>
+                  {%- endif -%}
+                </select>
+                {%- if first_option.available == false -%}
+                  <span class="sb__sold-out">Sold out</span>
+                {%- endif -%}
+              {%- else -%}
+                <label class="sb__visually-hidden" for="sb-{{ block.id }}-{{ forloop.index }}">
+                  Choose a variant for {{ selector.productTitle | escape }}
+                </label>
+                <select id="sb-{{ block.id }}-{{ forloop.index }}" class="sb__select" data-selector
+                  data-selector-key="{{ selector.key | json | escape }}" required>
+                  <option value="">Choose a variant</option>
+                  {%- for option in selector.options -%}
+                    <option value="{{ option.id | escape }}"
+                      data-image-url="{{ option.imageUrl | default: '' | escape }}"
+                      {% if option.available == false %}disabled{% endif %}>
+                      {{- option.title | escape -}}
+                      {%- if option.available == false %} - Sold out{% endif -%}
+                    </option>
+                  {%- endfor -%}
+                </select>
+              {%- endif -%}
             </div>
           </div>
         </fieldset>

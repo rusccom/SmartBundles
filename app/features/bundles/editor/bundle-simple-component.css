@@ -1,0 +1,52 @@
+.sb-simple-component {
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: 44px 48px minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 72px;
+  padding: 10px 16px;
+}
+
+.sb-simple-component-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sb-simple-component-status {
+  color: #616161;
+  font-size: 13px;
+}
+
+.sb-simple-component-status-sold-out {
+  color: #8e1f0b;
+}
+
+.sb-simple-component-price {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sb-simple-component .sb-component-remove-action {
+  padding: 0;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .sb-simple-component {
+    grid-template-columns: 44px 44px minmax(0, 1fr) auto;
+    padding-inline: 12px;
+  }
+
+  .sb-simple-component-price {
+    grid-column: 3;
+    color: #616161;
+  }
+
+  .sb-simple-component .sb-component-remove-action {
+    grid-column: 4;
+    grid-row: 1 / 3;
+  }
+}

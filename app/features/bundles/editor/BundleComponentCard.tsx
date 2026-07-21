@@ -3,6 +3,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { BundleComponentDetails } from "./BundleComponentDetails";
 import { BundleComponentHeader } from "./BundleComponentHeader";
+import { BundleSimpleComponentCard } from "./BundleSimpleComponentCard";
+import { isSimpleBundleComponent } from "./bundle-component-presentation";
 import type { EditorSelector } from "./editor.types";
 
 export interface BundleComponentCardProps {
@@ -24,6 +26,9 @@ export function BundleComponentCard(props: BundleComponentCardProps) {
   const className = `sb-component${isDragging ? " sb-component-dragging" : ""}`;
   const dragHandle = <button type="button" className="sb-drag-handle" ref={setActivatorNodeRef}
     {...attributes} {...listeners} aria-label={`Move ${props.selector.productTitle}`}><s-icon type="drag-handle" /></button>;
+  if (isSimpleBundleComponent(props.selector)) return <article ref={setNodeRef} style={style} className={className}>
+    <BundleSimpleComponentCard {...props} dragHandle={dragHandle} />
+  </article>;
   return <article ref={setNodeRef} style={style} className={className}>
     <BundleComponentHeader selector={props.selector} expanded={expanded} detailsId={detailsId}
       selectedCount={selectedCount} currencyCode={props.currencyCode} locale={props.locale}

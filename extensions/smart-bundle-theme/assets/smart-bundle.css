@@ -109,6 +109,10 @@
   color: var(--sb-error);
 }
 
+.sb__sold-out {
+  color: var(--sb-error);
+}
+
 .sb__status:empty,
 .sb__error[hidden] {
   display: none;

@@ -1,10 +1,14 @@
 import type { EditorSelector } from "./editor.types";
+import { isSimpleBundleComponent } from "./bundle-component-presentation";
 
 export function initialEditorSelectors(selectors: EditorSelector[]): EditorSelector[] {
   return selectors.map((selector) => ({
     ...selector,
     label: selector.productTitle,
-    options: selector.options.map((option) => ({ ...option })),
+    options: selector.options.map((option) => ({
+      ...option,
+      allowed: isSimpleBundleComponent(selector) || option.allowed,
+    })),
   }));
 }
 
@@ -12,7 +16,7 @@ export function serializedSelectors(selectors: EditorSelector[]): string {
   const clean = selectors.map((selector) => ({
     ...selector,
     label: selector.productTitle,
-    options: selector.options.filter(({ allowed }) => allowed).map(serializedOption),
+    options: selector.options.filter((option) => isSimpleBundleComponent(selector) || option.allowed).map(serializedOption),
   }));
   return JSON.stringify(clean);
 }

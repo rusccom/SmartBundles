@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { initialEditorSelectors, reorderSelectors } from "./editor-state";
 import type { BundleEditorInitial } from "./editor.types";
 import { useProductPicker } from "./useProductPicker";
+import { isSimpleBundleComponent } from "./bundle-component-presentation";
 
 export function useBundleEditor(initial: BundleEditorInitial) {
   const [selectors, setSelectors] = useState(() => initialEditorSelectors(initial.selectors));
@@ -14,7 +15,7 @@ export function useBundleEditor(initial: BundleEditorInitial) {
 }
 
 function toggleOption(items: ReturnType<typeof initialEditorSelectors>, index: number, id: string) {
-  return items.map((selector, i) => i === index ? {
+  return items.map((selector, i) => i === index && !isSimpleBundleComponent(selector) ? {
     ...selector,
     options: selector.options.map((option) => option.id === id ? { ...option, allowed: !option.allowed } : option),
   } : selector);
