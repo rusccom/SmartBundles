@@ -1,0 +1,34 @@
+import { useEffect, useState } from "react";
+import { useAppBridge } from "@shopify/app-bridge-react";
+
+export interface StorefrontActivationBannerProps {
+  editorUrl?: string;
+}
+
+export function StorefrontActivationBanner({ editorUrl }: StorefrontActivationBannerProps) {
+  const shopify = useAppBridge();
+  const [active, setActive] = useState<boolean>();
+
+  useEffect(() => {
+    let current = true;
+    shopify.app.extensions()
+      .then((extensions) => current && setActive(hasActiveEmbed(extensions)))
+      .catch(() => current && setActive(undefined));
+    return () => { current = false; };
+  }, [shopify]);
+
+  if (active !== false || !editorUrl) return null;
+  return <s-banner tone="warning">
+    Activate SmartBundle once in the published theme. Bundle selectors will then be placed automatically on bundle product pages.{' '}
+    <s-link href={editorUrl} target="_blank">Activate storefront</s-link>
+  </s-banner>;
+}
+
+function hasActiveEmbed(extensions: Awaited<ReturnType<ReturnType<typeof useAppBridge>["app"]["extensions"]>>): boolean {
+  return extensions.some((extension) => extension.type === "theme_app_extension"
+    && extension.activations.some((activation) => "status" in activation
+      && "handle" in activation
+      && activation.handle === "smart-bundle"
+      && activation.target === "body"
+      && activation.status === "active"));
+}

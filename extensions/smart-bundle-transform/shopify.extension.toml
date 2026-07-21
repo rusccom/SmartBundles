@@ -1,0 +1,17 @@
+api_version = "2026-07"
+
+[[extensions]]
+name = "Smart Bundle Transform"
+handle = "smart-bundle-transform"
+uid = "75ab75d8-62a8-6c51-d2a2-0d91b29dd56cd7e9e904"
+type = "function"
+description = "Expands validated Smart Bundles into their selected components"
+
+  [[extensions.targeting]]
+  target = "cart.transform.run"
+  input_query = "src/cart_transform_run.graphql"
+  export = "cart-transform-run"
+
+  [extensions.build]
+  command = ""
+  path = "dist/function.wasm"

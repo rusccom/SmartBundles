@@ -1,0 +1,126 @@
+{%- assign bundle = product.metafields["$app"].bundle_presentation.value -%}
+{%- assign parent_variant_gid = bundle.parentVariantId -%}
+{%- assign parent_variant_id = parent_variant_gid | split: '/' | last -%}
+{%- assign selector_count = bundle.selectors.size | default: 0 -%}
+
+{%- if bundle.sv == 1 and bundle.en == 1 and parent_variant_gid != blank and selector_count >= 4 and selector_count <= 30 -%}
+  <smart-bundle
+    class="sb"
+    data-auto-mount="true"
+    data-parent-variant-gid="{{ parent_variant_gid | escape }}"
+    data-parent-variant-id="{{ parent_variant_id | escape }}"
+    data-revision="{{ bundle.rv | json | escape }}"
+    data-redirect-to-cart="{{ block.settings.redirect_to_cart }}"
+    hidden
+    {{ block.shopify_attributes }}
+  >
+    <div class="sb__heading">
+      <h2 class="sb__title">{{ block.settings.heading | escape }}</h2>
+      {%- if block.settings.show_progress -%}
+        <span class="sb__progress" data-progress aria-live="polite">0 / {{ selector_count }} selected</span>
+      {%- endif -%}
+    </div>
+
+    <div class="sb__components" data-components>
+      {%- for selector in bundle.selectors -%}
+        {%- assign first_option = selector.options.first -%}
+        <fieldset class="sb__component" data-component>
+          <legend class="sb__legend">{{ selector.label | default: selector.productTitle | escape }}</legend>
+          <div class="sb__component-body">
+            {%- if first_option.imageUrl != blank -%}
+              {% # theme-check-disable RemoteAsset %}
+              <img
+                class="sb__image"
+                src="{{ first_option.imageUrl | escape }}"
+                alt=""
+                width="72"
+                height="72"
+                loading="lazy"
+                data-image
+              >
+              {% # theme-check-enable RemoteAsset %}
+            {%- endif -%}
+            <div class="sb__choice">
+              <span class="sb__product-title">{{ selector.productTitle | escape }}</span>
+              <label class="sb__visually-hidden" for="sb-{{ block.id }}-{{ forloop.index }}">
+                Choose a variant for {{ selector.productTitle | escape }}
+              </label>
+              <select
+                id="sb-{{ block.id }}-{{ forloop.index }}"
+                class="sb__select"
+                data-selector
+                data-selector-key="{{ selector.key | json | escape }}"
+                required
+              >
+                <option value="">Choose a variant</option>
+                {%- for option in selector.options -%}
+                  <option
+                    value="{{ option.id | escape }}"
+                    data-image-url="{{ option.imageUrl | default: '' | escape }}"
+                    {% if option.available == false %}disabled{% endif %}
+                  >
+                    {{- option.title | escape -}}
+                    {%- if option.available == false %} - Sold out{% endif -%}
+                  </option>
+                {%- endfor -%}
+              </select>
+            </div>
+          </div>
+        </fieldset>
+      {%- endfor -%}
+    </div>
+
+    <div class="sb__actions">
+      <p class="sb__status" data-status aria-live="polite"></p>
+      <p class="sb__error" data-error role="alert" hidden></p>
+      <button
+        class="sb__button"
+        type="button"
+        data-add-button
+        disabled
+        aria-disabled="true"
+      >
+        {{ block.settings.button_label | escape }}
+      </button>
+    </div>
+  </smart-bundle>
+{%- elsif request.design_mode -%}
+  <div class="sb sb__editor-note" {{ block.shopify_attributes }}>
+    Publish a valid Smart Bundle with 4-30 components to show this block.
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Smart Bundle storefront",
+  "target": "body",
+  "stylesheet": "smart-bundle.css",
+  "javascript": "smart-bundle.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Build your bundle"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Add bundle to cart"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_progress",
+      "label": "Show selection progress",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "redirect_to_cart",
+      "label": "Open the cart after adding",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,21 @@
+query CartTransformRunInput {
+  cart {
+    lines {
+      id
+      bundleSelection: attribute(key: "_sb") {
+        value
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            bundleRuntime: metafield(namespace: "$app", key: "bundle_runtime") {
+              jsonValue
+            }
+          }
+        }
+      }
+    }
+  }
+}

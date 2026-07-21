@@ -1,0 +1,5 @@
+ALTER TABLE "Bundle"
+ALTER COLUMN "title" DROP NOT NULL;
+
+ALTER TABLE "BundleRevision"
+ALTER COLUMN "config" DROP NOT NULL;

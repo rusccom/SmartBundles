@@ -1,0 +1,152 @@
+.sb {
+  --sb-border: rgba(18, 18, 18, 0.16);
+  --sb-error: #b42318;
+  --sb-focus: #1f5eff;
+  display: block;
+  margin-block: 1.5rem;
+}
+
+.sb[hidden] {
+  display: none !important;
+}
+
+.sb__heading,
+.sb__component-body,
+.sb__actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.sb__heading {
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sb__title,
+.sb__status,
+.sb__error {
+  margin: 0;
+}
+
+.sb__progress {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.sb__components {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.sb__component {
+  border: 1px solid var(--sb-border);
+  border-radius: 0.75rem;
+  margin: 0;
+  padding: 1rem;
+}
+
+.sb__legend {
+  font-weight: 650;
+  padding-inline: 0.25rem;
+}
+
+.sb__component-body {
+  align-items: center;
+}
+
+.sb__image {
+  border-radius: 0.5rem;
+  height: 72px;
+  object-fit: cover;
+  width: 72px;
+}
+
+.sb__choice {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb__product-title {
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.sb__select {
+  background: inherit;
+  border: 1px solid var(--sb-border);
+  border-radius: 0.5rem;
+  color: inherit;
+  min-height: 44px;
+  padding: 0.65rem 2.25rem 0.65rem 0.75rem;
+  width: 100%;
+}
+
+.sb__select:focus-visible,
+.sb__button:focus-visible {
+  outline: 3px solid var(--sb-focus);
+  outline-offset: 2px;
+}
+
+.sb__actions {
+  align-items: stretch;
+  flex-direction: column;
+  margin-top: 1rem;
+}
+
+.sb__button {
+  cursor: pointer;
+  min-height: 48px;
+  width: 100%;
+}
+
+.sb__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.sb__error {
+  color: var(--sb-error);
+}
+
+.sb__status:empty,
+.sb__error[hidden] {
+  display: none;
+}
+
+.sb__visually-hidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.sb-native-submit--hidden {
+  display: none !important;
+}
+
+.sb__editor-note {
+  border: 1px dashed var(--sb-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+@media screen and (max-width: 749px) {
+  .sb__actions {
+    background: rgb(var(--color-background, 255 255 255));
+    bottom: 0;
+    margin-inline: -1rem;
+    padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+    position: sticky;
+    z-index: 5;
+  }
+
+  .sb__heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

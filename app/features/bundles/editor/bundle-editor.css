@@ -1,0 +1,16 @@
+.sb-editor-form { display: grid; gap: 20px; }
+.sb-component-list { display: grid; gap: 16px; }
+.sb-component { border: 1px solid #d5d7da; border-radius: 12px; padding: 16px; background: #fff; }
+.sb-component header, .sb-component footer, .sb-editor-actions { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.sb-component > label, .sb-component fieldset { display: grid; gap: 8px; margin-top: 14px; }
+.sb-component input[type="text"], .sb-component label > input:not([type]) { min-height: 42px; border: 1px solid #8c9196; border-radius: 8px; padding: 0 10px; }
+.sb-component fieldset { border: 0; padding: 0; }
+.sb-option { display: flex; gap: 10px; align-items: center; min-height: 36px; }
+.sb-component footer { justify-content: flex-start; margin-top: 16px; }
+.sb-component button, .sb-editor-actions button { min-height: 40px; border: 1px solid #8c9196; border-radius: 8px; padding: 0 14px; background: #fff; cursor: pointer; }
+.sb-component button.critical { color: #8e1f0b; margin-left: auto; }
+.sb-editor-actions { justify-content: flex-end; position: sticky; bottom: 0; padding: 16px; background: #f6f6f7; border-top: 1px solid #d5d7da; z-index: 2; }
+.sb-editor-actions button.primary { color: #fff; border-color: #303030; background: #303030; }
+.sb-replacement { display: grid; gap: 6px; max-width: 420px; }
+.sb-replacement select { min-height: 42px; border: 1px solid #8c9196; border-radius: 8px; padding: 0 10px; background: #fff; }
+@media (max-width: 640px) { .sb-component header, .sb-component footer { align-items: stretch; flex-direction: column; } .sb-component button.critical { margin-left: 0; } }

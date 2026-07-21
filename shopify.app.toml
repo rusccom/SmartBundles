@@ -1,0 +1,58 @@
+client_id = "fd2a3ab5cb50798f5a7917d179e68cfd"
+name = "SmartBundle"
+handle = "smartbundle-smarttrade"
+application_url = "https://smartbundle-production.up.railway.app"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = false
+
+[access_scopes]
+scopes = "read_products,write_products,read_cart_transforms,write_cart_transforms,read_publications,write_publications"
+
+[auth]
+redirect_urls = [
+  "https://smartbundle-production.up.railway.app/auth/callback",
+  "https://smartbundle-production.up.railway.app/auth/shopify/callback",
+  "https://smartbundle-production.up.railway.app/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/scopes_update"]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = ["products/update", "products/delete"]
+  uri = "/webhooks/products"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+  uri = "/webhooks/privacy"
+
+[product.metafields.app.bundle_id]
+name = "SmartBundle identity"
+description = "Stable identity of a bundle product managed by SmartBundle"
+type = "single_line_text_field"
+access.admin = "merchant_read"
+
+[product.metafields.app.bundle_runtime]
+name = "SmartBundle runtime configuration"
+description = "Trusted configuration consumed by the SmartBundle Cart Transform"
+type = "json"
+access.admin = "merchant_read"
+
+[product.metafields.app.bundle_presentation]
+name = "SmartBundle storefront configuration"
+description = "Selector content rendered by the SmartBundle theme block"
+type = "json"
+access.admin = "merchant_read"
+
+[pos]
+embedded = false
