@@ -1,4 +1,4 @@
-import { BundleComponentCard } from "./BundleComponentCard";
+import { BundleSortableList } from "./BundleSortableList";
 import type { ReturnTypeBundleEditor } from "./bundle-editor-hook.types";
 import type { EditorSelector } from "./editor.types";
 
@@ -14,11 +14,7 @@ export function BundleComponentsSection({ editor, currencyCode, locale, error }:
     <s-stack direction="block" gap="base">
       <s-paragraph>{sectionSummary(editor.selectors)} Each component requires at least one allowed variant.</s-paragraph>
       {error ? <s-banner tone="critical">{error}</s-banner> : null}
-      <div className="sb-component-list">{editor.selectors.map((selector, index) =>
-        <BundleComponentCard key={selector.key} selector={selector} index={index} total={editor.selectors.length}
-          currencyCode={currencyCode} locale={locale} onLabel={editor.label} onOption={editor.option}
-          onMove={editor.move} onRemove={editor.remove} />
-      )}</div>
+      <BundleSortableList editor={editor} currencyCode={currencyCode} locale={locale} />
       <s-button disabled={editor.selectors.length >= 150} onClick={editor.addComponent}>Add components</s-button>
     </s-stack>
   </s-section>;

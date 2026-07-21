@@ -7,16 +7,16 @@ export interface StorefrontActivationBannerProps {
 
 export function StorefrontActivationBanner({ editorUrl }: StorefrontActivationBannerProps) {
   const active = useStorefrontActive();
-  if (active || !editorUrl) return null;
+  if (active !== false || !editorUrl) return null;
   return <s-banner tone="warning">
     Activate SmartBundle once in the published theme. Bundle selectors will then be placed automatically on bundle product pages.{' '}
     <s-link href={editorUrl} target="_blank">Activate storefront</s-link>
   </s-banner>;
 }
 
-function useStorefrontActive(): boolean {
+function useStorefrontActive(): boolean | undefined {
   const shopify = useAppBridge();
-  const [active, setActive] = useState(false);
+  const [active, setActive] = useState<boolean>();
   useEffect(() => {
     let current = true;
     const refresh = () => shopify.app.extensions()
@@ -24,11 +24,11 @@ function useStorefrontActive(): boolean {
       .catch(() => current && setActive(false));
     const refreshVisible = () => { if (!document.hidden) void refresh(); };
     void refresh();
-    window.addEventListener("focus", refresh);
+    const timer = window.setInterval(refresh, 5000);
     document.addEventListener("visibilitychange", refreshVisible);
     return () => {
       current = false;
-      window.removeEventListener("focus", refresh);
+      window.clearInterval(timer);
       document.removeEventListener("visibilitychange", refreshVisible);
     };
   }, [shopify]);
@@ -39,10 +39,7 @@ function hasActiveEmbed(extensions: Awaited<ReturnType<ReturnType<typeof useAppB
   return extensions.some((extension) => extension.type === "theme_app_extension"
     && extension.activations.some((activation) => "status" in activation
       && "handle" in activation
-      && "activations" in activation
       && activation.handle === "smart-bundle"
       && activation.target === "body"
-      && activation.status === "active"
-      && Array.isArray(activation.activations)
-      && activation.activations.some((placement: { target?: unknown }) => placement.target === "theme")));
+      && activation.status === "active"));
 }

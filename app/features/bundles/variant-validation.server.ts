@@ -93,7 +93,8 @@ function verifiedSelector(
 ): BundleSelectorInput {
   const options = selector.options.map(({ id }) => verifiedOption(id, selector.productId, variants));
   const product = variants.get(options[0].id)?.product;
-  return { ...selector, productTitle: product?.title ?? selector.productTitle, options };
+  const productTitle = product?.title ?? selector.productTitle;
+  return { ...selector, label: productTitle, productTitle, options };
 }
 
 function verifiedOption(

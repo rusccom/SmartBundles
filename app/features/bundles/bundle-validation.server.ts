@@ -70,11 +70,12 @@ function parseSelectors(value: string): BundleSelectorInput[] {
 function parseSelector(value: unknown, position: number): BundleSelectorInput[] {
   if (!isRecord(value)) return [];
   const options = Array.isArray(value.options) ? value.options.flatMap(parseOption) : [];
+  const productTitle = shortText(value.productTitle, 255);
   return [{
     key: positiveInt(value.key) || position + 1,
-    label: shortText(value.label, 120),
+    label: productTitle,
     productId: gid(value.productId, "Product"),
-    productTitle: shortText(value.productTitle, 255),
+    productTitle,
     options,
   }];
 }
