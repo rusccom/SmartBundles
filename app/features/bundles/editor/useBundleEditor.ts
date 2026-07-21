@@ -11,7 +11,9 @@ export function useBundleEditor(initial: BundleEditorInitial) {
   const reorder = useCallback((activeKey: number, overKey: number) =>
     setSelectors((items) => reorderSelectors(items, activeKey, overKey)), []);
   const option = useCallback((index: number, id: string) => setSelectors((items) => toggleOption(items, index, id)), []);
-  return { selectors, addComponent, remove, reorder, option };
+  const quantity = useCallback((index: number, value: number) =>
+    setSelectors((items) => updateQuantity(items, index, value)), []);
+  return { selectors, addComponent, remove, reorder, option, quantity };
 }
 
 function toggleOption(items: ReturnType<typeof initialEditorSelectors>, index: number, id: string) {
@@ -19,4 +21,8 @@ function toggleOption(items: ReturnType<typeof initialEditorSelectors>, index: n
     ...selector,
     options: selector.options.map((option) => option.id === id ? { ...option, allowed: !option.allowed } : option),
   } : selector);
+}
+
+function updateQuantity(items: ReturnType<typeof initialEditorSelectors>, index: number, quantity: number) {
+  return items.map((selector, current) => current === index ? { ...selector, quantity } : selector);
 }

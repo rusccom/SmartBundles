@@ -1,20 +1,25 @@
 import type {
   BundleContentSubmission,
   BundleDraftInput,
+  BundlePricingMode,
   BundleSelectorInput,
   BundleValidationResult,
   BundleVariantInput,
 } from "./bundle.types";
+import { buildRuntimeConfig } from "./bundle-config.server";
+import { calculateParentPrice } from "./bundle-pricing";
 
 export const MIN_SELECTORS = 1;
 export const MAX_SELECTORS = 150;
 const MAX_OPTIONS = 200;
+const MAX_QUANTITY = 2_000;
 
 export function parseBundleForm(form: FormData): BundleValidationResult {
   const draft = bundleDraft(form);
   const content = contentSubmission(form);
   const bundleVersion = parseBundleVersion(rawValue(form, "bundleVersion"));
   const errors = validateBundle(draft);
+  if (!validPricingMode(rawValue(form, "pricingMode"))) errors.pricingMode = "Choose a pricing mode.";
   if (bundleVersion === undefined) errors.form = "The bundle version is invalid. Reload and try again.";
   if (!validDirtyValue(rawValue(form, "descriptionDirty"))) errors.description = "Description state is invalid.";
   if (bundleVersion === undefined) return { errors };
@@ -23,8 +28,10 @@ export function parseBundleForm(form: FormData): BundleValidationResult {
 }
 
 function bundleDraft(form: FormData): BundleDraftInput {
+  const pricingMode = parsedPricingMode(rawValue(form, "pricingMode"));
   return {
-    price: textValue(form, "price"),
+    pricingMode,
+    fixedPrice: pricingMode === "FIXED" ? optionalMoney(textValue(form, "fixedPrice")) : null,
     selectors: parseSelectors(textValue(form, "selectors")),
   };
 }
@@ -76,6 +83,7 @@ function parseSelector(value: unknown, position: number): BundleSelectorInput[] 
     label: productTitle,
     productId: gid(value.productId, "Product"),
     productTitle,
+    quantity: quantity(value.quantity),
     options,
   }];
 }
@@ -85,15 +93,74 @@ function parseOption(value: unknown): BundleVariantInput[] {
   const id = gid(value.id, "ProductVariant");
   const title = shortText(value.title, 255);
   if (!id || !title) return [];
-  return [{ id, title, imageUrl: optionalUrl(value.imageUrl), available: value.available !== false }];
+  return [{
+    id, title, imageUrl: optionalUrl(value.imageUrl),
+    available: value.available !== false,
+    unitPrice: optionalMoney(value.unitPrice) ?? undefined,
+  }];
 }
 
 function validateBundle(data: BundleDraftInput): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (!validPrice(data.price)) errors.price = "Enter a price greater than 0.";
+  if (data.pricingMode === "FIXED" && !validFixedPrice(data.fixedPrice)) {
+    errors.fixedPrice = "Enter a fixed price greater than 0.";
+  }
   validateSelectorCount(data.selectors, errors);
-  validateSelectors(data.selectors, errors);
+  validateSelectors(data, errors);
+  validateAggregateQuantities(data.selectors, errors);
+  validateParentPrice(data, errors);
+  validateRuntimeProjection(data, errors);
   return errors;
+}
+
+function validateParentPrice(
+  data: BundleDraftInput,
+  errors: Record<string, string>,
+): void {
+  if (errors.fixedPrice || errors.selectors || Object.keys(errors).some((key) => key.startsWith("selector."))) return;
+  try {
+    calculateParentPrice(data.pricingMode, data.fixedPrice, data.selectors);
+  } catch {
+    errors.selectors = "The maximum bundle total exceeds the supported price limit.";
+  }
+}
+
+function validateRuntimeProjection(
+  data: BundleDraftInput,
+  errors: Record<string, string>,
+): void {
+  if (errors.selectors || Object.keys(errors).some((key) => key.startsWith("selector."))) return;
+  try {
+    buildRuntimeConfig(runtimeSizeIdentity(data), data.selectors);
+  } catch (error) {
+    errors.selectors = error instanceof Error ? error.message : "Bundle configuration is too large.";
+  }
+}
+
+function runtimeSizeIdentity(data: BundleDraftInput) {
+  return {
+    publicId: "x".repeat(32), revision: 2_147_483_647,
+    parentVariantId: "gid://shopify/ProductVariant/99999999999999999999",
+    pricingMode: data.pricingMode, currencyCode: "XXX",
+    fixedPrice: data.fixedPrice, parentPrice: "9999999999.99",
+  };
+}
+
+function validateAggregateQuantities(
+  selectors: BundleSelectorInput[],
+  errors: Record<string, string>,
+): void {
+  const quantities = new Map<string, number>();
+  for (const selector of selectors) {
+    const variantIds = new Set(selector.options.map(({ id }) => id));
+    for (const id of variantIds) {
+      const total = (quantities.get(id) ?? 0) + selector.quantity;
+      quantities.set(id, total);
+      if (total > MAX_QUANTITY) {
+        errors.selectors = `Combined quantity for one variant cannot exceed ${MAX_QUANTITY}.`;
+      }
+    }
+  }
 }
 
 function validateSelectorCount(
@@ -107,24 +174,29 @@ function validateSelectorCount(
 }
 
 function validateSelectors(
-  selectors: BundleSelectorInput[],
+  data: BundleDraftInput,
   errors: Record<string, string>,
 ): void {
   const keys = new Set<number>();
-  selectors.forEach((selector, index) => validateSelector(selector, index, keys, errors));
+  data.selectors.forEach((selector, index) =>
+    validateSelector(selector, index, data.pricingMode, keys, errors));
   const invalid = Object.keys(errors).some((key) => key.startsWith("selector."));
   if (invalid && !errors.selectors) errors.selectors = "Each component needs a label and at least one allowed variant.";
 }
 
 function validateSelector(
-  item: BundleSelectorInput,
-  index: number,
-  keys: Set<number>,
-  errors: Record<string, string>,
+  item: BundleSelectorInput, index: number, pricingMode: BundlePricingMode,
+  keys: Set<number>, errors: Record<string, string>,
 ): void {
   if (!item.productId) errors[`selector.${index}.product`] = "Choose a product.";
   if (!item.label) errors[`selector.${index}.label`] = "Enter a component label.";
+  if (item.quantity < 1 || item.quantity > MAX_QUANTITY) {
+    errors[`selector.${index}.quantity`] = `Quantity must be between 1 and ${MAX_QUANTITY}.`;
+  }
   if (!item.options.length) errors[`selector.${index}.options`] = "Choose at least one allowed variant.";
+  if (pricingMode === "DYNAMIC" && item.options.some(({ unitPrice }) => unitPrice === undefined)) {
+    errors[`selector.${index}.options`] = "Dynamic bundle variants need current prices.";
+  }
   if (new Set(item.options.map(({ id }) => id)).size !== item.options.length) {
     errors[`selector.${index}.options`] = "Allowed variants must be unique.";
   }
@@ -132,12 +204,34 @@ function validateSelector(
   keys.add(item.key);
 }
 
-function validPrice(value: string): boolean {
-  return /^\d{1,9}(\.\d{1,2})?$/.test(value) && Number(value) > 0;
+function validFixedPrice(value: string | null): boolean {
+  return value !== null && validMoney(value) && Number(value) > 0;
 }
 
 function positiveInt(value: unknown): number {
   return Number.isSafeInteger(value) && Number(value) > 0 ? Number(value) : 0;
+}
+
+function quantity(value: unknown): number {
+  return Number.isSafeInteger(value) ? Number(value) : 0;
+}
+
+function parsedPricingMode(value: string): BundlePricingMode {
+  return value === "DYNAMIC" ? "DYNAMIC" : "FIXED";
+}
+
+function validPricingMode(value: string): boolean {
+  return value === "FIXED" || value === "DYNAMIC";
+}
+
+function optionalMoney(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return validMoney(normalized) ? normalized : null;
+}
+
+function validMoney(value: string): boolean {
+  return /^\d{1,10}(\.\d{1,2})?$/.test(value);
 }
 
 function shortText(value: unknown, max: number): string {

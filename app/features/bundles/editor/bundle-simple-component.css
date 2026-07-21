@@ -1,7 +1,7 @@
 .sb-simple-component {
   display: grid;
   box-sizing: border-box;
-  grid-template-columns: 44px 48px minmax(0, 1fr) auto auto;
+  grid-template-columns: 44px 48px minmax(0, 1fr) 112px auto auto;
   gap: 10px;
   align-items: center;
   min-height: 72px;
@@ -45,8 +45,12 @@
     color: #616161;
   }
 
+  .sb-simple-component .sb-quantity-field {
+    grid-column: 3;
+  }
+
   .sb-simple-component .sb-component-remove-action {
     grid-column: 4;
-    grid-row: 1 / 3;
+    grid-row: 1 / 4;
   }
 }

@@ -8,6 +8,12 @@ import {
   projectionHash,
 } from "../bundles/bundle-config.server";
 import type { BundleSelectorInput } from "../bundles/bundle.types";
+import { calculateParentPrice } from "../bundles/bundle-pricing";
+import {
+  bundleProjectionError,
+  bundleProjectionErrorCode,
+  isBundleProjectionError,
+} from "../bundles/bundle-projection-error.server";
 import {
   verifyBundleSelectors,
 } from "../bundles/variant-validation.server";
@@ -112,11 +118,35 @@ async function syncActiveBundle(
 
 function buildProjection(active: ActiveBundle, selectors: BundleSelectorInput[]) {
   const variantId = requiredVariant(active);
-  const runtime = buildRuntimeConfig(active.bundle.publicId, active.revision.revision, variantId, selectors);
-  const presentation = buildPresentationConfig(active.bundle.publicId, active.revision.revision, variantId, selectors);
-  const runtimeValue = jsonProjection(runtime);
-  const presentationValue = jsonProjection(presentation);
-  return { runtime, presentation, runtimeValue, presentationValue };
+  try {
+    const parentPrice = calculateParentPrice(
+      active.source.pricingMode, active.source.fixedPrice, selectors);
+    const identity = projectionIdentity(active, variantId, parentPrice);
+    const runtime = buildRuntimeConfig(identity, selectors);
+    const presentation = buildPresentationConfig(identity, selectors);
+    return projectedValues(runtime, presentation, parentPrice);
+  } catch (error) {
+    throw bundleProjectionError(error);
+  }
+}
+
+function projectedValues(runtime: unknown, presentation: unknown, parentPrice: string) {
+  return {
+    runtime, presentation, parentPrice,
+    runtimeValue: jsonProjection(runtime), presentationValue: jsonProjection(presentation),
+  };
+}
+
+function projectionIdentity(active: ActiveBundle, parentVariantId: string, parentPrice: string) {
+  return {
+    publicId: active.bundle.publicId,
+    revision: active.revision.revision,
+    parentVariantId,
+    pricingMode: active.source.pricingMode,
+    currencyCode: active.source.currencyCode,
+    fixedPrice: active.source.fixedPrice,
+    parentPrice,
+  };
 }
 
 function parentInput(
@@ -130,7 +160,7 @@ function parentInput(
     publicationId: requiredPublication(active),
     publicId: active.bundle.publicId,
     revision: active.revision.revision,
-    price: active.source.price,
+    price: projection.parentPrice,
     runtimeValue: projection.runtimeValue,
     presentationValue: projection.presentationValue,
     assertOwned: guard,
@@ -138,12 +168,12 @@ function parentInput(
 }
 
 function reconciledState(
-  active: ActiveBundle, selectors: BundleSelectorInput[],
-  projection: ReturnType<typeof buildProjection>,
+  active: ActiveBundle, selectors: BundleSelectorInput[], projection: ReturnType<typeof buildProjection>,
   fields: ProjectionFields,
 ) {
   return {
     bundleId: active.bundle.id, revision: active.revision.revision,
+    parentPrice: projection.parentPrice,
     runtime: jsonValue(projection.runtime),
     presentation: jsonValue(projection.presentation),
     runtimeBytes: Buffer.byteLength(projection.runtimeValue),
@@ -199,6 +229,7 @@ function clearInvalidVariantIdentity(active: ActiveBundle): Promise<void> {
 
 function errorCode(error: unknown): string {
   if (error instanceof BundleComponentValidationError) return "COMPONENT_INVALID";
+  if (isBundleProjectionError(error)) return bundleProjectionErrorCode();
   if (error instanceof Error && error.message === PARENT_MISSING) return PARENT_MISSING;
   if (error instanceof Error && error.message === PARENT_IDENTITY_INVALID) return PARENT_IDENTITY_INVALID;
   if (error instanceof Error && error.message === PARENT_VARIANTS_INVALID) return PARENT_VARIANTS_INVALID;
@@ -223,6 +254,7 @@ function requiredPublication(active: ActiveBundle): string {
 }
 
 function isUnsafeProjection(active: ActiveBundle, error: unknown): boolean {
+  if (isBundleProjectionError(error)) return true;
   if (!(error instanceof Error)) return false;
   if (error.message === REVISION_CHANGED) return true;
   return [PARENT_MISSING, PARENT_IDENTITY_INVALID, PARENT_VARIANTS_INVALID, PUBLICATION_MISSING]

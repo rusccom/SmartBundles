@@ -1,0 +1,38 @@
+.sb-pricing-fields,
+.sb-editor-field,
+.sb-quantity-field {
+  display: grid;
+  gap: 6px;
+}
+
+.sb-editor-field select,
+.sb-editor-field input,
+.sb-quantity-field input {
+  box-sizing: border-box;
+  min-height: 42px;
+  border: 1px solid #8c9196;
+  border-radius: 8px;
+  padding: 0 10px;
+  color: inherit;
+  background: #fff;
+}
+
+.sb-editor-field-error {
+  color: #8e1f0b;
+  font-size: 13px;
+}
+
+.sb-quantity-field {
+  width: 112px;
+  color: #616161;
+  font-size: 13px;
+}
+
+.sb-component-settings {
+  padding: 14px 16px;
+}
+
+.sb-component-quantity {
+  color: #616161;
+  font-size: 13px;
+}

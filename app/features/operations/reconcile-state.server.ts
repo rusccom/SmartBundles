@@ -10,6 +10,7 @@ export interface ReconcileStateInput {
   runtimeBytes: number;
   runtimeHash: string;
   presentationHash: string;
+  parentPrice: string;
   runtimeMetafieldId: string;
   runtimeDigest: string;
   presentationMetafieldId: string;
@@ -109,6 +110,7 @@ async function updateSelectorSnapshots(
       where: { revisionId_selectorKey: { revisionId, selectorKey: selector.key } },
       data: {
         productTitle: selector.productTitle,
+        quantity: selector.quantity,
         options: { updateMany: selector.options.map(optionSnapshot) },
       },
     });
@@ -118,7 +120,12 @@ async function updateSelectorSnapshots(
 function optionSnapshot(option: BundleSelectorInput["options"][number]) {
   return {
     where: { variantGid: option.id },
-    data: { title: option.title, imageUrl: option.imageUrl ?? null, available: Boolean(option.available) },
+    data: {
+      title: option.title,
+      imageUrl: option.imageUrl ?? null,
+      available: Boolean(option.available),
+      unitPrice: option.unitPrice,
+    },
   };
 }
 
@@ -126,6 +133,7 @@ function revisionData(input: ReconcileStateInput) {
   return {
     runtimeConfig: input.runtime,
     presentationConfig: input.presentation,
+    parentPrice: input.parentPrice,
     runtimeBytes: input.runtimeBytes,
     runtimeHash: input.runtimeHash,
     presentationHash: input.presentationHash,

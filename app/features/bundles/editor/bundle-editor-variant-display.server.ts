@@ -119,7 +119,7 @@ function editorOption(variant: VariantNode, allowed: boolean, defaultImageUrl?: 
     title: variant.title,
     imageUrl: variant.image?.url ?? defaultImageUrl,
     available: variant.availableForSale,
-    displayPrice: variant.price,
+    unitPrice: variant.price,
     allowed,
   };
 }

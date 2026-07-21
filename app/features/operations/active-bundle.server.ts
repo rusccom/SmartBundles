@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
-import type { BundleSelectorInput } from "../bundles/bundle.types";
+import type { BundlePricingMode, BundleSelectorInput } from "../bundles/bundle.types";
 
 export interface ActiveBundle {
   bundle: ActiveBundleRecord;
@@ -11,7 +11,10 @@ export interface ActiveBundle {
 }
 
 export interface ActiveParentSource {
-  price: string;
+  pricingMode: BundlePricingMode;
+  fixedPrice: string | null;
+  parentPrice: string;
+  currencyCode: string;
 }
 
 interface ActiveBundleRecord {
@@ -27,13 +30,15 @@ interface ActiveBundleRecord {
   runtimeEnabled: boolean;
   lockVersion: number;
   updatedAt: Date;
-  shop: { domain: string; onlineStorePublicationGid: string | null };
+  shop: { domain: string; currencyCode: string | null; onlineStorePublicationGid: string | null };
   projection: { runtimeDigest: string | null; presentationDigest: string | null } | null;
 }
 
 interface ActiveRevisionRecord {
   revision: number;
   runtimeConfig: Prisma.JsonValue | null;
+  pricingMode: BundlePricingMode;
+  fixedPrice: Prisma.Decimal | null;
   parentPrice: Prisma.Decimal;
 }
 
@@ -71,8 +76,17 @@ async function loadRevisionBundle(
     bundle,
     revision,
     selectors: mapSelectors(revision.selectors),
-    source: { price: revision.parentPrice.toString() },
+    source: activeSource(bundle, revision),
     revisionSource,
+  };
+}
+
+function activeSource(bundle: ActiveBundleRecord, revision: ActiveRevisionRecord) {
+  return {
+    pricingMode: revision.pricingMode,
+    fixedPrice: revision.fixedPrice?.toString() ?? null,
+    parentPrice: revision.parentPrice.toString(),
+    currencyCode: requiredCurrencyCode(bundle.shop.currencyCode),
   };
 }
 
@@ -99,13 +113,15 @@ const bundleSelect = {
   runtimeEnabled: true,
   lockVersion: true,
   updatedAt: true,
-  shop: { select: { domain: true, onlineStorePublicationGid: true } },
+  shop: { select: { domain: true, currencyCode: true, onlineStorePublicationGid: true } },
   projection: { select: { runtimeDigest: true, presentationDigest: true } },
 };
 
 const revisionSelect = {
   revision: true,
   runtimeConfig: true,
+  pricingMode: true,
+  fixedPrice: true,
   parentPrice: true,
   selectors: {
     orderBy: { position: "asc" as const },
@@ -127,11 +143,18 @@ function mapSelectors(selectors: SelectorRecord[]): BundleSelectorInput[] {
     label: selector.label,
     productId: selector.productGid,
     productTitle: selector.productTitle,
+    quantity: selector.quantity,
     options: selector.options.map((option) => ({
       id: option.variantGid,
       title: option.title,
       imageUrl: option.imageUrl ?? undefined,
       available: option.available,
+      unitPrice: option.unitPrice?.toString(),
     })),
   }));
+}
+
+function requiredCurrencyCode(value: string | null): string {
+  if (!value) throw new Error("Shop currency is unavailable.");
+  return value;
 }

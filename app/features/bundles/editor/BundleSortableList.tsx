@@ -21,7 +21,8 @@ export function BundleSortableList({ editor, currencyCode, locale }: BundleSorta
     <SortableContext items={items} strategy={verticalListSortingStrategy}>
       <div className="sb-component-list">{editor.selectors.map((selector, index) =>
         <BundleComponentCard key={selector.key} selector={selector} index={index}
-          currencyCode={currencyCode} locale={locale} onOption={editor.option} onRemove={editor.remove} />
+          currencyCode={currencyCode} locale={locale} onOption={editor.option}
+          onQuantity={editor.quantity} onRemove={editor.remove} />
       )}</div>
     </SortableContext>
   </DndContext>;

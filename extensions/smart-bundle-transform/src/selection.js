@@ -49,9 +49,11 @@ function resolveSelector(selector, byKey, components) {
 function aggregateComponents(components) {
   const totals = new Map();
   for (const component of components) {
-    const total = (totals.get(component.variantId) || 0) + component.quantity;
-    if (total > MAX_COMPONENT_QUANTITY) return null;
-    totals.set(component.variantId, total);
+    const current = totals.get(component.variantId);
+    if (current && current.unitPrice !== component.unitPrice) return null;
+    const quantity = (current?.quantity || 0) + component.quantity;
+    if (quantity > MAX_COMPONENT_QUANTITY) return null;
+    totals.set(component.variantId, { quantity, unitPrice: component.unitPrice });
   }
-  return [...totals].map(([merchandiseId, quantity]) => ({ merchandiseId, quantity }));
+  return [...totals].map(([merchandiseId, component]) => ({ merchandiseId, ...component }));
 }

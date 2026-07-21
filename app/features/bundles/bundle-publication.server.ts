@@ -14,12 +14,15 @@ import {
   saveProjection,
 } from "./publication-repository.server";
 import type { ParentProductIds } from "./shopify-product.server";
+import type { PresentationConfig, RuntimeConfig } from "./bundle.types";
 import { verifyBundleSelectors } from "./variant-validation.server";
 import { repairParentProjection } from "../operations/parent-projection.server";
 import {
   createBundleClaimGuard,
 } from "../operations/operation-claim-guard.server";
 import type { OperationGuard } from "../operations/operation-claim-guard.server";
+import { calculateParentPrice } from "./bundle-pricing";
+import { bundleProjectionError } from "./bundle-projection-error.server";
 
 export async function preparePublication(
   admin: AdminClient,
@@ -34,7 +37,9 @@ export async function preparePublication(
   const publicationId = loaded.bundle.shop.onlineStorePublicationGid;
   if (!publicationId) throw new Error("Online Store publication is unavailable.");
   const selectors = await verifyBundleSelectors(admin, loaded.selectors, publicationId);
-  return { ...loaded, selectors };
+  const prepared = { ...loaded, selectors };
+  assertProjectable(prepared);
+  return prepared;
 }
 
 export type PreparedPublication = Awaited<ReturnType<typeof preparePublication>>;
@@ -69,13 +74,45 @@ export interface PublicationResult {
 }
 
 function projectPublication(prepared: PreparedPublication, parentVariantId: string) {
-  const args = [prepared.bundle.publicId, prepared.revision.revision, parentVariantId] as const;
-  const runtime = buildRuntimeConfig(...args, prepared.selectors);
-  const presentation = buildPresentationConfig(...args, prepared.selectors);
+  try {
+    const parentPrice = calculateParentPrice(
+      prepared.source.pricingMode, prepared.source.fixedPrice, prepared.selectors);
+    const identity = projectionIdentity(prepared, parentVariantId, parentPrice);
+    const runtime = buildRuntimeConfig(identity, prepared.selectors);
+    const presentation = buildPresentationConfig(identity, prepared.selectors);
+    return projectedPublication(prepared, runtime, presentation, parentPrice);
+  } catch (error) {
+    throw bundleProjectionError(error);
+  }
+}
+
+function assertProjectable(prepared: PreparedPublication): void {
+  projectPublication(prepared, requiredParentProduct(prepared).variantId);
+}
+
+function projectedPublication(
+  prepared: PreparedPublication, runtime: RuntimeConfig,
+  presentation: PresentationConfig, parentPrice: string,
+) {
   return {
-    ...prepared, runtime, presentation,
-    runtimeValue: jsonProjection(runtime),
-    presentationValue: jsonProjection(presentation),
+    ...prepared, runtime, presentation, parentPrice,
+    runtimeValue: jsonProjection(runtime), presentationValue: jsonProjection(presentation),
+  };
+}
+
+function projectionIdentity(
+  prepared: PreparedPublication,
+  parentVariantId: string,
+  parentPrice: string,
+) {
+  return {
+    publicId: prepared.bundle.publicId,
+    revision: prepared.revision.revision,
+    parentVariantId,
+    pricingMode: prepared.source.pricingMode,
+    currencyCode: prepared.source.currencyCode,
+    fixedPrice: prepared.source.fixedPrice,
+    parentPrice,
   };
 }
 
@@ -99,7 +136,7 @@ function parentProjection(
     publicationId: requiredPublication(prepared),
     publicId: prepared.bundle.publicId,
     revision: prepared.revision.revision,
-    price: prepared.source.price,
+    price: prepared.parentPrice,
     runtimeValue: prepared.runtimeValue,
     presentationValue: prepared.presentationValue,
     allowRevisionChange: true,
@@ -115,6 +152,8 @@ async function persistPreparedProjection(
 ): Promise<void> {
   await saveProjection({
     bundleId: prepared.bundle.id, revision: prepared.revision.revision,
+    parentPrice: prepared.parentPrice,
+    selectors: prepared.selectors,
     runtimeConfig: jsonValue(prepared.runtime), presentationConfig: jsonValue(prepared.presentation),
     runtimeBytes: Buffer.byteLength(prepared.runtimeValue), runtimeHash: projectionHash(prepared.runtimeValue),
     presentationHash: projectionHash(prepared.presentationValue), runtimeMetafieldId: runtime.id,

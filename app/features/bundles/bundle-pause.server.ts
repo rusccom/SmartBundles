@@ -10,6 +10,7 @@ import {
 import type { ReplacementRestoreClaim } from "../operations/replacement-quota-restore.server";
 import { serializable } from "./bundle-quota.server";
 import { recoverBundleSaveClaim } from "./bundle-save-recovery.server";
+import { assertBundleWritesEnabled } from "../operations/bundle-write-gate.server";
 
 const BUSY_STATUSES: BundleStatus[] = [
   BundleStatus.PUBLISHING,
@@ -30,6 +31,7 @@ export async function pauseBundle(
   shopId: string,
   bundleId: string,
 ): Promise<void> {
+  assertBundleWritesEnabled();
   const recovery = await recoverBundleSaveClaim(admin, shopId, bundleId);
   if (recovery === "WAITING") throw new Error("Bundle editor save recovery is waiting.");
   const claim = await claimManualPause(shopId, bundleId);

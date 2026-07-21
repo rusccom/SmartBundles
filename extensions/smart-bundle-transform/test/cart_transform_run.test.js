@@ -22,42 +22,70 @@ test("aggregates a variant selected in multiple slots", () => {
   ]);
 });
 
+test("prices dynamic components in presentment currency", () => {
+  const result = run(selection(VARIANTS), dynamicRuntime(), "0.80");
+  assert.deepEqual(result.operations[0].lineExpand.expandedCartItems[0], {
+    ...component("101", 2),
+    price: { adjustment: { fixedPricePerUnit: { amount: "8.00" } } },
+  });
+});
+
+test("rounds each dynamic unit in a zero-decimal presentment currency", () => {
+  const runtime = dynamicRuntime();
+  runtime.c[0][2] = "0.01";
+  const result = run(selection(VARIANTS), runtime, "150", "JPY");
+  assert.equal(result.operations[0].lineExpand.expandedCartItems[0]
+    .price.adjustment.fixedPricePerUnit.amount, "2");
+});
+
+test("supports Shopify's four-letter USDC currency code", () => {
+  const result = run(selection(VARIANTS), dynamicRuntime(), "1", "USDC");
+  assert.equal(result.operations[0].lineExpand.expandedCartItems[0]
+    .price.adjustment.fixedPricePerUnit.amount, "10.00");
+});
+
+test("rejects an aggregate quantity above the Shopify limit", () => {
+  const runtime = quantityRuntime();
+  assert.throws(() => run(selection(["101", "101", "103", "104"]), runtime));
+});
+
 test("rejects missing or malformed selections", () => {
-  assert.deepEqual(run(undefined).operations, []);
-  assert.deepEqual(run("not-json").operations, []);
-  assert.deepEqual(run(JSON.stringify({ rv: 1, s: [] })).operations, []);
+  assert.throws(() => run(undefined));
+  assert.throws(() => run("not-json"));
+  assert.throws(() => run(JSON.stringify({ rv: 1, s: [] })));
 });
 
 test("rejects forged variants and revision mismatches", () => {
-  assert.deepEqual(run(selection(["101", "102", "103", "999"])).operations, []);
-  assert.deepEqual(run(selection(VARIANTS, 2)).operations, []);
+  assert.throws(() => run(selection(["101", "102", "103", "999"])));
+  assert.throws(() => run(selection(VARIANTS, 2)));
 });
 
 test("rejects a different cart-line parent variant", () => {
   const input = inputFor(selection(VARIANTS));
   input.cart.lines[0].merchandise.id = "gid://shopify/ProductVariant/901";
-  assert.deepEqual(cartTransformRun(input).operations, []);
+  assert.throws(() => cartTransformRun(input));
 });
 
 test("rejects runtime without the pinned parent", () => {
   const runtime = validRuntime();
   delete runtime.p;
-  assert.deepEqual(run(selection(VARIANTS), runtime).operations, []);
+  assert.throws(() => run(selection(VARIANTS), runtime));
 });
 
 test("rejects more than 150 selectors", () => {
   const runtime = repeatedRuntime(151);
   const choices = Array.from({ length: 151 }, (_, index) => String(1_000 + index));
-  assert.deepEqual(run(selection(choices), runtime).operations, []);
+  assert.throws(() => run(selection(choices), runtime));
 });
 
-function run(attribute, runtime = validRuntime()) {
-  return cartTransformRun(inputFor(attribute, runtime));
+function run(attribute, runtime = validRuntime(), presentmentCurrencyRate = "1.0", currencyCode = "USD") {
+  return cartTransformRun(inputFor(attribute, runtime, presentmentCurrencyRate, currencyCode));
 }
 
-function inputFor(attribute, runtime = validRuntime()) {
-  return { cart: { lines: [{
+function inputFor(attribute, runtime = validRuntime(), presentmentCurrencyRate = "1.0", currencyCode = "USD") {
+  return { presentmentCurrencyRate, cart: { lines: [{
     id: "gid://shopify/CartLine/1",
+    cost: { amountPerQuantity: { currencyCode } },
     bundleSelection: attribute === undefined ? null : { value: attribute },
     merchandise: {
       __typename: "ProductVariant", id: PARENT, requiresComponents: true,
@@ -68,10 +96,24 @@ function inputFor(attribute, runtime = validRuntime()) {
 
 function validRuntime() {
   return {
-    sv: 1, rv: 1, en: 1, b: "bundle-1", p: PARENT,
+    sv: 2, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0,
     c: VARIANTS.map((id) => [id, 1]),
     s: VARIANTS.map((_, index) => ({ k: index + 1, o: [index] })),
   };
+}
+
+function dynamicRuntime() {
+  const runtime = validRuntime();
+  runtime.m = 1;
+  runtime.c = VARIANTS.map((id, index) => [id, index === 0 ? 2 : 1, `${index + 10}.00`]);
+  return runtime;
+}
+
+function quantityRuntime() {
+  const runtime = validRuntime();
+  runtime.c[0][1] = 1_500;
+  runtime.s[1].o = [0, 1];
+  return runtime;
 }
 
 function duplicateRuntime() {
@@ -83,7 +125,7 @@ function duplicateRuntime() {
 function repeatedRuntime(count) {
   const ids = Array.from({ length: count }, (_, index) => String(1_000 + index));
   return {
-    sv: 1, rv: 1, en: 1, b: "bundle-1", p: PARENT,
+    sv: 2, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0,
     c: ids.map((id) => [id, 1]),
     s: ids.map((_, index) => ({ k: index + 1, o: [index] })),
   };

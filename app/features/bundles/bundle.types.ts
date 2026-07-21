@@ -3,6 +3,7 @@ export interface BundleVariantInput {
   title: string;
   imageUrl?: string;
   available?: boolean;
+  unitPrice?: string;
 }
 
 export interface BundleSelectorInput {
@@ -10,11 +11,15 @@ export interface BundleSelectorInput {
   label: string;
   productId: string;
   productTitle: string;
+  quantity: number;
   options: BundleVariantInput[];
 }
 
+export type BundlePricingMode = "FIXED" | "DYNAMIC";
+
 export interface BundleDraftInput {
-  price: string;
+  pricingMode: BundlePricingMode;
+  fixedPrice: string | null;
   selectors: BundleSelectorInput[];
 }
 
@@ -38,20 +43,26 @@ export interface BundleValidationResult {
 }
 
 export interface RuntimeConfig {
-  sv: 1;
+  sv: 2;
   rv: number;
   en: 0 | 1;
   b: string;
   p: string;
-  c: Array<[string, number]>;
+  m: 0 | 1;
+  c: Array<[string, number] | [string, number, string]>;
   s: Array<{ k: number; o: number[] }>;
 }
 
 export interface PresentationConfig {
-  sv: 1;
+  sv: 2;
   rv: number;
   en: 0 | 1;
   b: string;
   parentVariantId: string;
+  pricing: PresentationPricing;
   selectors: BundleSelectorInput[];
 }
+
+export type PresentationPricing =
+  | { mode: "fixed"; currencyCode: string; amount: string }
+  | { mode: "dynamic"; currencyCode: string; maximumAmount: string };

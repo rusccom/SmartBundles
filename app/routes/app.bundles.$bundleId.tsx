@@ -78,7 +78,8 @@ function editorInitial(
   const productContent = editorContentData({ shopDomain, bundleId: bundle.id, lockVersion: bundle.lockVersion, content });
   return {
     id: bundle.id, version: String(bundle.lockVersion), ...productContent,
-    price: bundle.price, status: bundle.status, ...display,
+    pricingMode: bundle.pricingMode, fixedPrice: bundle.fixedPrice ?? "",
+    status: bundle.status, ...display,
   };
 }
 

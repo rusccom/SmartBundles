@@ -1,6 +1,7 @@
 import { data, redirect } from "react-router";
 import { authenticate } from "../../shopify.server";
 import { ensureShopContext } from "../installation/shop-context.server";
+import { bundleWritesDisabled } from "../operations/bundle-write-gate.server";
 import type { AdminClient } from "../shopify/admin-api.server";
 import { BundleContentError } from "./content/BundleContentError.server";
 import { createSubmittedParent } from "./content/content-creation.server";
@@ -47,6 +48,7 @@ interface ExistingSaveAttempt {
 export async function bundleEditorAction(request: Request, bundleId: string | null) {
   const { admin, session } = await authenticate.admin(request);
   const shop = await ensureShopContext(admin, session.shop);
+  if (bundleWritesDisabled()) return maintenanceFailure();
   const form = await request.formData();
   if (form.get("intent") === "pause") return pauseEditorBundle(admin, shop.id, bundleId);
   const parsed = parseBundleForm(form);
@@ -139,6 +141,10 @@ function knownSaveError(error: unknown, productSaved: boolean) {
 
 function invalidVersion() {
   return failure(400, "The bundle version is invalid. Reload and try again.", {});
+}
+
+function maintenanceFailure() {
+  return failure(503, "Bundle changes are temporarily unavailable during maintenance.", {});
 }
 
 function versionConflict(productSaved: boolean) {

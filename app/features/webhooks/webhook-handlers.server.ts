@@ -1,4 +1,5 @@
 import prisma from "../../db.server";
+import { bundleWritesDisabled } from "../operations/bundle-write-gate.server";
 
 export async function handleUninstalled(shop: string): Promise<void> {
   await prisma.$transaction([
@@ -20,6 +21,7 @@ export async function handleProductWebhook(
   webhookId: string,
   shop: string,
 ): Promise<void> {
+  if (bundleWritesDisabled()) return;
   const productGid = productId(payload);
   if (!productGid) return;
   const bundles = await relatedBundles(shop, productGid);

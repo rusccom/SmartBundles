@@ -1,6 +1,7 @@
 import { BundleComponentRemoveAction } from "./BundleComponentRemoveAction";
 import { BundleProductThumbnail } from "./BundleProductThumbnail";
-import { formatEditorPrice } from "./bundle-editor-price";
+import { BundleComponentQuantityField } from "./BundleComponentQuantityField";
+import { formatEditorLinePrice } from "./bundle-editor-price";
 import type { EditorSelector } from "./editor.types";
 
 export interface BundleSimpleComponentCardProps {
@@ -9,6 +10,7 @@ export interface BundleSimpleComponentCardProps {
   currencyCode: string;
   locale: string;
   dragHandle: React.ReactNode;
+  onQuantity: (index: number, quantity: number) => void;
   onRemove: (index: number) => void;
 }
 
@@ -22,8 +24,10 @@ export function BundleSimpleComponentCard(props: BundleSimpleComponentCardProps)
     <BundleProductThumbnail imageUrl={option.imageUrl} title={props.selector.productTitle} />
     <span className="sb-simple-component-info"><strong>{props.selector.productTitle}</strong>
       <span className={`sb-simple-component-status${statusClass}`}>{status}</span></span>
-    <span className="sb-simple-component-price">{formatEditorPrice(option.displayPrice,
-      props.currencyCode, props.locale)}</span>
+    <BundleComponentQuantityField quantity={props.selector.quantity}
+      onChange={(quantity) => props.onQuantity(props.index, quantity)} />
+    <span className="sb-simple-component-price">{formatEditorLinePrice(
+      option.unitPrice, props.selector.quantity, props.currencyCode, props.locale)}</span>
     <BundleComponentRemoveAction index={props.index} productTitle={props.selector.productTitle}
       onRemove={props.onRemove} />
   </div>;

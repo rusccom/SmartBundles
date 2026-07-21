@@ -1,7 +1,8 @@
 export interface BundleListItem {
   id: string;
   title: string;
-  price: string;
+  pricingMode: "FIXED" | "DYNAMIC";
+  fixedPrice: string | null;
   status: string;
   health: string;
   componentCount: number;

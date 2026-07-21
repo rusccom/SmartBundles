@@ -29,6 +29,8 @@ import type {
   ReplacementRestoreClaim,
 } from "../operations/replacement-quota-restore.server";
 import { runWithPublicationJobOwnership } from "../operations/sync-publication-job-owner.server";
+import { isBundleProjectionError } from "./bundle-projection-error.server";
+import { assertBundleWritesEnabled } from "../operations/bundle-write-gate.server";
 
 const MAX_PUBLISH_ATTEMPTS = 5;
 
@@ -40,9 +42,9 @@ export interface PublishRecoveryJob {
 }
 
 export async function activateBundle(
-  admin: AdminClient, shopId: string, bundleId: string,
-  replacedBundleId?: string,
+  admin: AdminClient, shopId: string, bundleId: string, replacedBundleId?: string,
 ): Promise<void> {
+  assertBundleWritesEnabled();
   await recoverActivationSaves(admin, shopId, [bundleId, replacedBundleId]);
   const prepared = await preparePublication(admin, bundleId, shopId);
   assertPublicationReady(prepared);
@@ -55,6 +57,7 @@ export async function activateBundle(
     await executeClaimedActivation(admin, shopId, claim, prepared);
   } catch (error) {
     await recordClaimError(claim.target, error);
+    if (isBundleProjectionError(error)) await compensateActivation(admin, shopId, claim);
     throw error;
   }
 }
@@ -92,6 +95,10 @@ export async function resumeActivationJob(
     return "PUBLISHED";
   } catch (error) {
     await recordClaimError(recovery.target, error);
+    if (isBundleProjectionError(error)) {
+      await compensateActivation(admin, job.shopId, recovery);
+      return "COMPENSATED";
+    }
     if (job.attempts < MAX_PUBLISH_ATTEMPTS) throw error;
     await compensateActivation(admin, job.shopId, recovery);
     return "COMPENSATED";

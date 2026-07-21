@@ -32,3 +32,7 @@ export function isVariantGid(value) {
 export function isVariantToken(value) {
   return typeof value === "string" && PRODUCT_VARIANT_TOKEN.test(value);
 }
+
+export function isUnitPrice(value) {
+  return typeof value === "string" && /^\d{1,10}(\.\d{1,2})?$/.test(value);
+}

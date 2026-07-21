@@ -1,7 +1,13 @@
 query CartTransformRunInput {
+  presentmentCurrencyRate
   cart {
     lines {
       id
+      cost {
+        amountPerQuantity {
+          currencyCode
+        }
+      }
       bundleSelection: attribute(key: "_sb") {
         value
       }

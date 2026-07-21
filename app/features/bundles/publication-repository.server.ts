@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
+import type { BundleSelectorInput } from "./bundle.types";
 
 export interface ProjectionRecord {
   bundleId: string;
@@ -9,6 +10,8 @@ export interface ProjectionRecord {
   runtimeBytes: number;
   runtimeHash: string;
   presentationHash: string;
+  parentPrice: string;
+  selectors: BundleSelectorInput[];
   runtimeMetafieldId?: string;
   runtimeDigest?: string;
   presentationMetafieldId?: string;
@@ -21,11 +24,12 @@ export async function saveProjection(
 ): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await assertProjectionClaim(tx, record.bundleId, claimVersion);
-    await tx.bundleRevision.update({
+    const revision = await tx.bundleRevision.update({
       where: { bundleId_revision: { bundleId: record.bundleId, revision: record.revision } },
       data: revisionProjection(record),
       select: { id: true },
     });
+    await saveSelectorSnapshots(tx, revision.id, record.selectors);
     await tx.shopifyProjection.upsert({
       where: { bundleId: record.bundleId },
       create: projectionCreate(record),
@@ -54,9 +58,43 @@ function revisionProjection(record: ProjectionRecord) {
   return {
     runtimeConfig: record.runtimeConfig,
     presentationConfig: record.presentationConfig,
+    parentPrice: record.parentPrice,
     runtimeBytes: record.runtimeBytes,
     runtimeHash: record.runtimeHash,
     presentationHash: record.presentationHash,
+  };
+}
+
+async function saveSelectorSnapshots(
+  tx: Prisma.TransactionClient,
+  revisionId: string,
+  selectors: BundleSelectorInput[],
+): Promise<void> {
+  for (const selector of selectors) {
+    await tx.bundleSelector.update({
+      where: { revisionId_selectorKey: { revisionId, selectorKey: selector.key } },
+      data: selectorSnapshot(selector),
+    });
+  }
+}
+
+function selectorSnapshot(selector: BundleSelectorInput) {
+  return {
+    productTitle: selector.productTitle,
+    quantity: selector.quantity,
+    options: { updateMany: selector.options.map(optionSnapshot) },
+  };
+}
+
+function optionSnapshot(option: BundleSelectorInput["options"][number]) {
+  return {
+    where: { variantGid: option.id },
+    data: {
+      title: option.title,
+      imageUrl: option.imageUrl ?? null,
+      available: Boolean(option.available),
+      unitPrice: option.unitPrice,
+    },
   };
 }
 

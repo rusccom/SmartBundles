@@ -27,6 +27,7 @@ function serializedOption(option: EditorSelector["options"][number]) {
     title: option.title,
     imageUrl: option.imageUrl,
     available: option.available,
+    unitPrice: option.unitPrice,
   };
 }
 

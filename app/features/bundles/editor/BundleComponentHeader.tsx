@@ -25,8 +25,10 @@ export function BundleComponentHeader(props: BundleComponentHeaderProps) {
     <strong className="sb-component-title">{props.selector.productTitle}</strong>
     <span className="sb-component-meta"><span className={`sb-component-summary${summaryTone}`} aria-live="polite">
       {props.selectedCount} / {props.selector.options.length} selected</span>
+      <span className="sb-component-quantity">×{props.selector.quantity}</span>
       <span className="sb-component-price">{formatEditorPriceRange(
-        props.selector.options.filter(({ allowed }) => allowed), props.currencyCode, props.locale)}</span>
+        props.selector.options.filter(({ allowed }) => allowed), props.selector.quantity,
+        props.currencyCode, props.locale)}</span>
     </span>
   </header>;
 }

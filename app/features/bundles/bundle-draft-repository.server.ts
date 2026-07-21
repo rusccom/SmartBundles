@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import type { BundleDraftInput, BundleSelectorInput } from "./bundle.types";
+import { calculateParentPrice } from "./bundle-pricing";
 import type { ParentProductIds } from "./shopify-product.server";
 import { BundleVersionConflictError } from "./BundleVersionConflictError.server";
 import { assertStoredDraftMatches } from "./bundle-draft-match.server";
@@ -83,7 +84,8 @@ function newBundleData(input: CreateInput): Prisma.BundleCreateInput {
   return {
     shop: { connect: { id: input.shopId } },
     publicId: input.publicId,
-    price: input.draft.price,
+    pricingMode: input.draft.pricingMode,
+    fixedPrice: input.draft.fixedPrice,
     parentProductGid: input.parent.productId,
     parentVariantGid: input.parent.variantId,
     draftRevision: 1,
@@ -114,7 +116,9 @@ function revisionData(
 function nestedRevisionData(revision: number, draft: BundleDraftInput) {
   return {
     revision,
-    parentPrice: draft.price,
+    pricingMode: draft.pricingMode,
+    fixedPrice: draft.fixedPrice,
+    parentPrice: calculateParentPrice(draft.pricingMode, draft.fixedPrice, draft.selectors),
     selectors: { create: draft.selectors.map(selectorData) },
   };
 }
@@ -126,6 +130,7 @@ function selectorData(selector: BundleSelectorInput, position: number) {
     label: selector.label,
     productGid: selector.productId,
     productTitle: selector.productTitle,
+    quantity: selector.quantity,
     options: { create: selector.options.map(optionData) },
   };
 }
@@ -137,12 +142,14 @@ function optionData(option: BundleSelectorInput["options"][number], position: nu
     title: option.title,
     imageUrl: option.imageUrl,
     available: option.available ?? true,
+    unitPrice: option.unitPrice,
   };
 }
 
 function draftUpdate(draft: BundleDraftInput, revision: number): Prisma.BundleUpdateInput {
   return {
-    price: draft.price,
+    pricingMode: draft.pricingMode,
+    fixedPrice: draft.fixedPrice,
     draftRevision: revision,
     lastErrorCode: null,
     lastErrorMessage: null,

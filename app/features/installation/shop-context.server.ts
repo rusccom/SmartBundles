@@ -7,6 +7,7 @@ const SHOP_QUERY = `#graphql
     shop {
       id
       myshopifyDomain
+      currencyCode
       features {
         bundles { eligibleForBundles ineligibilityReason sellsBundles }
       }
@@ -29,6 +30,7 @@ interface ShopQuery {
   shop: {
     id: string;
     myshopifyDomain: string;
+    currencyCode: string;
     features: { bundles: { eligibleForBundles: boolean; ineligibilityReason?: string | null } };
   };
   publications: { nodes: Array<{ id: string; name: string }> };
@@ -53,7 +55,13 @@ export async function ensureShopContext(admin: AdminClient, domain: string) {
 async function freshContext(domain: string) {
   const threshold = new Date(Date.now() - 5 * 60_000);
   return prisma.shop.findFirst({
-    where: { domain, installationStatus: "INSTALLED", updatedAt: { gt: threshold }, cartTransformGid: { not: null } },
+    where: {
+      domain,
+      currencyCode: { not: null },
+      installationStatus: "INSTALLED",
+      updatedAt: { gt: threshold },
+      cartTransformGid: { not: null },
+    },
     include: { entitlement: true },
   });
 }
@@ -91,6 +99,7 @@ function updateData(context: ShopQuery, transform: string | null, publication?: 
   const bundles = context.shop.features.bundles;
   return {
     shopGid: context.shop.id,
+    currencyCode: context.shop.currencyCode,
     installationStatus: "INSTALLED" as const,
     eligibleForBundles: bundles.eligibleForBundles,
     ineligibilityReason: bundles.ineligibilityReason,

@@ -9,6 +9,7 @@ const VARIANTS_QUERY = `#graphql
       ... on ProductVariant {
         id
         title
+        price
         availableForSale
         requiresComponents
         productVariantComponents(first: 1) { nodes { id } }
@@ -29,6 +30,7 @@ const VARIANT_QUERY_BATCH = 40;
 interface VariantNode {
   id: string;
   title: string;
+  price: string;
   availableForSale: boolean;
   requiresComponents: boolean;
   productVariantComponents: { nodes: Array<{ id: string }> };
@@ -106,7 +108,13 @@ function verifiedOption(
   if (!variant || variant.product.id !== productId) invalidComponent("A selected variant no longer exists.");
   if (isBundleVariant(variant)) invalidComponent("Nested bundle components aren't supported.");
   if (!variant.product.publishedOnPublication) invalidComponent("Component products must be published to Online Store.");
-  return { id, title: variant.title, imageUrl: variant.image?.url, available: variant.availableForSale };
+  return {
+    id,
+    title: variant.title,
+    imageUrl: variant.image?.url,
+    available: variant.availableForSale,
+    unitPrice: variant.price,
+  };
 }
 
 function invalidComponent(message: string): never {

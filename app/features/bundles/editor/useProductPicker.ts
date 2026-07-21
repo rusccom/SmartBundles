@@ -31,6 +31,7 @@ function nextKey(selectors: EditorSelector[]): number {
 function selectedProduct(product: PickedProduct, key: number): EditorSelector {
   return {
     key,
+    quantity: 1,
     label: product.title,
     productId: product.id,
     productTitle: product.title,
@@ -42,8 +43,8 @@ function pickedOption(product: PickedProduct, variant: PickedVariant) {
   if (!variant.id) return [];
   const imageUrl = variant.image?.originalSrc ?? product.images[0]?.originalSrc;
   const available = variant.availableForSale ?? variant.inventoryQuantity !== 0;
-  const displayPrice = variant.price;
-  return [{ id: variant.id, title: variant.title || "Default", imageUrl, available, allowed: true, displayPrice }];
+  const unitPrice = variant.price;
+  return [{ id: variant.id, title: variant.title || "Default", imageUrl, available, allowed: true, unitPrice }];
 }
 
 interface PickedProduct {

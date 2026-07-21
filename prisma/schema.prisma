@@ -42,6 +42,10 @@ enum RevisionStatus {
   PUBLISHED
   SUPERSEDED
 }
+enum PricingMode {
+  FIXED
+  DYNAMIC
+}
 enum PublicationJobType {
   PUBLISH
   PAUSE
@@ -87,11 +91,11 @@ model Session {
   @@index([shop])
   @@index([expires])
 }
-
 model Shop {
   id                        String             @id @default(uuid()) @db.Uuid
   shopGid                   String?            @unique
   domain                    String             @unique
+  currencyCode              String?
   installationStatus        InstallationStatus @default(INSTALLED)
   eligibleForBundles        Boolean            @default(false)
   ineligibilityReason       String?
@@ -108,7 +112,6 @@ model Shop {
   outboxEvents              OutboxEvent[]
   webhookDeliveries         WebhookDelivery[]
 }
-
 model ShopEntitlement {
   shopId                String             @id @db.Uuid
   plan                  Plan               @default(FREE)
@@ -130,12 +133,12 @@ model ShopEntitlement {
   @@index([plan, quotaEnforcedAt])
   @@index([pendingPlan, pendingEffectiveAt])
 }
-
 model Bundle {
   id                     String             @id @default(uuid()) @db.Uuid
   shopId                 String             @db.Uuid
   publicId               String             @default(cuid())
-  price                  Decimal            @db.Decimal(12, 2)
+  pricingMode            PricingMode        @default(FIXED)
+  fixedPrice             Decimal?           @db.Decimal(12, 2)
   status                 BundleStatus       @default(DRAFT)
   health                 BundleHealth       @default(READY)
   countsTowardQuota      Boolean            @default(false)
@@ -171,7 +174,6 @@ model Bundle {
   @@index([shopId, updatedAt, id])
   @@index([shopId, countsTowardQuota, quotaRank, activatedAt])
 }
-
 model BundleRevision {
   id                 String           @id @default(uuid()) @db.Uuid
   bundleId           String           @db.Uuid
@@ -181,6 +183,8 @@ model BundleRevision {
   runtimeBytes       Int              @default(0)
   runtimeHash        String?
   presentationHash   String?
+  pricingMode        PricingMode      @default(FIXED)
+  fixedPrice         Decimal?         @db.Decimal(12, 2)
   parentPrice        Decimal          @db.Decimal(12, 2)
   status             RevisionStatus   @default(DRAFT)
   createdAt          DateTime         @default(now())
@@ -200,6 +204,7 @@ model BundleSelector {
   label        String
   productGid   String
   productTitle String
+  quantity     Int                   @default(1)
   revision     BundleRevision        @relation(fields: [revisionId], references: [id], onDelete: Cascade)
   options      BundleVariantOption[]
 
@@ -216,6 +221,7 @@ model BundleVariantOption {
   title      String
   imageUrl   String?
   available  Boolean        @default(true)
+  unitPrice  Decimal?       @db.Decimal(12, 2)
   selector   BundleSelector @relation(fields: [selectorId], references: [id], onDelete: Cascade)
 
   @@unique([selectorId, variantGid])

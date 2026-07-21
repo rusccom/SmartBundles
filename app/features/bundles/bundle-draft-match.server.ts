@@ -1,16 +1,19 @@
 import { Prisma } from "@prisma/client";
 import type { BundleDraftInput, BundleSelectorInput } from "./bundle.types";
+import { calculateParentPrice } from "./bundle-pricing";
 import { BundleVersionConflictError } from "./BundleVersionConflictError.server";
 
 const revisionSelect = {
+  pricingMode: true,
+  fixedPrice: true,
   parentPrice: true,
   selectors: {
     orderBy: { position: "asc" as const },
     select: {
-      selectorKey: true, position: true, label: true, productGid: true, productTitle: true,
+      selectorKey: true, position: true, label: true, productGid: true, productTitle: true, quantity: true,
       options: {
         orderBy: { position: "asc" as const },
-        select: { position: true, variantGid: true, title: true, imageUrl: true, available: true },
+        select: { position: true, variantGid: true, title: true, imageUrl: true, available: true, unitPrice: true },
       },
     },
   },
@@ -35,8 +38,16 @@ export async function assertStoredDraftMatches(
 }
 
 function sameDraft(revision: StoredRevision, draft: BundleDraftInput): boolean {
-  if (!revision.parentPrice.equals(new Prisma.Decimal(draft.price))) return false;
+  if (revision.pricingMode !== draft.pricingMode) return false;
+  if (!sameNullableMoney(revision.fixedPrice, draft.fixedPrice)) return false;
+  const parentPrice = calculateParentPrice(draft.pricingMode, draft.fixedPrice, draft.selectors);
+  if (!revision.parentPrice.equals(new Prisma.Decimal(parentPrice))) return false;
   return JSON.stringify(storedSelectors(revision)) === JSON.stringify(submittedSelectors(draft.selectors));
+}
+
+function sameNullableMoney(actual: Prisma.Decimal | null, expected: string | null): boolean {
+  if (actual === null || expected === null) return actual === null && expected === null;
+  return actual.equals(new Prisma.Decimal(expected));
 }
 
 function storedSelectors(revision: StoredRevision) {
@@ -46,9 +57,11 @@ function storedSelectors(revision: StoredRevision) {
     label: selector.label,
     productId: selector.productGid,
     productTitle: selector.productTitle,
+    quantity: selector.quantity,
     options: selector.options.map((option) => ({
       position: option.position, id: option.variantGid, title: option.title,
       imageUrl: option.imageUrl, available: option.available,
+      unitPrice: option.unitPrice?.toString() ?? null,
     })),
   }));
 }
@@ -60,9 +73,15 @@ function submittedSelectors(selectors: BundleSelectorInput[]) {
     label: selector.label,
     productId: selector.productId,
     productTitle: selector.productTitle,
+    quantity: selector.quantity,
     options: selector.options.map((option, optionPosition) => ({
       position: optionPosition, id: option.id, title: option.title,
       imageUrl: option.imageUrl ?? null, available: option.available ?? true,
+      unitPrice: normalizedMoney(option.unitPrice),
     })),
   }));
+}
+
+function normalizedMoney(value?: string): string | null {
+  return value === undefined ? null : new Prisma.Decimal(value).toString();
 }

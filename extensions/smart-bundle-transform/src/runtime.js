@@ -1,31 +1,48 @@
 import { MAX_RUNTIME_COMPONENTS, MAX_SELECTORS, MIN_SELECTORS } from "./constants.js";
-import { isObject, isQuantity, isRevision, isSelectorKey, isVariantGid, isVariantToken } from "./validation.js";
+import {
+  isObject,
+  isQuantity,
+  isRevision,
+  isSelectorKey,
+  isUnitPrice,
+  isVariantGid,
+  isVariantToken,
+} from "./validation.js";
 
 export function readRuntime(line) {
   const value = line.merchandise.product.bundleRuntime?.jsonValue;
   if (!isRuntimeHeader(value)) return null;
-  const components = readComponents(value.c);
+  const components = readComponents(value.c, value.m);
   if (!components) return null;
   const selectors = readSelectors(value.s, components);
-  return selectors ? { rv: value.rv, parentVariantId: value.p, components, selectors } : null;
+  return selectors ? { rv: value.rv, mode: value.m, parentVariantId: value.p, components, selectors } : null;
 }
 
-function isRuntimeHeader(value) {
-  if (!isObject(value) || value.sv !== 1 || value.en !== 1) return false;
+export function isDisabledRuntime(value) {
+  if (!isObject(value) || value.sv !== 2 || value.en !== 0) return false;
   if (!isRevision(value.rv) || !isVariantGid(value.p)) return false;
   return typeof value.b === "string" && value.b.length > 0 && value.b.length <= 128;
 }
 
-function readComponents(value) {
+function isRuntimeHeader(value) {
+  if (!isObject(value) || value.sv !== 2 || value.en !== 1) return false;
+  if (!isRevision(value.rv) || !isVariantGid(value.p)) return false;
+  if (value.m !== 0 && value.m !== 1) return false;
+  return typeof value.b === "string" && value.b.length > 0 && value.b.length <= 128;
+}
+
+function readComponents(value, mode) {
   if (!Array.isArray(value) || value.length < 1 || value.length > MAX_RUNTIME_COMPONENTS) return null;
-  const components = value.map(readComponent);
+  const components = value.map((component) => readComponent(component, mode));
   return components.every(Boolean) ? components : null;
 }
 
-function readComponent(value) {
-  if (!Array.isArray(value) || value.length !== 2) return null;
+function readComponent(value, mode) {
+  const expectedLength = mode === 1 ? 3 : 2;
+  if (!Array.isArray(value) || value.length !== expectedLength) return null;
   if (!isVariantToken(value[0]) || !isQuantity(value[1])) return null;
-  return { variantId: `gid://shopify/ProductVariant/${value[0]}`, quantity: value[1] };
+  if (mode === 1 && !isUnitPrice(value[2])) return null;
+  return { variantId: `gid://shopify/ProductVariant/${value[0]}`, quantity: value[1], unitPrice: value[2] };
 }
 
 function readSelectors(value, components) {

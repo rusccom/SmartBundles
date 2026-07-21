@@ -2,6 +2,7 @@ import { BundleStatus } from "@prisma/client";
 import prisma from "../../db.server";
 import { unauthenticated } from "../../shopify.server";
 import type { AdminClient } from "../shopify/admin-api.server";
+import { ensureShopContext } from "../installation/shop-context.server";
 import { resumeActivationJob } from "../bundles/bundle-activation.server";
 import { recoverBundleSaveClaim } from "../bundles/bundle-save-recovery.server";
 import { loadPauseBundle } from "./active-bundle.server";
@@ -97,6 +98,7 @@ async function performReconcileJob(
   job: LeasedPublicationJob,
   ownership: JobLeaseOwnership,
 ) {
+  await ensureShopContext(admin, job.shop.domain);
   const recovery = await recoverBundleSaveClaim(admin, job.shopId, job.bundleId!);
   if (recovery === "WAITING") throw new Error("Bundle editor save recovery is waiting.");
   const claimVersion = await claimReconciliation(job);

@@ -1,4 +1,5 @@
 @import "./bundle-simple-component.css";
+@import "./bundle-editor-fields.css";
 
 .sb-editor-form {
   display: grid;

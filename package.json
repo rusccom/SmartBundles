@@ -21,8 +21,8 @@
     "typecheck": "react-router typegen && tsc --noEmit",
     "test": "npm run test --workspace smart-bundle-transform",
     "check:theme": "shopify theme check --path extensions/smart-bundle-theme",
-    "check:theme-js": "node --check extensions/smart-bundle-theme/assets/smart-bundle.js",
-    "check": "npm run typecheck && npm run lint && npm test && npm run check:theme && npm run check:theme-js && npm run build"
+    "check:theme-js": "node --check extensions/smart-bundle-theme/assets/smart-bundle-core.js && node --check extensions/smart-bundle-theme/assets/smart-bundle-form-guard.js && node --check extensions/smart-bundle-theme/assets/smart-bundle-unavailable.js && node --check extensions/smart-bundle-theme/assets/smart-bundle.js && node --check extensions/smart-bundle-theme/assets/smart-bundle-cart-recovery.js",
+    "check": "npm run typecheck && npm run lint && npm test && npm run check:theme && npm run check:theme-js && npm run function:build && npm run build"
   },
   "type": "module",
   "engines": {

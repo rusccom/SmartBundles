@@ -1,4 +1,4 @@
-export const MAX_COMPONENT_QUANTITY = 2_147_483_647;
+export const MAX_COMPONENT_QUANTITY = 2_000;
 export const MAX_SELECTION_BYTES = 8_000;
 export const MAX_SELECTORS = 150;
 export const MAX_RUNTIME_COMPONENTS = 200;

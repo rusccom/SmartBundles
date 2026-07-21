@@ -7,7 +7,8 @@ const BUNDLE_PAGE_SIZE = 50;
 const listSelect = {
   id: true,
   publicId: true,
-  price: true,
+  pricingMode: true,
+  fixedPrice: true,
   status: true,
   health: true,
   updatedAt: true,
@@ -39,7 +40,8 @@ function toBundleListItem(bundle: BundleListRecord) {
   return {
     id: bundle.id,
     publicId: bundle.publicId,
-    price: bundle.price.toString(),
+    pricingMode: bundle.pricingMode,
+    fixedPrice: bundle.fixedPrice?.toString() ?? null,
     status: bundle.status,
     health: bundle.health,
     componentCount: bundle.revisions[0]?.selectors.length ?? 0,
@@ -51,7 +53,8 @@ function toBundleListItem(bundle: BundleListRecord) {
 const editorSelect = {
   id: true,
   publicId: true,
-  price: true,
+  pricingMode: true,
+  fixedPrice: true,
   status: true,
   parentProductGid: true,
   parentVariantGid: true,
@@ -67,7 +70,11 @@ export async function getBundleForEditor(shopId: string, bundleId: string) {
   });
   if (!bundle) throw new Response("Bundle not found", { status: 404 });
   const revision = await loadEditorRevision(bundle.id, bundle.draftRevision, bundle.activeRevision);
-  return { ...bundle, price: bundle.price.toString(), selectors: mapSelectors(revision?.selectors ?? []) };
+  return {
+    ...bundle,
+    fixedPrice: bundle.fixedPrice?.toString() ?? null,
+    selectors: mapSelectors(revision?.selectors ?? []),
+  };
 }
 
 async function loadEditorRevision(
@@ -96,11 +103,13 @@ function mapSelectors(selectors: SelectorRecord[]): BundleSelectorInput[] {
     label: selector.label,
     productId: selector.productGid,
     productTitle: selector.productTitle,
+    quantity: selector.quantity,
     options: selector.options.map((option) => ({
       id: option.variantGid,
       title: option.title,
       imageUrl: option.imageUrl ?? undefined,
       available: option.available,
+      unitPrice: option.unitPrice?.toString(),
     })),
   }));
 }
@@ -110,7 +119,14 @@ interface SelectorRecord {
   label: string;
   productGid: string;
   productTitle: string;
-  options: Array<{ variantGid: string; title: string; imageUrl: string | null; available: boolean }>;
+  quantity: number;
+  options: Array<{
+    variantGid: string;
+    title: string;
+    imageUrl: string | null;
+    available: boolean;
+    unitPrice: Prisma.Decimal | null;
+  }>;
 }
 
 const publicationBundleSelect = {
@@ -148,15 +164,41 @@ function publicationBundle(bundleId: string) {
 async function loadPublicationRevision(bundle: PublicationBundle, selectedRevision: number) {
   const revision = await prisma.bundleRevision.findUnique({
     where: { bundleId_revision: { bundleId: bundle.id, revision: selectedRevision } },
-    select: { revision: true, parentPrice: true, ...revisionSelectorsSelect },
+    select: {
+      revision: true,
+      pricingMode: true,
+      fixedPrice: true,
+      parentPrice: true,
+      ...revisionSelectorsSelect,
+    },
   });
   if (!revision) throw new Error("Bundle revision was not found.");
   return {
     bundle,
     revision,
     selectors: mapSelectors(revision.selectors),
-    source: { price: revision.parentPrice.toString() },
+    source: publicationSource(bundle, revision),
   };
+}
+
+function publicationSource(bundle: PublicationBundle, revision: PublicationRevision) {
+  return {
+    pricingMode: revision.pricingMode,
+    fixedPrice: revision.fixedPrice?.toString() ?? null,
+    parentPrice: revision.parentPrice.toString(),
+    currencyCode: requiredCurrencyCode(bundle.shop.currencyCode),
+  };
+}
+
+interface PublicationRevision {
+  pricingMode: "FIXED" | "DYNAMIC";
+  fixedPrice: Prisma.Decimal | null;
+  parentPrice: Prisma.Decimal;
+}
+
+function requiredCurrencyCode(value: string | null): string {
+  if (!value) throw new Error("Shop currency is unavailable.");
+  return value;
 }
 
 export function activeBundleCount(shopId: string): Promise<number> {

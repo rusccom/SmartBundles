@@ -13,6 +13,7 @@ export interface BundleComponentCardProps {
   currencyCode: string;
   locale: string;
   onOption: (index: number, id: string) => void;
+  onQuantity: (index: number, quantity: number) => void;
   onRemove: (index: number) => void;
 }
 

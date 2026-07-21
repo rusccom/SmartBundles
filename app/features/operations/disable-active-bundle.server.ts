@@ -3,7 +3,6 @@ import prisma from "../../db.server";
 import type { AdminClient } from "../shopify/admin-api.server";
 import { adminRequest, assertNoUserErrors } from "../shopify/admin-api.server";
 import {
-  buildRuntimeConfig,
   disabledRuntime,
   jsonProjection,
 } from "../bundles/bundle-config.server";
@@ -103,13 +102,11 @@ async function disableWithoutPublication(
 }
 
 function disabledRuntimeValue(active: ActiveBundle): string {
-  const enabled = buildRuntimeConfig(
+  return jsonProjection(disabledRuntime(
     active.bundle.publicId,
     active.revision.revision,
     requiredVariant(active),
-    active.selectors,
-  );
-  return jsonProjection(disabledRuntime(enabled));
+  ));
 }
 
 function requiredVariant(active: ActiveBundle): string {

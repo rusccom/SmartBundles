@@ -16,6 +16,6 @@ export function BundleVariantOptionRow({ option, currencyCode, locale, onToggle 
     <span className="sb-option-title">{option.title}
       {soldOut ? <span className="sb-option-sold-out">Sold out</span> : null}
     </span>
-    <span className="sb-option-price">{formatEditorPrice(option.displayPrice, currencyCode, locale)}</span>
+    <span className="sb-option-price">{formatEditorPrice(option.unitPrice, currencyCode, locale)}</span>
   </label>;
 }

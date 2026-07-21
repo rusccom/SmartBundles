@@ -1,25 +1,36 @@
 import { createHash } from "node:crypto";
+import { pricingModeCode } from "./bundle-pricing";
 import type {
+  BundlePricingMode,
   BundleSelectorInput,
   PresentationConfig,
   RuntimeConfig,
 } from "./bundle.types";
 
 const MAX_RUNTIME_BYTES = 9_500;
-const MAX_UNIQUE_VARIANTS = 200;
+const MAX_RUNTIME_COMPONENTS = 200;
+
+export interface BundleProjectionIdentity {
+  publicId: string;
+  revision: number;
+  parentVariantId: string;
+  pricingMode: BundlePricingMode;
+  currencyCode: string;
+  fixedPrice: string | null;
+  parentPrice: string;
+}
 
 export function buildRuntimeConfig(
-  publicId: string,
-  revision: number,
-  parentVariantId: string,
+  identity: BundleProjectionIdentity,
   selectors: BundleSelectorInput[],
 ): RuntimeConfig {
-  const dictionary: Array<[string, number]> = [];
+  const dictionary: RuntimeConfig["c"] = [];
   const indexes = new Map<string, number>();
-  const slots = selectors.map((selector) => buildSlot(selector, dictionary, indexes));
+  const slots = selectors.map((selector) =>
+    buildSlot(selector, dictionary, indexes, identity.pricingMode));
   const config: RuntimeConfig = {
-    sv: 1, rv: revision, en: 1, b: publicId,
-    p: parentVariantId, c: dictionary, s: slots,
+    sv: 2, rv: identity.revision, en: 1, b: identity.publicId,
+    p: identity.parentVariantId, m: pricingModeCode(identity.pricingMode), c: dictionary, s: slots,
   };
   assertRuntimeLimits(config);
   return config;
@@ -27,25 +38,41 @@ export function buildRuntimeConfig(
 
 function buildSlot(
   selector: BundleSelectorInput,
-  dictionary: Array<[string, number]>,
+  dictionary: RuntimeConfig["c"],
   indexes: Map<string, number>,
+  mode: BundlePricingMode,
 ): { k: number; o: number[] } {
-  const options = selector.options.map(({ id }) => variantIndex(id, dictionary, indexes));
+  const options = selector.options.map((option) =>
+    componentIndex(option, selector.quantity, mode, dictionary, indexes));
   return { k: selector.key, o: [...new Set(options)] };
 }
 
-function variantIndex(
-  id: string,
-  dictionary: Array<[string, number]>,
+function componentIndex(
+  option: BundleSelectorInput["options"][number],
+  quantity: number,
+  mode: BundlePricingMode,
+  dictionary: RuntimeConfig["c"],
   indexes: Map<string, number>,
 ): number {
-  const token = variantToken(id);
-  const existing = indexes.get(token);
+  const component = componentValue(option, quantity, mode);
+  const key = JSON.stringify(component);
+  const existing = indexes.get(key);
   if (existing !== undefined) return existing;
   const index = dictionary.length;
-  dictionary.push([token, 1]);
-  indexes.set(token, index);
+  dictionary.push(component);
+  indexes.set(key, index);
   return index;
+}
+
+function componentValue(
+  option: BundleSelectorInput["options"][number],
+  quantity: number,
+  mode: BundlePricingMode,
+): RuntimeConfig["c"][number] {
+  const token = variantToken(option.id);
+  if (mode === "FIXED") return [token, quantity];
+  if (option.unitPrice === undefined) throw new Error("Dynamic bundle option price is missing.");
+  return [token, quantity, option.unitPrice];
 }
 
 function variantToken(id: string): string {
@@ -55,12 +82,27 @@ function variantToken(id: string): string {
 }
 
 export function buildPresentationConfig(
-  publicId: string,
-  revision: number,
-  parentVariantId: string,
+  identity: BundleProjectionIdentity,
   selectors: BundleSelectorInput[],
 ): PresentationConfig {
-  return { sv: 1, rv: revision, en: 1, b: publicId, parentVariantId, selectors };
+  return {
+    sv: 2, rv: identity.revision, en: 1, b: identity.publicId,
+    parentVariantId: identity.parentVariantId,
+    pricing: presentationPricing(identity),
+    selectors,
+  };
+}
+
+function presentationPricing(identity: BundleProjectionIdentity): PresentationConfig["pricing"] {
+  if (identity.pricingMode === "DYNAMIC") {
+    return {
+      mode: "dynamic",
+      currencyCode: identity.currencyCode,
+      maximumAmount: identity.parentPrice,
+    };
+  }
+  if (!identity.fixedPrice) throw new Error("Fixed bundle price is required.");
+  return { mode: "fixed", currencyCode: identity.currencyCode, amount: identity.parentPrice };
 }
 
 export function jsonProjection(value: unknown): string {
@@ -71,12 +113,16 @@ export function projectionHash(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
-export function disabledRuntime(value: RuntimeConfig): RuntimeConfig {
-  return { ...value, en: 0 };
+export function disabledRuntime(
+  publicId: string,
+  revision: number,
+  parentVariantId: string,
+) {
+  return { sv: 2 as const, rv: revision, en: 0 as const, b: publicId, p: parentVariantId };
 }
 
 function assertRuntimeLimits(config: RuntimeConfig): void {
   const bytes = Buffer.byteLength(JSON.stringify(config), "utf8");
-  if (config.c.length > MAX_UNIQUE_VARIANTS) throw new Error("Too many unique allowed variants.");
+  if (config.c.length > MAX_RUNTIME_COMPONENTS) throw new Error("Too many runtime components.");
   if (bytes > MAX_RUNTIME_BYTES) throw new Error("Bundle runtime configuration is too large.");
 }
