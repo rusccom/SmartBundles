@@ -6,8 +6,8 @@ import type {
   BundleVariantInput,
 } from "./bundle.types";
 
-export const MIN_SELECTORS = 4;
-export const MAX_SELECTORS = 30;
+export const MIN_SELECTORS = 1;
+export const MAX_SELECTORS = 150;
 const MAX_OPTIONS = 200;
 
 export function parseBundleForm(form: FormData): BundleValidationResult {

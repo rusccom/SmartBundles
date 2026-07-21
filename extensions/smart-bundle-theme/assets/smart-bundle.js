@@ -131,7 +131,7 @@ class SmartBundle extends HTMLElement {
   }
 
   validSelectorCount() {
-    return this.selectors.length >= 4 && this.selectors.length <= 30;
+    return this.selectors.length >= 1 && this.selectors.length <= 150;
   }
 
   async addToCart() {

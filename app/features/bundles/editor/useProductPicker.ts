@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import type { EditorSelector, SetSelectors } from "./editor.types";
 
-const MAX_SELECTORS = 30;
+const MAX_SELECTORS = 150;
 
 export function useProductPicker(setSelectors: SetSelectors) {
   const shopify = useAppBridge();

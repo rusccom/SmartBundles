@@ -45,9 +45,9 @@ test("rejects runtime without the pinned parent", () => {
   assert.deepEqual(run(selection(VARIANTS), runtime).operations, []);
 });
 
-test("rejects more than thirty selectors", () => {
-  const runtime = repeatedRuntime(31);
-  const choices = Array.from({ length: 31 }, (_, index) => String(1_000 + index));
+test("rejects more than 150 selectors", () => {
+  const runtime = repeatedRuntime(151);
+  const choices = Array.from({ length: 151 }, (_, index) => String(1_000 + index));
   assert.deepEqual(run(selection(choices), runtime).operations, []);
 });
 
