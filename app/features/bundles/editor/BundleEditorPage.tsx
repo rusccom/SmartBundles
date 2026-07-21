@@ -28,7 +28,8 @@ export function BundleEditorPage({ initial, errors = {}, quotaCandidates = [], p
       {serverMessage ? <s-banner tone={messageTone(initial.status)}>{serverMessage}</s-banner> : null}
       {quotaCandidates.length ? <BundleQuotaNotice candidates={quotaCandidates} pricingEnabled={pricingEnabled} /> : null}
       <BundleDetailsFields initial={initial} errors={errors} />
-      <BundleComponentsSection editor={editor} error={errors.selectors} />
+      <BundleComponentsSection editor={editor} currencyCode={initial.currencyCode}
+        locale={initial.locale} error={errors.selectors} />
       <BundleEditorActions status={initial.status} busy={navigation.state !== "idle"} replacing={quotaCandidates.length > 0} />
     </Form>
   </s-page>;

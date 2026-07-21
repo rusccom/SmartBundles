@@ -12,6 +12,8 @@ import { BundleEditorPage } from "../features/bundles/editor/BundleEditorPage";
 import { ensureShopContext } from "../features/installation/shop-context.server";
 import { isShopifyPricingEnabled } from "../features/billing/billing-config.server";
 import { authenticate } from "../shopify.server";
+import { hydrateEditorSelectors } from "../features/bundles/editor/bundle-editor-variant-display.server";
+import { editorLocale } from "../features/bundles/editor/bundle-editor-locale.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
@@ -21,17 +23,27 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const bundle = await getBundleForEditor(shop.id, id);
   if (!bundle.parentProductGid) throw new Response("Bundle product not found", { status: 404 });
   const url = new URL(request.url);
-  const [content, candidates] = await Promise.all([
-    readProductContent(admin, bundle.parentProductGid, bundle.publicId),
-    url.searchParams.has("quota") ? listReplacementCandidates(shop.id, id) : [],
-  ]);
+  const candidateLoad = Promise.resolve(url.searchParams.has("quota") ? listReplacementCandidates(shop.id, id) : []);
+  const [content, candidates, display] = await loadRouteData(admin, bundle, candidateLoad);
   const quotaCandidates = await titledCandidates(admin, candidates);
   return {
-    initial: editorInitial(bundle, content, session.shop),
+    initial: { ...editorInitial(bundle, content, session.shop, display), locale: editorLocale(request) },
     quotaCandidates,
     pricingEnabled: isShopifyPricingEnabled(),
     serverMessage: recoveryMessage(recovery) ?? statusMessage(url),
   };
+}
+
+function loadRouteData(
+  admin: Parameters<typeof readProductContent>[0],
+  bundle: Awaited<ReturnType<typeof getBundleForEditor>>,
+  candidates: Promise<Awaited<ReturnType<typeof listReplacementCandidates>>>,
+) {
+  return Promise.all([
+    readProductContent(admin, bundle.parentProductGid!, bundle.publicId),
+    candidates,
+    hydrateEditorSelectors(admin, bundle.selectors),
+  ]);
 }
 
 function recoveryMessage(recovery: Awaited<ReturnType<typeof recoverBundleSaveClaim>>): string | undefined {
@@ -61,11 +73,12 @@ function editorInitial(
   bundle: Awaited<ReturnType<typeof getBundleForEditor>>,
   content: Awaited<ReturnType<typeof readProductContent>>,
   shopDomain: string,
+  display: Awaited<ReturnType<typeof hydrateEditorSelectors>>,
 ) {
   const productContent = editorContentData({ shopDomain, bundleId: bundle.id, lockVersion: bundle.lockVersion, content });
   return {
     id: bundle.id, version: String(bundle.lockVersion), ...productContent,
-    price: bundle.price, status: bundle.status, selectors: bundle.selectors,
+    price: bundle.price, status: bundle.status, ...display,
   };
 }
 

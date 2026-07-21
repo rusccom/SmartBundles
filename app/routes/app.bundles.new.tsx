@@ -7,11 +7,14 @@ import "../features/bundles/editor/bundle-editor.css";
 import { BundleEditorPage } from "../features/bundles/editor/BundleEditorPage";
 import { authenticate } from "../shopify.server";
 import { signCreationToken } from "../features/bundles/content/content-token.server";
+import { loadShopCurrencyCode } from "../features/bundles/editor/bundle-editor-variant-display.server";
+import { editorLocale } from "../features/bundles/editor/bundle-editor-locale.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   const creationToken = signCreationToken(session.shop, randomUUID());
-  return { initial: { version: "new", title: "", descriptionHtml: "", creationToken, price: "", status: "DRAFT", selectors: [] } };
+  const currencyCode = await loadShopCurrencyCode(admin);
+  return { initial: { version: "new", title: "", descriptionHtml: "", creationToken, price: "", status: "DRAFT", currencyCode, locale: editorLocale(request), selectors: [] } };
 }
 
 export function action({ request }: ActionFunctionArgs) {

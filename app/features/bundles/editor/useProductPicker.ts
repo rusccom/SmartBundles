@@ -42,7 +42,8 @@ function pickedOption(product: PickedProduct, variant: PickedVariant) {
   if (!variant.id) return [];
   const imageUrl = variant.image?.originalSrc ?? product.images[0]?.originalSrc;
   const available = variant.availableForSale ?? variant.inventoryQuantity !== 0;
-  return [{ id: variant.id, title: variant.title || "Default", imageUrl, available, allowed: true }];
+  const displayPrice = variant.price;
+  return [{ id: variant.id, title: variant.title || "Default", imageUrl, available, allowed: true, displayPrice }];
 }
 
 interface PickedProduct {
@@ -57,5 +58,6 @@ interface PickedVariant {
   title?: string;
   availableForSale?: boolean;
   inventoryQuantity?: number | null;
+  price?: string;
   image?: { originalSrc: string } | null;
 }

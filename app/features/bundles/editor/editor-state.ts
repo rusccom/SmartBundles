@@ -1,22 +1,21 @@
-import type { BundleSelectorInput } from "../bundle.types";
 import type { EditorSelector } from "./editor.types";
 
-export function initialEditorSelectors(selectors: BundleSelectorInput[]): EditorSelector[] {
+export function initialEditorSelectors(selectors: EditorSelector[]): EditorSelector[] {
   return selectors.map((selector) => ({
     ...selector,
-    options: selector.options.map((option) => ({ ...option, allowed: true })),
+    options: selector.options.map((option) => ({ ...option })),
   }));
 }
 
 export function serializedSelectors(selectors: EditorSelector[]): string {
   const clean = selectors.map((selector) => ({
     ...selector,
-    options: selector.options.filter(({ allowed }) => allowed).map(stripAllowed),
+    options: selector.options.filter(({ allowed }) => allowed).map(serializedOption),
   }));
   return JSON.stringify(clean);
 }
 
-function stripAllowed(option: EditorSelector["options"][number]) {
+function serializedOption(option: EditorSelector["options"][number]) {
   return {
     id: option.id,
     title: option.title,

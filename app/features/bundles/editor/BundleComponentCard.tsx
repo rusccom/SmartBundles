@@ -1,10 +1,14 @@
-import { BundleVariantOptionRow } from "./BundleVariantOptionRow";
+import { useState } from "react";
+import { BundleComponentDetails } from "./BundleComponentDetails";
+import { BundleComponentHeader } from "./BundleComponentHeader";
 import type { EditorSelector } from "./editor.types";
 
 export interface BundleComponentCardProps {
   selector: EditorSelector;
   index: number;
   total: number;
+  currencyCode: string;
+  locale: string;
   onLabel: (index: number, value: string) => void;
   onOption: (index: number, id: string) => void;
   onMove: (index: number, offset: number) => void;
@@ -12,17 +16,14 @@ export interface BundleComponentCardProps {
 }
 
 export function BundleComponentCard(props: BundleComponentCardProps) {
-  const { selector, index, total } = props;
+  const { selector, index } = props;
+  const [expanded, setExpanded] = useState(index === 0);
+  const detailsId = `bundle-component-${selector.key}`;
+  const selectedCount = selector.options.filter(({ allowed }) => allowed).length;
   return <article className="sb-component">
-    <header><strong>{index + 1}. {selector.productTitle}</strong><span>{selector.options.filter(({ allowed }) => allowed).length} allowed</span></header>
-    <label>Customer-facing label<input value={selector.label} onChange={(event) => props.onLabel(index, event.currentTarget.value)} /></label>
-    <fieldset><legend>Allowed variants</legend>{selector.options.map((option) =>
-      <BundleVariantOptionRow key={option.id} option={option} onToggle={(id) => props.onOption(index, id)} />
-    )}</fieldset>
-    <footer>
-      <button type="button" disabled={index === 0} onClick={() => props.onMove(index, -1)}>Move up</button>
-      <button type="button" disabled={index === total - 1} onClick={() => props.onMove(index, 1)}>Move down</button>
-      <button type="button" className="critical" onClick={() => props.onRemove(index)}>Remove</button>
-    </footer>
+    <BundleComponentHeader selector={selector} expanded={expanded} detailsId={detailsId}
+      selectedCount={selectedCount} currencyCode={props.currencyCode} locale={props.locale}
+      onToggle={() => setExpanded((value) => !value)} />
+    {expanded ? <BundleComponentDetails {...props} detailsId={detailsId} /> : null}
   </article>;
 }
