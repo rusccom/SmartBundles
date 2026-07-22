@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import type { BundleDraftInput, BundleSelectorInput } from "./bundle.types";
-import { calculateParentPrice } from "./bundle-pricing";
+import { calculateBundlePrices } from "./bundle-pricing";
 import type { ParentProductIds } from "./shopify-product.server";
 import { BundleVersionConflictError } from "./BundleVersionConflictError.server";
 import { assertStoredDraftMatches } from "./bundle-draft-match.server";
@@ -86,6 +86,7 @@ function newBundleData(input: CreateInput): Prisma.BundleCreateInput {
     publicId: input.publicId,
     pricingMode: input.draft.pricingMode,
     fixedPrice: input.draft.fixedPrice,
+    discountPercent: input.draft.discountPercent,
     parentProductGid: input.parent.productId,
     parentVariantGid: input.parent.variantId,
     draftRevision: 1,
@@ -118,7 +119,8 @@ function nestedRevisionData(revision: number, draft: BundleDraftInput) {
     revision,
     pricingMode: draft.pricingMode,
     fixedPrice: draft.fixedPrice,
-    parentPrice: calculateParentPrice(draft.pricingMode, draft.fixedPrice, draft.selectors),
+    discountPercent: draft.discountPercent,
+    parentPrice: calculateBundlePrices(draft).finalPrice,
     selectors: { create: draft.selectors.map(selectorData) },
   };
 }
@@ -131,6 +133,7 @@ function selectorData(selector: BundleSelectorInput, position: number) {
     productGid: selector.productId,
     productTitle: selector.productTitle,
     quantity: selector.quantity,
+    discountPercent: selector.discountPercent,
     options: { create: selector.options.map(optionData) },
   };
 }
@@ -150,6 +153,7 @@ function draftUpdate(draft: BundleDraftInput, revision: number): Prisma.BundleUp
   return {
     pricingMode: draft.pricingMode,
     fixedPrice: draft.fixedPrice,
+    discountPercent: draft.discountPercent,
     draftRevision: revision,
     lastErrorCode: null,
     lastErrorMessage: null,

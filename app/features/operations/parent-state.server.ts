@@ -10,7 +10,9 @@ export interface MetafieldState {
 export interface ParentState {
   status: string;
   publishedOnPublication: boolean;
-  variants: { nodes: Array<{ id: string; requiresComponents: boolean; price: string }> };
+  variants: { nodes: Array<{
+    id: string; requiresComponents: boolean; price: string; compareAtPrice: string | null;
+  }> };
   identity?: { value: string } | null;
   runtime?: MetafieldState | null;
   presentation?: MetafieldState | null;
@@ -21,7 +23,7 @@ const READ_PARENT = `#graphql
     product(id: $id) {
       status
       publishedOnPublication(publicationId: $publicationId)
-      variants(first: 2) { nodes { id requiresComponents price } }
+      variants(first: 2) { nodes { id requiresComponents price compareAtPrice } }
       identity: metafield(namespace: "$app", key: "bundle_id") { value }
       runtime: metafield(namespace: "$app", key: "bundle_runtime") { id value compareDigest }
       presentation: metafield(namespace: "$app", key: "bundle_presentation") { id value compareDigest }

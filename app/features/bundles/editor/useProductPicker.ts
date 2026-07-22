@@ -32,6 +32,7 @@ function selectedProduct(product: PickedProduct, key: number): EditorSelector {
   return {
     key,
     quantity: 1,
+    discountPercent: "0",
     label: product.title,
     productId: product.id,
     productTitle: product.title,

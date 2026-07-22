@@ -16,8 +16,11 @@ export interface BundleProjectionIdentity {
   parentVariantId: string;
   pricingMode: BundlePricingMode;
   currencyCode: string;
-  fixedPrice: string | null;
+  discountPercent: string;
+  originalPrice: string;
   parentPrice: string;
+  maximumOriginalPrice: string;
+  maximumFinalPrice: string;
 }
 
 export function buildRuntimeConfig(
@@ -29,8 +32,9 @@ export function buildRuntimeConfig(
   const slots = selectors.map((selector) =>
     buildSlot(selector, dictionary, indexes, identity.pricingMode));
   const config: RuntimeConfig = {
-    sv: 2, rv: identity.revision, en: 1, b: identity.publicId,
-    p: identity.parentVariantId, m: pricingModeCode(identity.pricingMode), c: dictionary, s: slots,
+    sv: 3, rv: identity.revision, en: 1, b: identity.publicId,
+    p: identity.parentVariantId, m: pricingModeCode(identity.pricingMode),
+    d: identity.discountPercent, c: dictionary, s: slots,
   };
   assertRuntimeLimits(config);
   return config;
@@ -41,10 +45,10 @@ function buildSlot(
   dictionary: RuntimeConfig["c"],
   indexes: Map<string, number>,
   mode: BundlePricingMode,
-): { k: number; o: number[] } {
+): RuntimeConfig["s"][number] {
   const options = selector.options.map((option) =>
     componentIndex(option, selector.quantity, mode, dictionary, indexes));
-  return { k: selector.key, o: [...new Set(options)] };
+  return { k: selector.key, o: [...new Set(options)], d: selector.discountPercent };
 }
 
 function componentIndex(
@@ -86,7 +90,7 @@ export function buildPresentationConfig(
   selectors: BundleSelectorInput[],
 ): PresentationConfig {
   return {
-    sv: 2, rv: identity.revision, en: 1, b: identity.publicId,
+    sv: 3, rv: identity.revision, en: 1, b: identity.publicId,
     parentVariantId: identity.parentVariantId,
     pricing: presentationPricing(identity),
     selectors,
@@ -98,11 +102,16 @@ function presentationPricing(identity: BundleProjectionIdentity): PresentationCo
     return {
       mode: "dynamic",
       currencyCode: identity.currencyCode,
-      maximumAmount: identity.parentPrice,
+      discountPercent: identity.discountPercent,
+      maximumOriginalAmount: identity.maximumOriginalPrice,
+      maximumAmount: identity.maximumFinalPrice,
     };
   }
-  if (!identity.fixedPrice) throw new Error("Fixed bundle price is required.");
-  return { mode: "fixed", currencyCode: identity.currencyCode, amount: identity.parentPrice };
+  return {
+    mode: "fixed", currencyCode: identity.currencyCode,
+    discountPercent: identity.discountPercent,
+    originalAmount: identity.originalPrice, amount: identity.parentPrice,
+  };
 }
 
 export function jsonProjection(value: unknown): string {
@@ -118,7 +127,7 @@ export function disabledRuntime(
   revision: number,
   parentVariantId: string,
 ) {
-  return { sv: 2 as const, rv: revision, en: 0 as const, b: publicId, p: parentVariantId };
+  return { sv: 3 as const, rv: revision, en: 0 as const, b: publicId, p: parentVariantId };
 }
 
 function assertRuntimeLimits(config: RuntimeConfig): void {

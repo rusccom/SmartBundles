@@ -13,10 +13,13 @@ const VARIANTS_QUERY = `#graphql
         availableForSale
         requiresComponents
         productVariantComponents(first: 1) { nodes { id } }
-        image { url }
+        media(first: 1) { nodes { ... on MediaImage { image { url } } } }
         product {
           id
           title
+          media(first: 1, query: "media_type:IMAGE", sortKey: POSITION) {
+            nodes { ... on MediaImage { image { url } } }
+          }
           publishedOnPublication(publicationId: $publicationId)
           bundleComponents(first: 1) { nodes { componentProduct { id } } }
           bundleId: metafield(namespace: "$app", key: "bundle_id") { value }
@@ -34,15 +37,18 @@ interface VariantNode {
   availableForSale: boolean;
   requiresComponents: boolean;
   productVariantComponents: { nodes: Array<{ id: string }> };
-  image?: { url: string } | null;
+  media: { nodes: MediaNode[] };
   product: {
     id: string;
     title: string;
+    media: { nodes: MediaNode[] };
     publishedOnPublication: boolean;
     bundleComponents: { nodes: Array<{ componentProduct: { id: string } }> };
     bundleId?: { value: string } | null;
   };
 }
+
+interface MediaNode { image?: { url: string } | null }
 
 interface VariantQuery { nodes: Array<VariantNode | null> }
 
@@ -111,10 +117,14 @@ function verifiedOption(
   return {
     id,
     title: variant.title,
-    imageUrl: variant.image?.url,
+    imageUrl: variantImageUrl(variant),
     available: variant.availableForSale,
     unitPrice: variant.price,
   };
+}
+
+function variantImageUrl(variant: VariantNode): string | undefined {
+  return variant.media.nodes[0]?.image?.url ?? variant.product.media.nodes[0]?.image?.url;
 }
 
 function invalidComponent(message: string): never {

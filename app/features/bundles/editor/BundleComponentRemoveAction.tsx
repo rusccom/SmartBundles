@@ -5,8 +5,9 @@ export interface BundleComponentRemoveActionProps {
 }
 
 export function BundleComponentRemoveAction(props: BundleComponentRemoveActionProps) {
-  return <footer className="sb-component-remove-action">
-    <button type="button" className="critical" aria-label={`Remove ${props.productTitle}`}
-      onClick={() => props.onRemove(props.index)}>Remove</button>
-  </footer>;
+  const label = `Remove ${props.productTitle}`;
+  return <div className="sb-component-remove-action">
+    <button type="button" aria-label={label} title={label}
+      onClick={() => props.onRemove(props.index)}><span aria-hidden="true">×</span></button>
+  </div>;
 }

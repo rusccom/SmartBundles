@@ -111,6 +111,7 @@ async function updateSelectorSnapshots(
       data: {
         productTitle: selector.productTitle,
         quantity: selector.quantity,
+        discountPercent: selector.discountPercent,
         options: { updateMany: selector.options.map(optionSnapshot) },
       },
     });

@@ -24,6 +24,7 @@ export interface ParentProjectionInput {
   publicId: string;
   revision: number;
   price: string;
+  compareAtPrice: string | null;
   runtimeValue: string;
   presentationValue: string;
   allowRevisionChange?: boolean;
@@ -131,7 +132,9 @@ async function repairVariant(
   state: ParentState,
 ): Promise<void> {
   const variant = state.variants.nodes[0];
-  if (variant.requiresComponents && sameMoney(variant.price, input.price)) return;
+  const pricesMatch = sameMoney(variant.price, input.price)
+    && sameOptionalMoney(variant.compareAtPrice, input.compareAtPrice);
+  if (variant.requiresComponents && pricesMatch) return;
   await input.assertOwned();
   await updateParentVariant(admin, parentVariant(input));
 }
@@ -196,12 +199,16 @@ function productStatus(input: ParentProjectionInput, status: "ACTIVE" | "DRAFT")
 }
 
 function parentVariant(input: ParentProjectionInput) {
-  return { productId: input.productId, variantId: input.variantId, price: input.price };
+  return {
+    productId: input.productId, variantId: input.variantId,
+    price: input.price, compareAtPrice: input.compareAtPrice,
+  };
 }
 
 function projectionChanged(state: ParentState, input: ParentProjectionInput): boolean {
   const variant = state.variants.nodes[0];
   return !variant.requiresComponents || !sameMoney(variant.price, input.price) ||
+    !sameOptionalMoney(variant.compareAtPrice, input.compareAtPrice) ||
     state.runtime?.value !== input.runtimeValue ||
     state.presentation?.value !== input.presentationValue;
 }
@@ -221,7 +228,9 @@ function assertProjection(state: ParentState, input: ParentProjectionInput): voi
   const variant = state.variants.nodes[0];
   assertIdentity(state, input.publicId);
   assertManagedVariant(state, input.variantId);
-  if (!variant.requiresComponents || !sameMoney(variant.price, input.price)) {
+  const validPrice = sameMoney(variant.price, input.price)
+    && sameOptionalMoney(variant.compareAtPrice, input.compareAtPrice);
+  if (!variant.requiresComponents || !validPrice) {
     throw new Error("Parent variant repair failed.");
   }
   if (state.runtime?.value !== input.runtimeValue) throw new Error("Parent runtime repair failed.");
@@ -278,4 +287,9 @@ function parseRuntime(value: string): { rv?: number; b?: string } | null {
 function sameMoney(actual: string, expected: string): boolean {
   try { return new Prisma.Decimal(actual).equals(new Prisma.Decimal(expected)); }
   catch { return false; }
+}
+
+function sameOptionalMoney(actual: string | null, expected: string | null): boolean {
+  if (actual === null || expected === null) return actual === expected;
+  return sameMoney(actual, expected);
 }

@@ -1,21 +1,19 @@
+import type { BundleComponentCardProps } from "./BundleComponentCard";
+import { BundleComponentControls } from "./BundleComponentControls";
+import { BundleComponentMeta } from "./BundleComponentMeta";
+import { BundleComponentRemoveAction } from "./BundleComponentRemoveAction";
 import { BundleProductThumbnail } from "./BundleProductThumbnail";
-import { formatEditorPriceRange } from "./bundle-editor-price";
-import type { EditorSelector } from "./editor.types";
 
-export interface BundleComponentHeaderProps {
-  selector: EditorSelector;
+export interface BundleComponentHeaderProps extends BundleComponentCardProps {
   expanded: boolean;
   detailsId: string;
   selectedCount: number;
-  currencyCode: string;
-  locale: string;
   dragHandle: React.ReactNode;
   onToggle: () => void;
 }
 
 export function BundleComponentHeader(props: BundleComponentHeaderProps) {
   const imageUrl = props.selector.options.find((option) => option.imageUrl)?.imageUrl;
-  const summaryTone = props.selectedCount ? "" : " sb-component-summary-critical";
   return <header className="sb-component-header">
     {props.dragHandle}
     <button type="button" className="sb-disclosure" aria-expanded={props.expanded} aria-controls={props.detailsId}
@@ -23,12 +21,12 @@ export function BundleComponentHeader(props: BundleComponentHeaderProps) {
       <span className="sb-disclosure-icon" aria-hidden="true">{props.expanded ? "−" : "+"}</span></button>
     <BundleProductThumbnail imageUrl={imageUrl} title={props.selector.productTitle} />
     <strong className="sb-component-title">{props.selector.productTitle}</strong>
-    <span className="sb-component-meta"><span className={`sb-component-summary${summaryTone}`} aria-live="polite">
-      {props.selectedCount} / {props.selector.options.length} selected</span>
-      <span className="sb-component-quantity">×{props.selector.quantity}</span>
-      <span className="sb-component-price">{formatEditorPriceRange(
-        props.selector.options.filter(({ allowed }) => allowed), props.selector.quantity,
-        props.currencyCode, props.locale)}</span>
-    </span>
+    <BundleComponentControls selector={props.selector} discountDisabled={props.discountDisabled}
+      onQuantity={(value) => props.onQuantity(props.index, value)}
+      onDiscount={(value) => props.onDiscount(props.index, value)} />
+    <BundleComponentMeta selector={props.selector} selectedCount={props.selectedCount}
+      currencyCode={props.currencyCode} locale={props.locale} />
+    <BundleComponentRemoveAction index={props.index} productTitle={props.selector.productTitle}
+      onRemove={props.onRemove} />
   </header>;
 }

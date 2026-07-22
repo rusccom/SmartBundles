@@ -36,3 +36,8 @@ export function isVariantToken(value) {
 export function isUnitPrice(value) {
   return typeof value === "string" && /^\d{1,10}(\.\d{1,2})?$/.test(value);
 }
+
+export function isDiscountPercent(value) {
+  if (typeof value !== "string" || !/^\d{1,3}(\.\d{1,2})?$/.test(value)) return false;
+  return Number(value) >= 0 && Number(value) <= 100;
+}

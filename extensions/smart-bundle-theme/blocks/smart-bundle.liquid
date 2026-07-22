@@ -1,4 +1,6 @@
 <script src="{{ 'smart-bundle-core.js' | asset_url }}" type="module"></script>
+<script src="{{ 'smart-bundle-pricing.js' | asset_url }}" type="module"></script>
+<script src="{{ 'smart-bundle-native-price.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-form-guard.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-unavailable.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle.js' | asset_url }}" type="module"></script>
@@ -9,14 +11,15 @@
 {%- assign parent_variant_id = parent_variant_gid | split: '/' | last -%}
 {%- assign selector_count = bundle.selectors.size | default: 0 -%}
 {%- assign pricing_mode = bundle.pricing.mode -%}
+{%- assign discount_percent = bundle.pricing.discountPercent -%}
 {%- assign pricing_valid = false -%}
-{%- if pricing_mode == 'fixed' and bundle.pricing.amount != blank -%}
+{%- if pricing_mode == 'fixed' and bundle.pricing.originalAmount != blank and bundle.pricing.amount != blank and discount_percent != blank -%}
   {%- assign pricing_valid = true -%}
-{%- elsif pricing_mode == 'dynamic' and bundle.pricing.maximumAmount != blank -%}
+{%- elsif pricing_mode == 'dynamic' and bundle.pricing.maximumOriginalAmount != blank and bundle.pricing.maximumAmount != blank and discount_percent != blank -%}
   {%- assign pricing_valid = true -%}
 {%- endif -%}
 
-{%- if bundle.sv == 2 and bundle.en == 1 and parent_variant_gid != blank and selector_count >= 1 and selector_count <= 150 and pricing_valid -%}
+{%- if bundle.sv == 3 and bundle.en == 1 and parent_variant_gid != blank and selector_count >= 1 and selector_count <= 150 and pricing_valid -%}
   {%- assign selected_count = 0 -%}
   {%- for selector in bundle.selectors -%}
     {%- assign only_option = selector.options.first -%}
@@ -25,7 +28,7 @@
     {%- endif -%}
   {%- endfor -%}
   {%- assign contextual_variant = product.selected_or_first_available_variant -%}
-  {%- assign fixed_total = contextual_variant.price | money_with_currency -%}
+  {%- assign fixed_total = contextual_variant.price | money -%}
   <smart-bundle
     class="sb"
     data-auto-mount="true"
@@ -35,13 +38,16 @@
     data-redirect-to-cart="{{ block.settings.redirect_to_cart }}"
     data-price-mode="{{ pricing_mode | escape }}"
     data-currency-code="{{ bundle.pricing.currencyCode | escape }}"
+    data-locale="{{ request.locale.iso_code | escape }}"
+    data-discount-percent="{{ discount_percent | escape }}"
+    data-original-amount="{{ bundle.pricing.originalAmount | default: '' | escape }}"
+    data-amount="{{ bundle.pricing.amount | default: '' | escape }}"
+    data-maximum-original-amount="{{ bundle.pricing.maximumOriginalAmount | default: '' | escape }}"
     data-maximum-amount="{{ bundle.pricing.maximumAmount | default: '' | escape }}"
-    data-fixed-total="{{ fixed_total | escape }}"
     data-progress-template="{{ 'smart_bundle.progress' | t: selected: '__selected__', total: '__total__' | escape }}"
     data-select-one="{{ 'smart_bundle.select_one_more' | t | escape }}"
     data-select-many="{{ 'smart_bundle.select_many_more' | t: count: '__count__' | escape }}"
     data-choose-variant="{{ 'smart_bundle.choose_variant' | t | escape }}"
-    data-included="{{ 'smart_bundle.included' | t | escape }}"
     data-price-unavailable="{{ 'smart_bundle.price_unavailable' | t | escape }}"
     data-option-unavailable="{{ 'smart_bundle.option_unavailable' | t | escape }}"
     data-bundle-unavailable="{{ 'smart_bundle.bundle_unavailable' | t | escape }}"
@@ -65,14 +71,12 @@
     <div class="sb__components" data-components>
       {%- for selector in bundle.selectors -%}
         {%- assign first_option = selector.options.first -%}
+        {%- assign selector_discount = selector.discountPercent | plus: 0 -%}
         {%- assign is_simple = false -%}
         {%- if selector.options.size == 1 -%}{%- assign is_simple = true -%}{%- endif -%}
         {%- assign initial_label = 'smart_bundle.choose_variant' | t -%}
         {%- if is_simple and first_option.available != false -%}
-          {%- assign initial_label = first_option.title -%}
-          {%- if initial_label == 'Default Title' -%}
-            {%- assign initial_label = 'smart_bundle.included' | t -%}
-          {%- endif -%}
+          {%- assign initial_label = blank -%}
         {%- elsif is_simple -%}
           {%- assign initial_label = 'smart_bundle.option_unavailable' | t -%}
         {%- endif -%}
@@ -88,12 +92,17 @@
           </span>
           <span class="sb__summary-copy">
             <strong class="sb__product-title">{{ selector.productTitle | escape }}</strong>
-            <span class="sb__selection" data-selection-label>{{ initial_label | escape }}</span>
+            {%- unless initial_label == blank -%}
+              <span class="sb__selection" data-selection-label>{{ initial_label | escape }}</span>
+            {%- endunless -%}
           </span>
           <span class="sb__summary-meta">
             <span class="sb__quantity">{{ 'smart_bundle.quantity' | t: quantity: selector.quantity }}</span>
+            {%- if selector_discount > 0 -%}
+              <span class="sb__component-discount">{{ 'smart_bundle.discount_badge' | t: discount: selector.discountPercent }}</span>
+            {%- endif -%}
             <span class="sb__line-price" data-line-price>
-              {%- if pricing_mode == 'fixed' -%}{{ 'smart_bundle.included' | t }}{%- else -%}—{%- endif -%}
+              {%- unless pricing_mode == 'fixed' -%}—{%- endunless -%}
             </span>
           </span>
         {%- endcapture -%}
@@ -102,6 +111,7 @@
           data-component
           data-selector-key="{{ selector.key | json | escape }}"
           data-quantity="{{ selector.quantity | escape }}"
+          data-discount-percent="{{ selector.discountPercent | escape }}"
           data-default-image="{{ first_option.imageUrl | default: '' | escape }}"
         >
           {%- if is_simple -%}
@@ -109,7 +119,7 @@
             <input
               type="hidden"
               data-selector
-              data-option-title="{{ initial_label | escape }}"
+              data-option-title=""
               data-image-url="{{ first_option.imageUrl | default: '' | escape }}"
               data-unit-price="{{ first_option.unitPrice | default: '' | escape }}"
               value="{% if first_option.available != false %}{{ first_option.id | escape }}{% endif %}"
@@ -120,7 +130,7 @@
               {{ summary_content }}<span class="sb__chevron" aria-hidden="true"></span>
             </button>
             <div class="sb__panel" id="{{ panel_id }}" data-panel hidden>
-              <fieldset class="sb__options">
+              <fieldset class="sb__options" aria-required="true">
                 <legend class="sb__visually-hidden">{{ 'smart_bundle.choose_variant_for' | t: product: selector.productTitle }}</legend>
                 {%- for option in selector.options -%}
                   <label class="sb__option{% if option.available == false %} sb__option--sold-out{% endif %}">
@@ -140,7 +150,7 @@
                         {% # theme-check-disable RemoteAsset %}
                         <img src="{{ option.imageUrl | escape }}" alt="" width="40" height="40" loading="lazy">
                         {% # theme-check-enable RemoteAsset %}
-                      {%- else -%}<span class="sb__option-placeholder"></span>{%- endif -%}
+                      {%- else -%}<span class="sb__option-placeholder" data-image-placeholder></span>{%- endif -%}
                     </span>
                     <span class="sb__option-copy"><span>{{ option.title | escape }}</span>
                       {%- if option.available == false -%}<small>{{ 'smart_bundle.sold_out' | t }}</small>{%- endif -%}
@@ -158,8 +168,12 @@
     <div class="sb__actions">
       <div class="sb__total-row">
         <span>{% if pricing_mode == 'fixed' %}{{ 'smart_bundle.bundle_price' | t }}{% else %}{{ 'smart_bundle.total' | t }}{% endif %}</span>
-        <strong data-total>{% if pricing_mode == 'fixed' %}{{ fixed_total }}{% else %}—{% endif %}</strong>
+        <span class="sb__total-prices">
+          <s class="sb__original-total" data-original-total hidden></s>
+          <strong data-total>{% if pricing_mode == 'fixed' %}{{ fixed_total }}{% else %}—{% endif %}</strong>
+        </span>
       </div>
+      <p class="sb__discount" data-discount-badge hidden>{{ 'smart_bundle.discount_badge' | t: discount: discount_percent }}</p>
       {%- if pricing_mode == 'fixed' -%}<p class="sb__price-note">{{ 'smart_bundle.fixed_price_note' | t }}</p>{%- endif -%}
       <p class="sb__hint" data-hint aria-live="polite"></p>
       <p class="sb__status" data-status aria-live="polite"></p>

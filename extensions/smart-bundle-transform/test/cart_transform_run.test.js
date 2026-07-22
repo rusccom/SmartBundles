@@ -15,18 +15,22 @@ test("expands an exact four-slot selection", () => {
   }]);
 });
 
-test("aggregates a variant selected in multiple slots", () => {
+test("keeps different component discounts as separate expanded items", () => {
   const result = run(selection(["101", "101", "103", "104"]), duplicateRuntime());
   assert.deepEqual(result.operations[0].lineExpand.expandedCartItems, [
-    component("101", 2), component("103"), component("104"),
+    pricedComponent("101", 2, "10.00"), pricedComponent("101", 2, "5.00"),
+    pricedComponent("103", 1, "12.00"), pricedComponent("104", 1, "13.00"),
   ]);
 });
 
 test("prices dynamic components in presentment currency", () => {
-  const result = run(selection(VARIANTS), dynamicRuntime(), "0.80");
+  const runtime = dynamicRuntime();
+  runtime.d = "10";
+  runtime.s[0].d = "50";
+  const result = run(selection(VARIANTS), runtime, "0.80");
   assert.deepEqual(result.operations[0].lineExpand.expandedCartItems[0], {
     ...component("101", 2),
-    price: { adjustment: { fixedPricePerUnit: { amount: "8.00" } } },
+    price: { adjustment: { fixedPricePerUnit: { amount: "3.60" } } },
   });
 });
 
@@ -50,9 +54,12 @@ test("rejects an aggregate quantity above the Shopify limit", () => {
 });
 
 test("rejects missing or malformed selections", () => {
+  const fixedDiscount = validRuntime();
+  fixedDiscount.s[0].d = "1";
   assert.throws(() => run(undefined));
   assert.throws(() => run("not-json"));
   assert.throws(() => run(JSON.stringify({ rv: 1, s: [] })));
+  assert.throws(() => run(selection(VARIANTS), fixedDiscount));
 });
 
 test("rejects forged variants and revision mismatches", () => {
@@ -96,9 +103,9 @@ function inputFor(attribute, runtime = validRuntime(), presentmentCurrencyRate =
 
 function validRuntime() {
   return {
-    sv: 2, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0,
+    sv: 3, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0, d: "0",
     c: VARIANTS.map((id) => [id, 1]),
-    s: VARIANTS.map((_, index) => ({ k: index + 1, o: [index] })),
+    s: VARIANTS.map((_, index) => ({ k: index + 1, o: [index], d: "0" })),
   };
 }
 
@@ -117,17 +124,18 @@ function quantityRuntime() {
 }
 
 function duplicateRuntime() {
-  const runtime = validRuntime();
+  const runtime = dynamicRuntime();
   runtime.s[1].o = [0, 1];
+  runtime.s[1].d = "50";
   return runtime;
 }
 
 function repeatedRuntime(count) {
   const ids = Array.from({ length: count }, (_, index) => String(1_000 + index));
   return {
-    sv: 2, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0,
+    sv: 3, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0, d: "0",
     c: ids.map((id) => [id, 1]),
-    s: ids.map((_, index) => ({ k: index + 1, o: [index] })),
+    s: ids.map((_, index) => ({ k: index + 1, o: [index], d: "0" })),
   };
 }
 
@@ -140,4 +148,8 @@ function selection(ids, revision = 1) {
 
 function component(id, quantity = 1) {
   return { merchandiseId: `gid://shopify/ProductVariant/${id}`, quantity };
+}
+
+function pricedComponent(id, quantity, amount) {
+  return { ...component(id, quantity), price: { adjustment: { fixedPricePerUnit: { amount } } } };
 }

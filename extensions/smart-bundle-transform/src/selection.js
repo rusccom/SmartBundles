@@ -43,17 +43,19 @@ function resolveSelector(selector, byKey, components) {
   const selectedId = byKey.get(selector.key);
   if (!selectedId) return null;
   const matches = selector.options.filter((index) => components[index].variantId === selectedId);
-  return matches.length === 1 ? components[matches[0]] : null;
+  if (matches.length !== 1) return null;
+  return { ...components[matches[0]], discountPercent: selector.discountPercent };
 }
 
 function aggregateComponents(components) {
   const totals = new Map();
   for (const component of components) {
-    const current = totals.get(component.variantId);
+    const key = `${component.variantId}\u0000${component.discountPercent}`;
+    const current = totals.get(key);
     if (current && current.unitPrice !== component.unitPrice) return null;
     const quantity = (current?.quantity || 0) + component.quantity;
     if (quantity > MAX_COMPONENT_QUANTITY) return null;
-    totals.set(component.variantId, { quantity, unitPrice: component.unitPrice });
+    totals.set(key, { ...component, quantity });
   }
-  return [...totals].map(([merchandiseId, component]) => ({ merchandiseId, ...component }));
+  return [...totals.values()].map(({ variantId, ...component }) => ({ merchandiseId: variantId, ...component }));
 }

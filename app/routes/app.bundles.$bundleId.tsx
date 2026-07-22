@@ -79,6 +79,7 @@ function editorInitial(
   return {
     id: bundle.id, version: String(bundle.lockVersion), ...productContent,
     pricingMode: bundle.pricingMode, fixedPrice: bundle.fixedPrice ?? "",
+    discountPercent: bundle.discountPercent,
     status: bundle.status, ...display,
   };
 }

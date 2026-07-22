@@ -8,7 +8,7 @@ import {
   projectionHash,
 } from "../bundles/bundle-config.server";
 import type { BundleSelectorInput } from "../bundles/bundle.types";
-import { calculateParentPrice } from "../bundles/bundle-pricing";
+import { bundleCompareAtPrice, calculateBundlePrices } from "../bundles/bundle-pricing";
 import {
   bundleProjectionError,
   bundleProjectionErrorCode,
@@ -119,33 +119,45 @@ async function syncActiveBundle(
 function buildProjection(active: ActiveBundle, selectors: BundleSelectorInput[]) {
   const variantId = requiredVariant(active);
   try {
-    const parentPrice = calculateParentPrice(
-      active.source.pricingMode, active.source.fixedPrice, selectors);
-    const identity = projectionIdentity(active, variantId, parentPrice);
+    const prices = calculateBundlePrices({
+      pricingMode: active.source.pricingMode, fixedPrice: active.source.fixedPrice,
+      discountPercent: active.source.discountPercent, selectors,
+    });
+    const identity = projectionIdentity(active, variantId, prices);
     const runtime = buildRuntimeConfig(identity, selectors);
     const presentation = buildPresentationConfig(identity, selectors);
-    return projectedValues(runtime, presentation, parentPrice);
+    return projectedValues(runtime, presentation, prices);
   } catch (error) {
     throw bundleProjectionError(error);
   }
 }
 
-function projectedValues(runtime: unknown, presentation: unknown, parentPrice: string) {
+function projectedValues(
+  runtime: unknown, presentation: unknown,
+  prices: ReturnType<typeof calculateBundlePrices>,
+) {
   return {
-    runtime, presentation, parentPrice,
+    runtime, presentation, parentPrice: prices.finalPrice,
+    compareAtPrice: bundleCompareAtPrice(prices),
     runtimeValue: jsonProjection(runtime), presentationValue: jsonProjection(presentation),
   };
 }
 
-function projectionIdentity(active: ActiveBundle, parentVariantId: string, parentPrice: string) {
+function projectionIdentity(
+  active: ActiveBundle, parentVariantId: string,
+  prices: ReturnType<typeof calculateBundlePrices>,
+) {
   return {
     publicId: active.bundle.publicId,
     revision: active.revision.revision,
     parentVariantId,
     pricingMode: active.source.pricingMode,
     currencyCode: active.source.currencyCode,
-    fixedPrice: active.source.fixedPrice,
-    parentPrice,
+    discountPercent: active.source.discountPercent,
+    originalPrice: prices.originalPrice,
+    parentPrice: prices.finalPrice,
+    maximumOriginalPrice: prices.maximumOriginalPrice,
+    maximumFinalPrice: prices.maximumFinalPrice,
   };
 }
 
@@ -161,6 +173,7 @@ function parentInput(
     publicId: active.bundle.publicId,
     revision: active.revision.revision,
     price: projection.parentPrice,
+    compareAtPrice: projection.compareAtPrice,
     runtimeValue: projection.runtimeValue,
     presentationValue: projection.presentationValue,
     assertOwned: guard,

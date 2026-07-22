@@ -1,6 +1,5 @@
 import type { BundleEditorInitial } from "./editor.types";
 import { DescriptionEditor } from "../../rich-text/description/DescriptionEditor";
-import { BundlePricingFields } from "./BundlePricingFields";
 
 export interface BundleDetailsFieldsProps {
   initial: BundleEditorInitial;
@@ -11,7 +10,6 @@ export function BundleDetailsFields({ initial, errors }: BundleDetailsFieldsProp
   return <s-section heading="Details">
     <s-stack direction="block" gap="base">
       <s-text-field label="Bundle title" name="title" defaultValue={initial.title} required error={errors.title} />
-      <BundlePricingFields initial={initial} fixedPriceError={errors.fixedPrice} modeError={errors.pricingMode} />
       <DescriptionEditor key={`${initial.id ?? "new"}:${initial.version}`} initialValue={initial.descriptionHtml} error={errors.description} />
       <s-paragraph>Title and description are loaded from and saved directly to Shopify.</s-paragraph>
     </s-stack>

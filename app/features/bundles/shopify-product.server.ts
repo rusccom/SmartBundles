@@ -18,9 +18,12 @@ interface UserError { message: string }
 
 export async function updateParentVariant(
   admin: AdminClient,
-  input: ParentProductIds & { price: string },
+  input: ParentProductIds & { price: string; compareAtPrice: string | null },
 ): Promise<void> {
-  const variants = [{ id: input.variantId, price: input.price, requiresComponents: true }];
+  const variants = [{
+    id: input.variantId, price: input.price,
+    compareAtPrice: input.compareAtPrice, requiresComponents: true,
+  }];
   const result = await adminRequest<UpdateVariantResult>(admin, UPDATE_VARIANT, { productId: input.productId, variants });
   assertNoUserErrors(result.productVariantsBulkUpdate.userErrors, "Bundle variant update failed");
 }
@@ -107,7 +110,9 @@ interface ReadProductResult {
     id: string;
     status: string;
     publishedOnPublication: boolean;
-    variants: { nodes: Array<{ id: string; requiresComponents: boolean; price: string }> };
+    variants: { nodes: Array<{
+      id: string; requiresComponents: boolean; price: string; compareAtPrice: string | null;
+    }> };
     bundleId?: { value: string } | null;
     runtime?: { id: string; value: string; compareDigest: string } | null;
     presentation?: { id: string; value: string; compareDigest: string } | null;
