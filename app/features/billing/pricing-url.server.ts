@@ -2,11 +2,14 @@ import {
   getShopifyAppHandle,
   isShopifyPricingEnabled,
 } from "./billing-config.server";
+import { isComplimentaryProShop } from "./complimentary-entitlement.server";
 
 const SHOP_SUFFIX = ".myshopify.com";
 const HANDLE_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
 export function getPricingUrl(shopDomain: string): string {
+  if (isComplimentaryProShop(shopDomain))
+    throw new Error("This shop has complimentary Pro access.");
   if (!isShopifyPricingEnabled())
     throw new Error("Shopify App Pricing is not configured.");
   const storeHandle = storeHandleFromDomain(shopDomain);

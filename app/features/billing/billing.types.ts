@@ -1,7 +1,7 @@
 import type { Plan, SubscriptionStatus } from "@prisma/client";
 
 export type BillingRefreshMode = "normal" | "quota" | "force";
-export type BillingSource = "cache" | "partner" | "grace" | "restricted";
+export type BillingSource = "cache" | "partner" | "grace" | "restricted" | "complimentary";
 
 export interface BillingState {
   shopId: string;
