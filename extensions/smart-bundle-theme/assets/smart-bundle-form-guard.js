@@ -34,34 +34,45 @@ class SmartBundleFormGuard {
 
   stop() {
     this.observer.disconnect();
-    this.restoreForm();
+    this.restoreForms();
   }
 
   sync() {
-    const nextForm = this.owner.productForm();
-    if (nextForm !== this.form) this.replaceForm(nextForm);
+    const nextForms = this.owner.productForms();
+    if (!this.sameForms(nextForms)) this.replaceForms(nextForms);
     this.protectControls();
   }
 
-  replaceForm(form) {
-    this.restoreForm();
-    this.form = form;
-    this.form?.addEventListener("submit", this.blockSubmit);
+  sameForms(forms) {
+    return this.forms?.size === forms.length && forms.every((form) => this.forms.has(form));
+  }
+
+  replaceForms(forms) {
+    this.restoreForms();
+    this.forms = new Set(forms);
+    this.forms.forEach((form) => form.addEventListener("submit", this.blockSubmit));
   }
 
   protectControls() {
-    this.form?.querySelectorAll(SMART_BUNDLE_NATIVE_SELECTOR).forEach((control) => {
-      if (this.records.has(control)) return;
-      this.records.add(control);
-      acquireSmartBundleControl(control);
+    this.forms?.forEach((form) => this.protectForm(form));
+  }
+
+  protectForm(form) {
+    form.querySelectorAll(SMART_BUNDLE_NATIVE_SELECTOR).forEach((control) => {
+      if (!this.records.has(control)) this.protectControl(control);
     });
   }
 
-  restoreForm() {
-    this.form?.removeEventListener("submit", this.blockSubmit);
+  protectControl(control) {
+    this.records.add(control);
+    acquireSmartBundleControl(control);
+  }
+
+  restoreForms() {
+    this.forms?.forEach((form) => form.removeEventListener("submit", this.blockSubmit));
     this.records.forEach(releaseSmartBundleControl);
     this.records.clear();
-    this.form = null;
+    this.forms = null;
   }
 }
 

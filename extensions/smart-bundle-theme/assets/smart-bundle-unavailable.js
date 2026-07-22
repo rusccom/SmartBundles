@@ -15,10 +15,15 @@ class SmartBundleUnavailable extends HTMLElement {
   }
 
   productForm() {
+    const forms = this.productForms();
+    return forms.find((form) => form.querySelector('[name="add"]')) || forms[0] || null;
+  }
+
+  productForms() {
     const id = this.dataset.parentVariantId || "";
-    if (!/^[1-9]\d*$/.test(id)) return null;
+    if (!/^[1-9]\d*$/.test(id)) return [];
     return [...document.querySelectorAll(UNAVAILABLE_FORM_SELECTOR)]
-      .find((form) => form.querySelector('[name="id"]')?.value === id) || null;
+      .filter((form) => form.querySelector('[name="id"]')?.value === id);
   }
 }
 

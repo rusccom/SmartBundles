@@ -38,9 +38,13 @@ class SmartBundle extends HTMLElement {
     return true;
   }
   productForm() {
+    const forms = this.productForms();
+    return forms.find((form) => form.querySelector('[name="add"]')) || forms[0] || null;
+  }
+  productForms() {
     const id = this.dataset.parentVariantId;
     return [...document.querySelectorAll(FORM_SELECTOR)]
-      .find((form) => form.querySelector('[name="id"]')?.value === id) || null;
+      .filter((form) => form.querySelector('[name="id"]')?.value === id);
   }
   waitForProductForm() {
     if (this.mountObserver) return;
