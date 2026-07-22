@@ -26,7 +26,7 @@ export const FIND_PARENT_PRODUCT = `#graphql
 export const UPDATE_VARIANT = `#graphql
   mutation SmartBundleUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
     productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-      productVariants { id requiresComponents price }
+      productVariants { id requiresComponents price compareAtPrice }
       userErrors { message }
     }
   }
@@ -72,7 +72,7 @@ export const READ_PRODUCT = `#graphql
       id
       status
       publishedOnPublication(publicationId: $publicationId)
-      variants(first: 2) { nodes { id requiresComponents price } }
+      variants(first: 2) { nodes { id requiresComponents price compareAtPrice } }
       bundleId: metafield(namespace: "$app", key: "bundle_id") { value }
       runtime: metafield(namespace: "$app", key: "bundle_runtime") {
         id value compareDigest

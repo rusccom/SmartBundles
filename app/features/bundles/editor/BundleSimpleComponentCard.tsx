@@ -1,6 +1,6 @@
 import { BundleComponentRemoveAction } from "./BundleComponentRemoveAction";
 import { BundleProductThumbnail } from "./BundleProductThumbnail";
-import { BundleComponentQuantityField } from "./BundleComponentQuantityField";
+import { BundleComponentControls } from "./BundleComponentControls";
 import { formatEditorLinePrice } from "./bundle-editor-price";
 import type { EditorSelector } from "./editor.types";
 
@@ -10,7 +10,9 @@ export interface BundleSimpleComponentCardProps {
   currencyCode: string;
   locale: string;
   dragHandle: React.ReactNode;
+  discountDisabled: boolean;
   onQuantity: (index: number, quantity: number) => void;
+  onDiscount: (index: number, discountPercent: string) => void;
   onRemove: (index: number) => void;
 }
 
@@ -24,10 +26,12 @@ export function BundleSimpleComponentCard(props: BundleSimpleComponentCardProps)
     <BundleProductThumbnail imageUrl={option.imageUrl} title={props.selector.productTitle} />
     <span className="sb-simple-component-info"><strong>{props.selector.productTitle}</strong>
       <span className={`sb-simple-component-status${statusClass}`}>{status}</span></span>
-    <BundleComponentQuantityField quantity={props.selector.quantity}
-      onChange={(quantity) => props.onQuantity(props.index, quantity)} />
+    <BundleComponentControls selector={props.selector} discountDisabled={props.discountDisabled}
+      onQuantity={(value) => props.onQuantity(props.index, value)}
+      onDiscount={(value) => props.onDiscount(props.index, value)} />
     <span className="sb-simple-component-price">{formatEditorLinePrice(
-      option.unitPrice, props.selector.quantity, props.currencyCode, props.locale)}</span>
+      option.unitPrice, props.selector.quantity, props.currencyCode, props.locale,
+      props.selector.discountPercent)}</span>
     <BundleComponentRemoveAction index={props.index} productTitle={props.selector.productTitle}
       onRemove={props.onRemove} />
   </div>;

@@ -30,7 +30,8 @@ function expandLine(line, presentmentCurrencyRate) {
   const items = readSelection(line.bundleSelection?.value, runtime);
   if (!items) return invalidBundle();
   const currencyCode = line.cost.amountPerQuantity.currencyCode;
-  const expandedCartItems = expandedItems(items, runtime.mode, presentmentCurrencyRate, currencyCode);
+  const expandedCartItems = expandedItems(
+    items, runtime.mode, runtime.discountPercent, presentmentCurrencyRate, currencyCode);
   return expandedCartItems ? { cartLineId: line.id, expandedCartItems } : invalidBundle();
 }
 
@@ -38,11 +39,11 @@ function invalidBundle() {
   throw new Error("Invalid SmartBundle composition.");
 }
 
-function expandedItems(items, mode, presentmentCurrencyRate, currencyCode) {
+function expandedItems(items, mode, discountPercent, presentmentCurrencyRate, currencyCode) {
   if (mode === 0) return items.map(withoutPrice);
   const rate = Number(presentmentCurrencyRate);
   if (!Number.isFinite(rate) || rate <= 0) return null;
-  const expanded = items.map((item) => dynamicItem(item, rate, currencyCode));
+  const expanded = items.map((item) => dynamicItem(item, discountPercent, rate, currencyCode));
   return expanded.every(Boolean) ? expanded : null;
 }
 
@@ -50,12 +51,13 @@ function withoutPrice({ merchandiseId, quantity }) {
   return { merchandiseId, quantity };
 }
 
-function dynamicItem({ merchandiseId, quantity, unitPrice }, rate, currencyCode) {
-  const amount = convertedAmount(unitPrice, rate, currencyCode);
+function dynamicItem(item, discountPercent, rate, currencyCode) {
+  const amount = convertedAmount(
+    item.unitPrice, item.discountPercent, discountPercent, rate, currencyCode);
   if (!amount) return null;
   return {
-    merchandiseId,
-    quantity,
+    merchandiseId: item.merchandiseId,
+    quantity: item.quantity,
     price: { adjustment: { fixedPricePerUnit: { amount } } },
   };
 }
@@ -63,11 +65,13 @@ function dynamicItem({ merchandiseId, quantity, unitPrice }, rate, currencyCode)
 const ZERO_DECIMAL = new Set(["AFN", "ALL", "BIF", "BYR", "CLP", "DJF", "GNF", "IQD", "IRR", "ISK", "JPY", "KMF", "KRW", "LAK", "LBP", "MGA", "MMK", "PYG", "RSD", "RWF", "SLL", "SOS", "STD", "SYP", "UGX", "VND", "VUV", "XAF", "XOF", "XPF", "YER"]);
 const THREE_DECIMAL = new Set(["BHD", "JOD", "KWD", "LYD", "OMR", "TND"]);
 
-function convertedAmount(unitPrice, rate, currencyCode) {
+function convertedAmount(unitPrice, componentDiscount, bundleDiscount, rate, currencyCode) {
   const decimals = currencyDecimals(currencyCode);
   if (decimals === null) return null;
   const scale = 10 ** decimals;
-  const minor = Math.round(Number(unitPrice) * rate * scale);
+  const componentMultiplier = (100 - Number(componentDiscount)) / 100;
+  const bundleMultiplier = (100 - Number(bundleDiscount)) / 100;
+  const minor = Math.round(Number(unitPrice) * componentMultiplier * bundleMultiplier * rate * scale);
   return Number.isSafeInteger(minor) ? (minor / scale).toFixed(decimals) : null;
 }
 

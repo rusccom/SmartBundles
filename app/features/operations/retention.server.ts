@@ -1,4 +1,5 @@
 import prisma from "../../db.server";
+import { PRICING_MINIMUM_JOB_PREFIX } from "./projection-upgrade.server";
 
 const RETENTION_DAYS = 30;
 const RETAIN_REVISIONS = 20;
@@ -39,7 +40,11 @@ async function deleteWebhookDeliveries(cutoff: Date): Promise<number> {
 
 async function deletePublicationJobs(cutoff: Date): Promise<number> {
   const records = await prisma.publicationJob.findMany({
-    where: { state: { in: ["COMPLETED", "FAILED"] }, updatedAt: { lt: cutoff } },
+    where: {
+      state: { in: ["COMPLETED", "FAILED"] },
+      updatedAt: { lt: cutoff },
+      NOT: { idempotencyKey: { startsWith: PRICING_MINIMUM_JOB_PREFIX } },
+    },
     select: { id: true }, take: DELETE_BATCH,
   });
   if (!records.length) return 0;

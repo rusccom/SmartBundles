@@ -3,6 +3,7 @@ import { BundleComponentsSection } from "./BundleComponentsSection";
 import { BundleDetailsFields } from "./BundleDetailsFields";
 import { BundleEditorActions } from "./BundleEditorActions";
 import { BundleQuotaNotice } from "./BundleQuotaNotice";
+import { BundlePricingFields } from "./BundlePricingFields";
 import { serializedSelectors } from "./editor-state";
 import type { BundleEditorInitial } from "./editor.types";
 import { useBundleEditor } from "./useBundleEditor";
@@ -28,8 +29,9 @@ export function BundleEditorPage({ initial, errors = {}, quotaCandidates = [], p
       {serverMessage ? <s-banner tone={messageTone(initial.status)}>{serverMessage}</s-banner> : null}
       {quotaCandidates.length ? <BundleQuotaNotice candidates={quotaCandidates} pricingEnabled={pricingEnabled} /> : null}
       <BundleDetailsFields initial={initial} errors={errors} />
-      <BundleComponentsSection editor={editor} currencyCode={initial.currencyCode}
-        locale={initial.locale} error={errors.selectors} />
+      <BundlePricingFields initial={initial} mode={editor.pricingMode} onModeChange={editor.changePricingMode}
+        fixedPriceError={errors.fixedPrice} modeError={errors.pricingMode} discountError={errors.discountPercent} />
+      <BundleComponentsSection editor={editor} currencyCode={initial.currencyCode} locale={initial.locale} error={errors.selectors} />
       <BundleEditorActions status={initial.status} busy={navigation.state !== "idle"} replacing={quotaCandidates.length > 0} />
     </Form>
   </s-page>;

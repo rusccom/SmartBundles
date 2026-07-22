@@ -17,6 +17,7 @@ export interface BundleEditorInitial {
   creationToken?: string;
   pricingMode: "FIXED" | "DYNAMIC";
   fixedPrice: string;
+  discountPercent: string;
   status: string;
   currencyCode: string;
   locale: string;

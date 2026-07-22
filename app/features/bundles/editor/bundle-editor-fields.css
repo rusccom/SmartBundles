@@ -1,5 +1,6 @@
 .sb-pricing-fields,
 .sb-editor-field,
+.sb-component-field,
 .sb-quantity-field {
   display: grid;
   gap: 6px;
@@ -7,6 +8,7 @@
 
 .sb-editor-field select,
 .sb-editor-field input,
+.sb-component-field input,
 .sb-quantity-field input {
   box-sizing: border-box;
   min-height: 42px;
@@ -23,13 +25,47 @@
 }
 
 .sb-quantity-field {
-  width: 112px;
+  width: 72px;
   color: #616161;
-  font-size: 13px;
+  font-size: 12px;
 }
 
-.sb-component-settings {
-  padding: 14px 16px;
+.sb-component-controls {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.sb-component-field,
+.sb-quantity-field {
+  gap: 3px;
+  align-content: start;
+}
+
+.sb-component-field input,
+.sb-quantity-field input {
+  min-height: 36px;
+  height: 36px;
+  padding-inline: 8px;
+}
+
+.sb-discount-field {
+  width: 80px;
+  color: #616161;
+  font-size: 12px;
+}
+
+.sb-component-field input:disabled {
+  color: #8c9196;
+  background: #f1f1f1;
+  cursor: not-allowed;
+}
+
+.sb-component-field-error {
+  color: #8e1f0b;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .sb-component-quantity {

@@ -6,6 +6,7 @@ import { isSimpleBundleComponent } from "./bundle-component-presentation";
 
 export function useBundleEditor(initial: BundleEditorInitial) {
   const [selectors, setSelectors] = useState(() => initialEditorSelectors(initial.selectors));
+  const [pricingMode, setPricingMode] = useState(initial.pricingMode);
   const addComponent = useProductPicker(setSelectors);
   const remove = useCallback((index: number) => setSelectors((items) => items.filter((_, i) => i !== index)), []);
   const reorder = useCallback((activeKey: number, overKey: number) =>
@@ -13,7 +14,13 @@ export function useBundleEditor(initial: BundleEditorInitial) {
   const option = useCallback((index: number, id: string) => setSelectors((items) => toggleOption(items, index, id)), []);
   const quantity = useCallback((index: number, value: number) =>
     setSelectors((items) => updateQuantity(items, index, value)), []);
-  return { selectors, addComponent, remove, reorder, option, quantity };
+  const discount = useCallback((index: number, value: string) =>
+    setSelectors((items) => updateDiscount(items, index, value)), []);
+  const changePricingMode = useCallback((mode: BundleEditorInitial["pricingMode"]) => {
+    setPricingMode(mode);
+    if (mode === "FIXED") setSelectors(clearDiscounts);
+  }, []);
+  return { selectors, pricingMode, addComponent, remove, reorder, option, quantity, discount, changePricingMode };
 }
 
 function toggleOption(items: ReturnType<typeof initialEditorSelectors>, index: number, id: string) {
@@ -25,4 +32,12 @@ function toggleOption(items: ReturnType<typeof initialEditorSelectors>, index: n
 
 function updateQuantity(items: ReturnType<typeof initialEditorSelectors>, index: number, quantity: number) {
   return items.map((selector, current) => current === index ? { ...selector, quantity } : selector);
+}
+
+function updateDiscount(items: ReturnType<typeof initialEditorSelectors>, index: number, discountPercent: string) {
+  return items.map((selector, current) => current === index ? { ...selector, discountPercent } : selector);
+}
+
+function clearDiscounts(items: ReturnType<typeof initialEditorSelectors>) {
+  return items.map((selector) => selector.discountPercent === "0" ? selector : { ...selector, discountPercent: "0" });
 }

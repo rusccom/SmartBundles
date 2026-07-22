@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const creationToken = signCreationToken(session.shop, randomUUID());
   const currencyCode = await loadShopCurrencyCode(admin);
   return { initial: { version: "new", title: "", descriptionHtml: "", creationToken,
-    pricingMode: "FIXED" as const, fixedPrice: "", status: "DRAFT", currencyCode,
+    pricingMode: "FIXED" as const, fixedPrice: "", discountPercent: "0", status: "DRAFT", currencyCode,
     locale: editorLocale(request), selectors: [] } };
 }
 

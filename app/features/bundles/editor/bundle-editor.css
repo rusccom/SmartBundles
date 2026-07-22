@@ -24,7 +24,7 @@
 .sb-component-header {
   display: grid;
   box-sizing: border-box;
-  grid-template-columns: 44px 44px 48px minmax(0, 1fr) auto;
+  grid-template-columns: 44px 44px 48px minmax(140px, 1fr) auto auto 44px;
   gap: 10px;
   align-items: center;
   min-height: 72px;
@@ -185,7 +185,6 @@
   font-size: 13px;
 }
 
-.sb-component-remove-action,
 .sb-editor-actions {
   display: flex;
   gap: 12px;
@@ -193,12 +192,12 @@
 }
 
 .sb-component-remove-action {
-  justify-content: flex-end;
-  padding: 14px 16px;
-  border-top: 1px solid #e1e3e5;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
 }
 
-.sb-component-remove-action button,
 .sb-editor-actions button {
   box-sizing: border-box;
   min-height: 44px;
@@ -209,8 +208,29 @@
   cursor: pointer;
 }
 
-.sb-component-remove-action button.critical {
+.sb-component-remove-action button {
+  display: grid;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  place-items: center;
   color: #8e1f0b;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sb-component-remove-action button:hover {
+  background: #fff1ee;
+}
+
+.sb-component-remove-action button:focus-visible {
+  outline: 2px solid #b42318;
+  outline-offset: 2px;
 }
 
 .sb-editor-actions {
@@ -245,14 +265,24 @@
 
 @media (max-width: 640px) {
   .sb-component-header {
-    grid-template-columns: 44px 44px 44px minmax(0, 1fr);
+    grid-template-columns: 44px 44px 44px minmax(0, 1fr) 44px;
     gap: 10px;
     padding-inline: 12px;
   }
 
+  .sb-component-header .sb-component-controls {
+    grid-column: 4;
+    justify-content: flex-start;
+  }
+
   .sb-component-meta {
-    grid-column: 3 / 5;
+    grid-column: 4;
     justify-items: start;
+  }
+
+  .sb-component-header .sb-component-remove-action {
+    grid-column: 5;
+    grid-row: 1 / 4;
   }
 
   .sb-option {

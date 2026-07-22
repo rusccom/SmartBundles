@@ -13,6 +13,7 @@ export interface ActiveBundle {
 export interface ActiveParentSource {
   pricingMode: BundlePricingMode;
   fixedPrice: string | null;
+  discountPercent: string;
   parentPrice: string;
   currencyCode: string;
 }
@@ -39,6 +40,7 @@ interface ActiveRevisionRecord {
   runtimeConfig: Prisma.JsonValue | null;
   pricingMode: BundlePricingMode;
   fixedPrice: Prisma.Decimal | null;
+  discountPercent: Prisma.Decimal;
   parentPrice: Prisma.Decimal;
 }
 
@@ -85,6 +87,7 @@ function activeSource(bundle: ActiveBundleRecord, revision: ActiveRevisionRecord
   return {
     pricingMode: revision.pricingMode,
     fixedPrice: revision.fixedPrice?.toString() ?? null,
+    discountPercent: revision.discountPercent.toString(),
     parentPrice: revision.parentPrice.toString(),
     currencyCode: requiredCurrencyCode(bundle.shop.currencyCode),
   };
@@ -122,6 +125,7 @@ const revisionSelect = {
   runtimeConfig: true,
   pricingMode: true,
   fixedPrice: true,
+  discountPercent: true,
   parentPrice: true,
   selectors: {
     orderBy: { position: "asc" as const },
@@ -144,6 +148,7 @@ function mapSelectors(selectors: SelectorRecord[]): BundleSelectorInput[] {
     productId: selector.productGid,
     productTitle: selector.productTitle,
     quantity: selector.quantity,
+    discountPercent: selector.discountPercent.toString(),
     options: selector.options.map((option) => ({
       id: option.variantGid,
       title: option.title,

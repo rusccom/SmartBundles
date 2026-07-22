@@ -7,7 +7,7 @@ import type {
   BundleVariantInput,
 } from "./bundle.types";
 import { buildRuntimeConfig } from "./bundle-config.server";
-import { calculateParentPrice } from "./bundle-pricing";
+import { calculateBundlePrices } from "./bundle-pricing";
 
 export const MIN_SELECTORS = 1;
 export const MAX_SELECTORS = 150;
@@ -32,6 +32,7 @@ function bundleDraft(form: FormData): BundleDraftInput {
   return {
     pricingMode,
     fixedPrice: pricingMode === "FIXED" ? optionalMoney(textValue(form, "fixedPrice")) : null,
+    discountPercent: textValue(form, "discountPercent"),
     selectors: parseSelectors(textValue(form, "selectors")),
   };
 }
@@ -84,6 +85,7 @@ function parseSelector(value: unknown, position: number): BundleSelectorInput[] 
     productId: gid(value.productId, "Product"),
     productTitle,
     quantity: quantity(value.quantity),
+    discountPercent: componentDiscount(value.discountPercent),
     options,
   }];
 }
@@ -105,6 +107,9 @@ function validateBundle(data: BundleDraftInput): Record<string, string> {
   if (data.pricingMode === "FIXED" && !validFixedPrice(data.fixedPrice)) {
     errors.fixedPrice = "Enter a fixed price greater than 0.";
   }
+  if (!validDiscountPercent(data.discountPercent)) {
+    errors.discountPercent = "Enter a discount from 0 to 100.";
+  }
   validateSelectorCount(data.selectors, errors);
   validateSelectors(data, errors);
   validateAggregateQuantities(data.selectors, errors);
@@ -117,9 +122,10 @@ function validateParentPrice(
   data: BundleDraftInput,
   errors: Record<string, string>,
 ): void {
-  if (errors.fixedPrice || errors.selectors || Object.keys(errors).some((key) => key.startsWith("selector."))) return;
+  if (errors.fixedPrice || errors.discountPercent || errors.selectors) return;
+  if (Object.keys(errors).some((key) => key.startsWith("selector."))) return;
   try {
-    calculateParentPrice(data.pricingMode, data.fixedPrice, data.selectors);
+    calculateBundlePrices(data);
   } catch {
     errors.selectors = "The maximum bundle total exceeds the supported price limit.";
   }
@@ -141,8 +147,9 @@ function runtimeSizeIdentity(data: BundleDraftInput) {
   return {
     publicId: "x".repeat(32), revision: 2_147_483_647,
     parentVariantId: "gid://shopify/ProductVariant/99999999999999999999",
-    pricingMode: data.pricingMode, currencyCode: "XXX",
-    fixedPrice: data.fixedPrice, parentPrice: "9999999999.99",
+    pricingMode: data.pricingMode, currencyCode: "XXX", discountPercent: data.discountPercent,
+    originalPrice: "9999999999.99", parentPrice: "9999999999.99",
+    maximumOriginalPrice: "9999999999.99", maximumFinalPrice: "9999999999.99",
   };
 }
 
@@ -194,9 +201,7 @@ function validateSelector(
     errors[`selector.${index}.quantity`] = `Quantity must be between 1 and ${MAX_QUANTITY}.`;
   }
   if (!item.options.length) errors[`selector.${index}.options`] = "Choose at least one allowed variant.";
-  if (pricingMode === "DYNAMIC" && item.options.some(({ unitPrice }) => unitPrice === undefined)) {
-    errors[`selector.${index}.options`] = "Dynamic bundle variants need current prices.";
-  }
+  validateSelectorPricing(item, index, pricingMode, errors);
   if (new Set(item.options.map(({ id }) => id)).size !== item.options.length) {
     errors[`selector.${index}.options`] = "Allowed variants must be unique.";
   }
@@ -204,8 +209,27 @@ function validateSelector(
   keys.add(item.key);
 }
 
+function validateSelectorPricing(
+  item: BundleSelectorInput, index: number, pricingMode: BundlePricingMode,
+  errors: Record<string, string>,
+): void {
+  const key = `selector.${index}.discountPercent`;
+  if (!validDiscountPercent(item.discountPercent)) errors[key] = "Enter a discount from 0 to 100.";
+  if (pricingMode === "FIXED" && Number(item.discountPercent) !== 0) {
+    errors[key] = "Component discounts require dynamic pricing.";
+  }
+  if (pricingMode === "DYNAMIC" && item.options.some(({ unitPrice }) => unitPrice === undefined)) {
+    errors[`selector.${index}.options`] = "Dynamic bundle variants need current prices.";
+  }
+}
+
 function validFixedPrice(value: string | null): boolean {
   return value !== null && validMoney(value) && Number(value) > 0;
+}
+
+function validDiscountPercent(value: string): boolean {
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(value)) return false;
+  return Number(value) >= 0 && Number(value) <= 100;
 }
 
 function positiveInt(value: unknown): number {
@@ -214,6 +238,10 @@ function positiveInt(value: unknown): number {
 
 function quantity(value: unknown): number {
   return Number.isSafeInteger(value) ? Number(value) : 0;
+}
+
+function componentDiscount(value: unknown): string {
+  return typeof value === "string" ? value.trim().slice(0, 16) : "";
 }
 
 function parsedPricingMode(value: string): BundlePricingMode {

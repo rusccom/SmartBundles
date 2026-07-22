@@ -15,9 +15,11 @@ const PRODUCTS_QUERY = `#graphql
       ... on Product {
         id
         title
-        featuredMedia { preview { image { url } } }
+        media(first: 1, query: "media_type:IMAGE", sortKey: POSITION) {
+          nodes { ... on MediaImage { image { url } } }
+        }
         variants(first: 50) {
-          nodes { id title price availableForSale image { url } }
+          nodes { id title price availableForSale media(first: 1) { nodes { ... on MediaImage { image { url } } } } }
           pageInfo { hasNextPage endCursor }
         }
       }
@@ -29,7 +31,7 @@ const PRODUCT_VARIANTS_QUERY = `#graphql
   query BundleEditorProductVariants($id: ID!, $after: String) {
     product(id: $id) {
       variants(first: 50, after: $after) {
-        nodes { id title price availableForSale image { url } }
+        nodes { id title price availableForSale media(first: 1) { nodes { ... on MediaImage { image { url } } } } }
         pageInfo { hasNextPage endCursor }
       }
     }
@@ -42,7 +44,7 @@ interface VariantNode {
   title: string;
   price: string;
   availableForSale: boolean;
-  image?: { url: string } | null;
+  media: { nodes: MediaNode[] };
 }
 interface VariantConnection {
   nodes: VariantNode[];
@@ -51,9 +53,10 @@ interface VariantConnection {
 interface ProductNode {
   id: string;
   title: string;
-  featuredMedia?: { preview?: { image?: { url: string } | null } | null } | null;
+  media: { nodes: MediaNode[] };
   variants: VariantConnection;
 }
+interface MediaNode { image?: { url: string } | null }
 interface ProductsQuery { nodes: Array<ProductNode | null> }
 interface ProductVariantsQuery { product?: { variants: VariantConnection } | null }
 interface EditorProduct { id: string; title: string; imageUrl?: string; variants: VariantNode[] }
@@ -92,7 +95,7 @@ async function completeProduct(admin: AdminClient, product: ProductNode): Promis
     variants.push(...connection.nodes);
     cursor = nextCursor(connection);
   }
-  return { id: product.id, title: product.title, imageUrl: product.featuredMedia?.preview?.image?.url, variants };
+  return { id: product.id, title: product.title, imageUrl: product.media.nodes[0]?.image?.url, variants };
 }
 
 function hydrateSelector(selector: BundleSelectorInput, products: Map<string, EditorProduct>): EditorSelector {
@@ -117,7 +120,7 @@ function editorOption(variant: VariantNode, allowed: boolean, defaultImageUrl?: 
   return {
     id: variant.id,
     title: variant.title,
-    imageUrl: variant.image?.url ?? defaultImageUrl,
+    imageUrl: variant.media.nodes[0]?.image?.url ?? defaultImageUrl,
     available: variant.availableForSale,
     unitPrice: variant.price,
     allowed,

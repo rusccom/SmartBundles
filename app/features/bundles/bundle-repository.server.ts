@@ -55,6 +55,7 @@ const editorSelect = {
   publicId: true,
   pricingMode: true,
   fixedPrice: true,
+  discountPercent: true,
   status: true,
   parentProductGid: true,
   parentVariantGid: true,
@@ -73,6 +74,7 @@ export async function getBundleForEditor(shopId: string, bundleId: string) {
   return {
     ...bundle,
     fixedPrice: bundle.fixedPrice?.toString() ?? null,
+    discountPercent: bundle.discountPercent.toString(),
     selectors: mapSelectors(revision?.selectors ?? []),
   };
 }
@@ -104,6 +106,7 @@ function mapSelectors(selectors: SelectorRecord[]): BundleSelectorInput[] {
     productId: selector.productGid,
     productTitle: selector.productTitle,
     quantity: selector.quantity,
+    discountPercent: selector.discountPercent.toString(),
     options: selector.options.map((option) => ({
       id: option.variantGid,
       title: option.title,
@@ -120,6 +123,7 @@ interface SelectorRecord {
   productGid: string;
   productTitle: string;
   quantity: number;
+  discountPercent: Prisma.Decimal;
   options: Array<{
     variantGid: string;
     title: string;
@@ -168,6 +172,7 @@ async function loadPublicationRevision(bundle: PublicationBundle, selectedRevisi
       revision: true,
       pricingMode: true,
       fixedPrice: true,
+      discountPercent: true,
       parentPrice: true,
       ...revisionSelectorsSelect,
     },
@@ -185,6 +190,7 @@ function publicationSource(bundle: PublicationBundle, revision: PublicationRevis
   return {
     pricingMode: revision.pricingMode,
     fixedPrice: revision.fixedPrice?.toString() ?? null,
+    discountPercent: revision.discountPercent.toString(),
     parentPrice: revision.parentPrice.toString(),
     currencyCode: requiredCurrencyCode(bundle.shop.currencyCode),
   };
@@ -193,6 +199,7 @@ function publicationSource(bundle: PublicationBundle, revision: PublicationRevis
 interface PublicationRevision {
   pricingMode: "FIXED" | "DYNAMIC";
   fixedPrice: Prisma.Decimal | null;
+  discountPercent: Prisma.Decimal;
   parentPrice: Prisma.Decimal;
 }
 

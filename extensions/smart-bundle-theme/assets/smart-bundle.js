@@ -1,5 +1,6 @@
 const FORM_SELECTOR = 'form[action*="/cart/add"]';
-const { activeMinor, fillTemplate, formatMinor, priceContext, selectedInput, sourceMinor, validQuantity } = window.SmartBundleCore;
+const { fillTemplate, priceContext, selectedInput, validQuantity } = window.SmartBundleCore;
+const pricing = window.SmartBundlePricing;
 class SmartBundle extends HTMLElement {
   connectedCallback() {
     if (this.initialized || !this.prepareMount() || this.initialized) return;
@@ -8,11 +9,13 @@ class SmartBundle extends HTMLElement {
     this.inputs = [...this.querySelectorAll("[data-selector]")];
     this.button = this.querySelector("[data-add-button]");
     this.context = priceContext(this);
-    this.priceValid = this.validPriceContract();
+    this.nativePrice = window.SmartBundleNativePrice.mount(this);
+    this.priceValid = pricing.validContract(this, this.inputs, this.context);
     this.contractValid = this.validContract();
     this.state = this.contractValid ? "incomplete" : "unavailable";
     this.bindEvents();
     this.guardForm();
+    this.bindImageErrors();
     this.renderOptions();
     this.render();
     this.hidden = false;
@@ -25,6 +28,8 @@ class SmartBundle extends HTMLElement {
     clearTimeout(this.mountTimer);
     clearTimeout(this.successTimer);
     this.restoreNativeControls();
+    this.nativePrice?.destroy();
+    this.nativePrice = null;
     this.initialized = false;
   }
   prepareMount() {
@@ -101,21 +106,10 @@ class SmartBundle extends HTMLElement {
     const count = this.components.length >= 1 && this.components.length <= 150;
     return count && this.components.every(validQuantity) && this.parentId() !== null && this.priceValid;
   }
-  validPriceContract() {
-    if (this.dataset.priceMode === "fixed") return Boolean(this.dataset.fixedTotal);
-    if (this.dataset.priceMode !== "dynamic" || !this.context) return false;
-    const maximum = sourceMinor(this.dataset.maximumAmount, this.context.sourceScale);
-    return maximum !== null && this.inputs.every((input) => this.inputPrice(input) !== null);
-  }
-  inputPrice(input) {
-    return input && this.context ? sourceMinor(input.dataset.unitPrice, this.context.sourceScale) : null;
-  }
   renderOptions() {
     this.querySelectorAll("[data-option-price]").forEach((output) => {
-      if (this.dataset.priceMode === "fixed") { output.textContent = this.dataset.included; return; }
       const input = output.closest("label")?.querySelector("[data-selector]");
-      const converted = activeMinor(this.inputPrice(input), this.context);
-      output.textContent = formatMinor(converted, this.context) || this.dataset.priceUnavailable;
+      output.textContent = pricing.optionText(this, input, this.context);
     });
   }
   render() {
@@ -125,25 +119,19 @@ class SmartBundle extends HTMLElement {
     if (this.state === "incomplete" && complete) this.state = "complete";
     this.renderProgress(selected);
     this.renderFooter(complete);
+    this.nativePrice?.render(pricing.previewTotals(this, this.components, this.context));
     this.dataset.state = this.state;
   }
   renderComponent(component) {
     const input = selectedInput(component);
     const available = component.querySelector('[data-selector]:not(:disabled):not([value=""])');
     const fallback = available ? this.dataset.chooseVariant : this.dataset.optionUnavailable;
-    component.querySelector("[data-selection-label]").textContent = input?.dataset.optionTitle || fallback;
+    const label = component.querySelector("[data-selection-label]");
+    if (label) label.textContent = input?.dataset.optionTitle || fallback;
     component.dataset.state = input ? "selected" : (available ? "required" : "unavailable");
     if (input) this.updateImage(component, input);
-    component.querySelector("[data-line-price]").textContent = this.linePrice(component, input);
-  }
-  linePrice(component, input) {
-    if (this.dataset.priceMode === "fixed") return this.dataset.included;
-    if (!input || !this.context) return "—";
-    const unit = this.inputPrice(input);
-    const convertedUnit = activeMinor(unit, this.context);
-    const lineTotal = convertedUnit === null ? null : convertedUnit * Number(component.dataset.quantity);
-    const converted = Number.isSafeInteger(lineTotal) ? lineTotal : null;
-    return formatMinor(converted, this.context) || this.dataset.priceUnavailable;
+    component.querySelector("[data-line-price]").textContent = pricing.lineText(
+      this, component, input, this.context);
   }
   updateImage(component, input) {
     const wrapper = component?.querySelector("[data-image-wrap]");
@@ -158,11 +146,25 @@ class SmartBundle extends HTMLElement {
       wrapper.replaceChildren(image);
     }
     image.src = url;
+    this.watchImage(image);
+  }
+  bindImageErrors() {
+    this.querySelectorAll("[data-image], .sb__option-media img")
+      .forEach((image) => this.watchImage(image));
+  }
+  watchImage(image) {
+    const wrapper = image.parentElement;
+    if (!wrapper) return;
+    image.onerror = () => this.showPlaceholder(wrapper);
+    if (image.getAttribute("src") && image.complete && image.naturalWidth === 0) {
+      this.showPlaceholder(wrapper);
+    }
   }
   showPlaceholder(wrapper) {
     if (wrapper.querySelector("[data-image-placeholder]")) return;
     const placeholder = document.createElement("span");
-    placeholder.className = "sb__image-placeholder";
+    const option = wrapper.classList.contains("sb__option-media");
+    placeholder.className = option ? "sb__option-placeholder" : "sb__image-placeholder";
     placeholder.setAttribute("data-image-placeholder", "");
     wrapper.replaceChildren(placeholder);
   }
@@ -173,16 +175,24 @@ class SmartBundle extends HTMLElement {
     progress.textContent = fillTemplate(this.dataset.progressTemplate, values);
   }
   renderFooter(complete) {
-    const total = this.totalText(complete);
+    const totals = pricing.totals(this, this.components, this.context, complete);
+    const total = totals?.current ?? null;
     const busy = this.state === "submitting" || this.state === "success";
     const unavailable = this.state === "unavailable" || (complete && total === null);
     const disabled = busy || unavailable || !complete;
-    this.querySelector("[data-total]").textContent = total || this.dataset.priceUnavailable;
+    this.renderTotals(totals);
     this.querySelector("[data-hint]").textContent = this.hintText(complete, unavailable, total);
     this.button.disabled = disabled;
     this.button.setAttribute("aria-disabled", String(disabled));
     this.button.textContent = this.buttonLabel();
     this.setAttribute("aria-busy", String(this.state === "submitting"));
+  }
+  renderTotals(totals) {
+    this.querySelector("[data-total]").textContent = totals?.current || this.dataset.priceUnavailable;
+    const original = this.querySelector("[data-original-total]");
+    original.textContent = totals?.original || "";
+    original.hidden = !totals?.original;
+    this.querySelector("[data-discount-badge]").hidden = !totals?.globalDiscount;
   }
   hintText(complete, unavailable, total) {
     if (unavailable) return !this.priceValid || total === null ? this.dataset.priceUnavailable : this.dataset.bundleUnavailable;
@@ -194,22 +204,6 @@ class SmartBundle extends HTMLElement {
     if (this.state === "submitting") return this.dataset.addingLabel;
     if (this.state === "success") return this.dataset.addedLabel;
     return this.dataset.addLabel;
-  }
-  totalText(complete) {
-    if (this.dataset.priceMode === "fixed") return this.dataset.fixedTotal;
-    if (!complete) return "—";
-    if (!this.context) return null;
-    let sourceTotal = 0; let activeTotal = 0;
-    for (const component of this.components) {
-      const price = this.inputPrice(selectedInput(component));
-      if (price === null) return null;
-      const activePrice = activeMinor(price, this.context); if (activePrice === null) return null;
-      const quantity = Number(component.dataset.quantity); sourceTotal += price * quantity;
-      activeTotal += activePrice * quantity;
-    }
-    const maximum = sourceMinor(this.dataset.maximumAmount, this.context.sourceScale);
-    if (maximum === null || sourceTotal > maximum || !Number.isSafeInteger(activeTotal)) return null;
-    return formatMinor(activeTotal, this.context);
   }
   selectionCount() {
     return this.components.filter((component) => selectedInput(component)).length;

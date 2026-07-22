@@ -21,7 +21,7 @@ import {
   createBundleClaimGuard,
 } from "../operations/operation-claim-guard.server";
 import type { OperationGuard } from "../operations/operation-claim-guard.server";
-import { calculateParentPrice } from "./bundle-pricing";
+import { bundleCompareAtPrice, calculateBundlePrices } from "./bundle-pricing";
 import { bundleProjectionError } from "./bundle-projection-error.server";
 
 export async function preparePublication(
@@ -75,12 +75,14 @@ export interface PublicationResult {
 
 function projectPublication(prepared: PreparedPublication, parentVariantId: string) {
   try {
-    const parentPrice = calculateParentPrice(
-      prepared.source.pricingMode, prepared.source.fixedPrice, prepared.selectors);
-    const identity = projectionIdentity(prepared, parentVariantId, parentPrice);
+    const prices = calculateBundlePrices({
+      pricingMode: prepared.source.pricingMode, fixedPrice: prepared.source.fixedPrice,
+      discountPercent: prepared.source.discountPercent, selectors: prepared.selectors,
+    });
+    const identity = projectionIdentity(prepared, parentVariantId, prices);
     const runtime = buildRuntimeConfig(identity, prepared.selectors);
     const presentation = buildPresentationConfig(identity, prepared.selectors);
-    return projectedPublication(prepared, runtime, presentation, parentPrice);
+    return projectedPublication(prepared, runtime, presentation, prices);
   } catch (error) {
     throw bundleProjectionError(error);
   }
@@ -92,10 +94,11 @@ function assertProjectable(prepared: PreparedPublication): void {
 
 function projectedPublication(
   prepared: PreparedPublication, runtime: RuntimeConfig,
-  presentation: PresentationConfig, parentPrice: string,
+  presentation: PresentationConfig, prices: ReturnType<typeof calculateBundlePrices>,
 ) {
   return {
-    ...prepared, runtime, presentation, parentPrice,
+    ...prepared, runtime, presentation,
+    parentPrice: prices.finalPrice, compareAtPrice: bundleCompareAtPrice(prices),
     runtimeValue: jsonProjection(runtime), presentationValue: jsonProjection(presentation),
   };
 }
@@ -103,7 +106,7 @@ function projectedPublication(
 function projectionIdentity(
   prepared: PreparedPublication,
   parentVariantId: string,
-  parentPrice: string,
+  prices: ReturnType<typeof calculateBundlePrices>,
 ) {
   return {
     publicId: prepared.bundle.publicId,
@@ -111,8 +114,11 @@ function projectionIdentity(
     parentVariantId,
     pricingMode: prepared.source.pricingMode,
     currencyCode: prepared.source.currencyCode,
-    fixedPrice: prepared.source.fixedPrice,
-    parentPrice,
+    discountPercent: prepared.source.discountPercent,
+    originalPrice: prices.originalPrice,
+    parentPrice: prices.finalPrice,
+    maximumOriginalPrice: prices.maximumOriginalPrice,
+    maximumFinalPrice: prices.maximumFinalPrice,
   };
 }
 
@@ -137,6 +143,7 @@ function parentProjection(
     publicId: prepared.bundle.publicId,
     revision: prepared.revision.revision,
     price: prepared.parentPrice,
+    compareAtPrice: prepared.compareAtPrice,
     runtimeValue: prepared.runtimeValue,
     presentationValue: prepared.presentationValue,
     allowRevisionChange: true,

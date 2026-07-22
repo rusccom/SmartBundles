@@ -1,16 +1,18 @@
 import { Prisma } from "@prisma/client";
 import type { BundleDraftInput, BundleSelectorInput } from "./bundle.types";
-import { calculateParentPrice } from "./bundle-pricing";
+import { calculateBundlePrices } from "./bundle-pricing";
 import { BundleVersionConflictError } from "./BundleVersionConflictError.server";
 
 const revisionSelect = {
   pricingMode: true,
   fixedPrice: true,
+  discountPercent: true,
   parentPrice: true,
   selectors: {
     orderBy: { position: "asc" as const },
     select: {
-      selectorKey: true, position: true, label: true, productGid: true, productTitle: true, quantity: true,
+      selectorKey: true, position: true, label: true, productGid: true, productTitle: true,
+      quantity: true, discountPercent: true,
       options: {
         orderBy: { position: "asc" as const },
         select: { position: true, variantGid: true, title: true, imageUrl: true, available: true, unitPrice: true },
@@ -40,7 +42,8 @@ export async function assertStoredDraftMatches(
 function sameDraft(revision: StoredRevision, draft: BundleDraftInput): boolean {
   if (revision.pricingMode !== draft.pricingMode) return false;
   if (!sameNullableMoney(revision.fixedPrice, draft.fixedPrice)) return false;
-  const parentPrice = calculateParentPrice(draft.pricingMode, draft.fixedPrice, draft.selectors);
+  if (!revision.discountPercent.equals(new Prisma.Decimal(draft.discountPercent))) return false;
+  const parentPrice = calculateBundlePrices(draft).finalPrice;
   if (!revision.parentPrice.equals(new Prisma.Decimal(parentPrice))) return false;
   return JSON.stringify(storedSelectors(revision)) === JSON.stringify(submittedSelectors(draft.selectors));
 }
@@ -58,6 +61,7 @@ function storedSelectors(revision: StoredRevision) {
     productId: selector.productGid,
     productTitle: selector.productTitle,
     quantity: selector.quantity,
+    discountPercent: selector.discountPercent.toString(),
     options: selector.options.map((option) => ({
       position: option.position, id: option.variantGid, title: option.title,
       imageUrl: option.imageUrl, available: option.available,
@@ -74,6 +78,7 @@ function submittedSelectors(selectors: BundleSelectorInput[]) {
     productId: selector.productId,
     productTitle: selector.productTitle,
     quantity: selector.quantity,
+    discountPercent: new Prisma.Decimal(selector.discountPercent).toString(),
     options: selector.options.map((option, optionPosition) => ({
       position: optionPosition, id: option.id, title: option.title,
       imageUrl: option.imageUrl ?? null, available: option.available ?? true,

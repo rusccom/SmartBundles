@@ -1,6 +1,7 @@
 import { MAX_RUNTIME_COMPONENTS, MAX_SELECTORS, MIN_SELECTORS } from "./constants.js";
 import {
   isObject,
+  isDiscountPercent,
   isQuantity,
   isRevision,
   isSelectorKey,
@@ -14,20 +15,24 @@ export function readRuntime(line) {
   if (!isRuntimeHeader(value)) return null;
   const components = readComponents(value.c, value.m);
   if (!components) return null;
-  const selectors = readSelectors(value.s, components);
-  return selectors ? { rv: value.rv, mode: value.m, parentVariantId: value.p, components, selectors } : null;
+  const selectors = readSelectors(value.s, components, value.m);
+  return selectors ? {
+    rv: value.rv, mode: value.m, discountPercent: value.d,
+    parentVariantId: value.p, components, selectors,
+  } : null;
 }
 
 export function isDisabledRuntime(value) {
-  if (!isObject(value) || value.sv !== 2 || value.en !== 0) return false;
+  if (!isObject(value) || value.sv !== 3 || value.en !== 0) return false;
   if (!isRevision(value.rv) || !isVariantGid(value.p)) return false;
   return typeof value.b === "string" && value.b.length > 0 && value.b.length <= 128;
 }
 
 function isRuntimeHeader(value) {
-  if (!isObject(value) || value.sv !== 2 || value.en !== 1) return false;
+  if (!isObject(value) || value.sv !== 3 || value.en !== 1) return false;
   if (!isRevision(value.rv) || !isVariantGid(value.p)) return false;
   if (value.m !== 0 && value.m !== 1) return false;
+  if (!isDiscountPercent(value.d)) return false;
   return typeof value.b === "string" && value.b.length > 0 && value.b.length <= 128;
 }
 
@@ -45,18 +50,22 @@ function readComponent(value, mode) {
   return { variantId: `gid://shopify/ProductVariant/${value[0]}`, quantity: value[1], unitPrice: value[2] };
 }
 
-function readSelectors(value, components) {
+function readSelectors(value, components, mode) {
   if (!Array.isArray(value) || !validSelectorCount(value.length)) return null;
-  const selectors = value.map((selector) => readSelector(selector, components));
+  const selectors = value.map((selector) => readSelector(selector, components, mode));
   if (!selectors.every(Boolean) || !uniqueKeys(selectors)) return null;
   return selectors;
 }
 
-function readSelector(value, components) {
+function readSelector(value, components, mode) {
   if (!isObject(value) || !isSelectorKey(value.k) || !Array.isArray(value.o)) return null;
+  if (!isDiscountPercent(value.d)) return null;
+  if (mode === 0 && Number(value.d) !== 0) return null;
   if (value.o.length < 1 || new Set(value.o).size !== value.o.length) return null;
   if (!value.o.every((index) => validIndex(index, components.length))) return null;
-  return uniqueVariants(value.o, components) ? { key: value.k, options: value.o } : null;
+  return uniqueVariants(value.o, components)
+    ? { key: value.k, options: value.o, discountPercent: value.d }
+    : null;
 }
 
 function uniqueKeys(selectors) {

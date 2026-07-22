@@ -12,8 +12,10 @@ export interface BundleComponentCardProps {
   index: number;
   currencyCode: string;
   locale: string;
+  discountDisabled: boolean;
   onOption: (index: number, id: string) => void;
   onQuantity: (index: number, quantity: number) => void;
+  onDiscount: (index: number, discountPercent: string) => void;
   onRemove: (index: number) => void;
 }
 
@@ -31,7 +33,7 @@ export function BundleComponentCard(props: BundleComponentCardProps) {
     <BundleSimpleComponentCard {...props} dragHandle={dragHandle} />
   </article>;
   return <article ref={setNodeRef} style={style} className={className}>
-    <BundleComponentHeader selector={props.selector} expanded={expanded} detailsId={detailsId}
+    <BundleComponentHeader {...props} expanded={expanded} detailsId={detailsId}
       selectedCount={selectedCount} currencyCode={props.currencyCode} locale={props.locale}
       dragHandle={dragHandle} onToggle={() => setExpanded((value) => !value)} />
     {expanded ? <BundleComponentDetails {...props} detailsId={detailsId} /> : null}

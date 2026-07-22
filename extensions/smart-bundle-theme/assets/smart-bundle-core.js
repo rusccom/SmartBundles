@@ -21,12 +21,13 @@ window.SmartBundleCore = Object.freeze({
   priceContext(element) {
     const source = element.dataset.currencyCode || "";
     const active = window.Shopify?.currency?.active || source;
+    const locale = element.dataset.locale || document.documentElement.lang || undefined;
     const scale = window.SmartBundleCore.currencyScale;
     const sourceScale = scale(source);
     const activeScale = scale(active);
     const rate = source === active ? 1 : Number(window.Shopify?.currency?.rate);
     if (!sourceScale || !activeScale || !Number.isFinite(rate) || rate <= 0) return null;
-    return { source, active, sourceScale, activeScale, rate };
+    return { source, active, sourceScale, activeScale, rate, locale };
   },
   sourceMinor(value, scale) {
     const text = String(value ?? "").trim();
@@ -42,8 +43,8 @@ window.SmartBundleCore = Object.freeze({
   formatMinor(minor, context) {
     if (minor === null || !context) return null;
     try {
-      const options = { style: "currency", currency: context.active };
-      return new Intl.NumberFormat(document.documentElement.lang || undefined, options).format(minor / context.activeScale);
+      const options = { style: "currency", currency: context.active, currencyDisplay: "narrowSymbol" };
+      return new Intl.NumberFormat(context.locale, options).format(minor / context.activeScale);
     } catch { return `${(minor / context.activeScale).toFixed(Math.log10(context.activeScale))} ${context.active}`; }
   },
 });
