@@ -12,12 +12,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const shop = await ensureShopContext(admin, session.shop);
   const state = await billingState(shop.id, shop.entitlement?.plan ?? "FREE");
   const url = new URL(request.url);
-  return { plan: state.plan, complimentary: state.source === "complimentary", pendingEffectiveAt: state.pendingEffectiveAt?.toISOString(), pricingUrl: pricingUrl(session.shop), message: planMessage(url) };
+  return { plan: state.plan, pendingEffectiveAt: state.pendingEffectiveAt?.toISOString(), pricingUrl: pricingUrl(session.shop), message: planMessage(url) };
 }
 
 async function billingState(shopId: string, fallback: "FREE" | "PRO") {
   try { return await getBillingState(shopId); }
-  catch { return { plan: fallback, pendingEffectiveAt: null, source: "cache" as const }; }
+  catch { return { plan: fallback, pendingEffectiveAt: null }; }
 }
 
 function pricingUrl(shop: string): string | undefined {

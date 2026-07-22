@@ -1,7 +1,6 @@
 import { Plan, SubscriptionStatus, type ShopEntitlement } from "@prisma/client";
 import prisma from "../../db.server";
 import { getProPlanHandle } from "./billing-config.server";
-import { complimentaryBillingState } from "./complimentary-entitlement.server";
 import type {
   BillingRefreshMode,
   BillingSource,
@@ -36,10 +35,6 @@ export async function getBillingState(
   });
   if (!shop) throw new Error("Shop not found.");
   const now = new Date();
-  const complimentary = await complimentaryBillingState(
-    shop.id, shop.domain, shop.entitlement, mode, now,
-  );
-  if (complimentary) return complimentary;
   if (isFresh(shop.entitlement, mode, now))
     return stateFromRecord(shop.entitlement!, "cache");
   if (!shop.shopGid)

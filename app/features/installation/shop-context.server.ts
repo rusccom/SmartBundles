@@ -1,6 +1,4 @@
 import prisma from "../../db.server";
-import type { ShopEntitlement } from "@prisma/client";
-import { ensureShopEntitlement } from "../billing/complimentary-entitlement.server";
 import type { AdminClient } from "../shopify/admin-api.server";
 import { adminRequest, assertNoUserErrors } from "../shopify/admin-api.server";
 
@@ -48,7 +46,7 @@ interface TransformMutation {
 
 export async function ensureShopContext(admin: AdminClient, domain: string) {
   const cached = await freshContext(domain);
-  if (cached) return withEntitlement(cached);
+  if (cached) return cached;
   const context = await adminRequest<ShopQuery>(admin, SHOP_QUERY);
   const transform = await ensureTransform(admin, context);
   return persistContext(context, transform);
@@ -93,9 +91,7 @@ async function persistContext(context: ShopQuery, transform: string | null) {
     update: updateData(context, transform, publication?.id),
     create: createData(context, transform, publication?.id),
   });
-  const entitlement = await ensureShopEntitlement(
-    saved.id, saved.domain,
-  );
+  const entitlement = await ensureEntitlement(saved.id);
   return { ...saved, entitlement };
 }
 
@@ -117,13 +113,10 @@ function createData(context: ShopQuery, transform: string | null, publication?: 
   return { domain: context.shop.myshopifyDomain, ...updateData(context, transform, publication) };
 }
 
-async function withEntitlement<T extends {
-  id: string;
-  domain: string;
-  entitlement: ShopEntitlement | null;
-}>(shop: T) {
-  const entitlement = await ensureShopEntitlement(
-    shop.id, shop.domain, shop.entitlement,
-  );
-  return { ...shop, entitlement };
+async function ensureEntitlement(shopId: string) {
+  await prisma.shopEntitlement.createMany({
+    data: [{ shopId, plan: "FREE" }],
+    skipDuplicates: true,
+  });
+  return prisma.shopEntitlement.findUniqueOrThrow({ where: { shopId } });
 }
