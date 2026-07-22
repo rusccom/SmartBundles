@@ -45,6 +45,8 @@
 
 .sb-component-field input,
 .sb-quantity-field input {
+  width: 100%;
+  min-width: 0;
   min-height: 36px;
   height: 36px;
   padding-inline: 8px;
