@@ -24,7 +24,7 @@
 .sb-component-header {
   display: grid;
   box-sizing: border-box;
-  grid-template-columns: 44px 44px 48px minmax(140px, 1fr) auto auto 44px;
+  grid-template-columns: 44px 44px 48px minmax(140px, 1fr) 160px 120px 44px;
   gap: 10px;
   align-items: center;
   min-height: 72px;
@@ -263,7 +263,7 @@
   background: #fff;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .sb-component-header {
     grid-template-columns: 44px 44px 44px minmax(0, 1fr) 44px;
     gap: 10px;
