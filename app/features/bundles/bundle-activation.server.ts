@@ -42,16 +42,16 @@ export interface PublishRecoveryJob {
 }
 
 export async function activateBundle(
-  admin: AdminClient, shopId: string, bundleId: string, replacedBundleId?: string,
+  admin: AdminClient, shopId: string, bundleId: string, replacedBundleId?: string, editorSaveToken?: string,
 ): Promise<void> {
   assertBundleWritesEnabled();
-  await recoverActivationSaves(admin, shopId, [bundleId, replacedBundleId]);
+  await recoverActivationSaves(admin, shopId,
+    editorSaveToken ? [replacedBundleId] : [bundleId, replacedBundleId]);
   const prepared = await preparePublication(admin, bundleId, shopId);
   assertPublicationReady(prepared);
   const claim = await claimActivation({
-    shopId, bundleId, replacedBundleId,
-    revision: prepared.revision.revision,
-    lockVersion: prepared.bundle.lockVersion,
+    shopId, bundleId, replacedBundleId, editorSaveToken,
+    revision: prepared.revision.revision, lockVersion: prepared.bundle.lockVersion,
   });
   try {
     await executeClaimedActivation(admin, shopId, claim, prepared);

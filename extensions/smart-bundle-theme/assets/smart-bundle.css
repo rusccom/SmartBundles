@@ -132,7 +132,7 @@
   color: var(--sb-muted);
   font-size: 0.875rem;
 }
-.sb__quantity { color: inherit; font-size: 1rem; font-weight: 650; }
+.sb__quantity { color: inherit; font-size: 1.5rem; font-weight: 650; line-height: 1; }
 .sb__component-discount { color: #8e1f0b; font-size: 0.75rem; font-weight: 650; }
 .sb__summary-meta {
   align-items: flex-end;
@@ -140,7 +140,9 @@
   white-space: nowrap;
 }
 .sb__line-price,
-.sb__option-price {
+.sb__option-price,
+.sb__total-row {
+  font-size: inherit;
   font-weight: 650;
 }
 .sb__chevron {
@@ -215,10 +217,10 @@
 .sb__total-row {
   align-items: baseline;
   display: flex;
-  font-size: 1.05rem;
   justify-content: space-between;
 }
 .sb__total-prices { display: inline-flex; gap: 0.5rem; }
+.sb__total-prices strong { font-weight: inherit; }
 .sb__button {
   background: rgb(var(--color-button, 18 18 18));
   border: 0;

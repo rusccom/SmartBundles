@@ -24,8 +24,9 @@ const savedSelect = {
 export function saveBundleDraft(
   claim: BundleSaveClaim,
   draft: BundleDraftInput,
+  retainClaim: boolean,
 ) {
-  return serializable((tx) => saveExisting(tx, { claim, draft }));
+  return serializable((tx) => saveExisting(tx, { claim, draft, retainClaim }));
 }
 
 export function createBundleDraft(
@@ -40,13 +41,14 @@ export function createBundleDraft(
 interface SaveInput {
   claim: BundleSaveClaim;
   draft: BundleDraftInput;
+  retainClaim: boolean;
 }
 
 async function saveExisting(tx: Prisma.TransactionClient, input: SaveInput) {
   const revision = await nextRevision(tx, input.claim.id);
   const updated = await tx.bundle.updateMany({
     where: bundleSaveClaimWhere(input.claim),
-    data: draftUpdate(input.draft, revision),
+    data: draftUpdate(input.draft, revision, input.retainClaim),
   });
   if (updated.count !== 1) throw new BundleVersionConflictError();
   await tx.bundleRevision.create({
@@ -149,7 +151,11 @@ function optionData(option: BundleSelectorInput["options"][number], position: nu
   };
 }
 
-function draftUpdate(draft: BundleDraftInput, revision: number): Prisma.BundleUpdateInput {
+function draftUpdate(
+  draft: BundleDraftInput,
+  revision: number,
+  retainClaim: boolean,
+): Prisma.BundleUpdateInput {
   return {
     pricingMode: draft.pricingMode,
     fixedPrice: draft.fixedPrice,
@@ -157,7 +163,7 @@ function draftUpdate(draft: BundleDraftInput, revision: number): Prisma.BundleUp
     draftRevision: revision,
     lastErrorCode: null,
     lastErrorMessage: null,
-    ...clearedBundleSaveClaim(),
+    ...(retainClaim ? {} : clearedBundleSaveClaim()),
     lockVersion: { increment: 1 },
   };
 }

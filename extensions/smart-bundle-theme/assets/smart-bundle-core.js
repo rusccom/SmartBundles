@@ -44,7 +44,15 @@ window.SmartBundleCore = Object.freeze({
     if (minor === null || !context) return null;
     try {
       const options = { style: "currency", currency: context.active, currencyDisplay: "narrowSymbol" };
-      return new Intl.NumberFormat(context.locale, options).format(minor / context.activeScale);
+      const currency = new Intl.NumberFormat(context.locale, options);
+      const resolved = currency.resolvedOptions();
+      const numberOptions = {
+        minimumFractionDigits: resolved.minimumFractionDigits,
+        maximumFractionDigits: resolved.maximumFractionDigits,
+      };
+      const value = minor / context.activeScale;
+      const symbol = currency.formatToParts(value).find(({ type }) => type === "currency")?.value;
+      return `${new Intl.NumberFormat(context.locale, numberOptions).format(value)} ${symbol || context.active}`;
     } catch { return `${(minor / context.activeScale).toFixed(Math.log10(context.activeScale))} ${context.active}`; }
   },
 });

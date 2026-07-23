@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { BundleStatus, Plan, type Prisma } from "@prisma/client";
 import { getBillingState } from "../billing/index.server";
 import { JOB_LEASE_MS } from "../operations/publication-job-lease.server";
+import { clearedBundleSaveClaim } from "./bundle-save-claim.server";
 import {
   FREE_ACTIVE_BUNDLE_LIMIT,
   QuotaExceededError,
@@ -39,6 +40,7 @@ export interface ActivationClaimInput {
   revision: number;
   lockVersion: number;
   replacedBundleId?: string;
+  editorSaveToken?: string;
 }
 
 interface ClaimRecord {
@@ -100,7 +102,10 @@ const claimSelect = {
 
 function assertTargetClaim(target: ClaimRecord, input: ActivationClaimInput): void {
   if (target.lockVersion !== input.lockVersion) throw new Error("Bundle changed before publication.");
-  if (BUSY_STATUSES.includes(target.status) || target.editorSaveToken) {
+  if (target.editorSaveToken !== (input.editorSaveToken ?? null)) {
+    throw new Error("Another bundle save is in progress.");
+  }
+  if (BUSY_STATUSES.includes(target.status)) {
     throw new Error("Another bundle operation is in progress.");
   }
   const revision = target.draftRevision ?? target.activeRevision;
@@ -152,9 +157,12 @@ async function claimRow(
   const updated = await tx.bundle.updateMany({
     where: {
       id: record.id, shopId, lockVersion: record.lockVersion,
-      status: record.status, editorSaveToken: null,
+      status: record.status, editorSaveToken: record.editorSaveToken,
     },
-    data: { status, countsTowardQuota: reserved, lockVersion: { increment: 1 } },
+    data: {
+      status, countsTowardQuota: reserved, lockVersion: { increment: 1 },
+      ...clearedBundleSaveClaim(),
+    },
   });
   if (updated.count !== 1) throw new Error("Concurrent bundle operation detected.");
   return operationRecord(record, status);

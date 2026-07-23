@@ -87,9 +87,10 @@ async function saveClaimedSubmission(
     assertBundleVersion: () => assertBundleSaveClaim(claim),
     beforeMutation: () => beginRemoteMutation(claim, attempt),
   });
-  const saved = await saveBundleDraft(claim, submission.draft);
+  const activating = context.form.get("intent") === "activate";
+  const saved = await saveBundleDraft(claim, submission.draft, activating);
   attempt.claim = undefined;
-  return finishEditorAction(context, saved.id, false);
+  return finishEditorAction(context, saved.id, false, activating ? claim : undefined);
 }
 
 async function beginRemoteMutation(claim: BundleSaveClaim, attempt: ExistingSaveAttempt) {
@@ -181,13 +182,19 @@ async function pauseEditorBundle(
   }
 }
 
-async function finishEditorAction(context: ActionContext, bundleId: string, created: boolean) {
+async function finishEditorAction(
+  context: ActionContext,
+  bundleId: string,
+  created: boolean,
+  saveClaim?: BundleSaveClaim,
+) {
   if (context.form.get("intent") !== "activate") return redirect(editorUrl(bundleId, "saved=1"));
   const replacement = stringValue(context.form.get("replacementId"));
   try {
-    await activateBundle(context.admin, context.shopId, bundleId, replacement);
+    await activateBundle(context.admin, context.shopId, bundleId, replacement, saveClaim?.token);
     return redirect(editorUrl(bundleId, "published=1"));
   } catch (error) {
+    if (saveClaim) await releaseFailedClaim(saveClaim);
     if (error instanceof QuotaExceededError) return redirect(editorUrl(bundleId, "quota=limit"));
     if (error instanceof BundleComponentValidationError) return componentFailure(bundleId, created, error);
     return redirect(editorUrl(bundleId, "sync=failed"));
