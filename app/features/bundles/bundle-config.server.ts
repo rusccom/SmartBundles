@@ -6,6 +6,7 @@ import type {
   PresentationConfig,
   RuntimeConfig,
 } from "./bundle.types";
+import type { StorefrontTextSource } from "../settings/storefront-text.types";
 
 const MAX_RUNTIME_BYTES = 9_500;
 const MAX_RUNTIME_COMPONENTS = 200;
@@ -88,12 +89,14 @@ function variantToken(id: string): string {
 export function buildPresentationConfig(
   identity: BundleProjectionIdentity,
   selectors: BundleSelectorInput[],
+  textSource: StorefrontTextSource,
 ): PresentationConfig {
   return {
-    sv: 3, rv: identity.revision, en: 1, b: identity.publicId,
+    sv: 4, rv: identity.revision, tv: textSource.version, en: 1, b: identity.publicId,
     parentVariantId: identity.parentVariantId,
     pricing: presentationPricing(identity),
     selectors,
+    texts: textSource.texts,
   };
 }
 

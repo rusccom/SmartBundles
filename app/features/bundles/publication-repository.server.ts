@@ -137,6 +137,7 @@ export interface PublishedRecord {
   revision: number;
   runtimeDigest: string;
   presentationDigest: string;
+  storefrontTextVersion: number;
   claimVersion: number;
 }
 
@@ -180,6 +181,7 @@ function publishedProjection(input: PublishedRecord) {
   return {
     runtimeDigest: input.runtimeDigest,
     presentationDigest: input.presentationDigest,
+    storefrontTextVersion: input.storefrontTextVersion,
     productStatus: "ACTIVE",
     published: true,
     checkedAt: new Date(),

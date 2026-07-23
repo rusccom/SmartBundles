@@ -1,6 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
 import type { BundlePricingMode, BundleSelectorInput } from "../bundles/bundle.types";
+import type { StorefrontTextSource } from "../settings/storefront-text.types";
+import { parseStoredStorefrontTexts } from "../settings/storefront-text-validation.server";
 
 export interface ActiveBundle {
   bundle: ActiveBundleRecord;
@@ -16,6 +18,7 @@ export interface ActiveParentSource {
   discountPercent: string;
   parentPrice: string;
   currencyCode: string;
+  storefrontTextSource: StorefrontTextSource;
 }
 
 interface ActiveBundleRecord {
@@ -31,8 +34,16 @@ interface ActiveBundleRecord {
   runtimeEnabled: boolean;
   lockVersion: number;
   updatedAt: Date;
-  shop: { domain: string; currencyCode: string | null; onlineStorePublicationGid: string | null };
+  shop: ActiveShopRecord;
   projection: { runtimeDigest: string | null; presentationDigest: string | null } | null;
+}
+
+interface ActiveShopRecord {
+  domain: string;
+  currencyCode: string | null;
+  onlineStorePublicationGid: string | null;
+  storefrontTexts: Prisma.JsonValue;
+  storefrontTextVersion: number;
 }
 
 interface ActiveRevisionRecord {
@@ -90,6 +101,10 @@ function activeSource(bundle: ActiveBundleRecord, revision: ActiveRevisionRecord
     discountPercent: revision.discountPercent.toString(),
     parentPrice: revision.parentPrice.toString(),
     currencyCode: requiredCurrencyCode(bundle.shop.currencyCode),
+    storefrontTextSource: {
+      version: bundle.shop.storefrontTextVersion,
+      texts: parseStoredStorefrontTexts(bundle.shop.storefrontTexts),
+    },
   };
 }
 
@@ -116,7 +131,15 @@ const bundleSelect = {
   runtimeEnabled: true,
   lockVersion: true,
   updatedAt: true,
-  shop: { select: { domain: true, currencyCode: true, onlineStorePublicationGid: true } },
+  shop: {
+    select: {
+      domain: true,
+      currencyCode: true,
+      onlineStorePublicationGid: true,
+      storefrontTexts: true,
+      storefrontTextVersion: true,
+    },
+  },
   projection: { select: { runtimeDigest: true, presentationDigest: true } },
 };
 

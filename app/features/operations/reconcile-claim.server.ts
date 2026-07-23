@@ -1,5 +1,6 @@
 import { type BundleStatus, type Prisma } from "@prisma/client";
 import prisma from "../../db.server";
+import { isStorefrontTextSyncPayload } from "../settings/storefront-text-sync.server";
 import type { LeasedPublicationJob } from "./publication-job-lease.server";
 
 const CLAIM_KEY = "reconcileClaimVersion";
@@ -30,8 +31,14 @@ async function createClaim(
 ): Promise<number | null> {
   const bundle = await reconciliationTarget(tx, job.bundleId!);
   if (!bundle?.activeRevision || !bundle.countsTowardQuota) return null;
+  if (bundle.status === "ARCHIVED") return null;
   if (bundle.editorSaveToken) throw new Error("Bundle editor save is in progress.");
-  if (["PUBLISHING", "UPDATING", "PAUSING"].includes(bundle.status)) return null;
+  if (["PUBLISHING", "UPDATING", "PAUSING"].includes(bundle.status)) {
+    if (isStorefrontTextSyncPayload(job.payload)) {
+      throw new Error("Bundle operation is in progress.");
+    }
+    return null;
+  }
   const version = bundle.lockVersion + 1;
   await claimBundle(tx, job.bundleId!, bundle.status, bundle.lockVersion);
   await persistJobClaim(tx, job, version);

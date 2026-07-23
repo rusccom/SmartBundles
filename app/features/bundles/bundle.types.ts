@@ -1,3 +1,5 @@
+import type { StorefrontTexts } from "../settings/storefront-text.types";
+
 export interface BundleVariantInput {
   id: string;
   title: string;
@@ -59,13 +61,15 @@ export interface RuntimeConfig {
 }
 
 export interface PresentationConfig {
-  sv: 3;
+  sv: 4;
   rv: number;
+  tv: number;
   en: 0 | 1;
   b: string;
   parentVariantId: string;
   pricing: PresentationPricing;
   selectors: BundleSelectorInput[];
+  texts: StorefrontTexts;
 }
 
 export type PresentationPricing =

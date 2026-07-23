@@ -1,26 +1,5 @@
 {
   "smart_bundle": {
-    "progress": "{{ selected }} of {{ total }} items selected",
-    "select_one_more": "Select 1 more item to continue.",
-    "select_many_more": "Select {{ count }} more items to continue.",
-    "choose_variant": "Choose a variant",
-    "choose_variant_for": "Choose a variant for {{ product }}",
-    "quantity": "×{{ quantity }}",
-    "sold_out": "Sold out",
-    "option_unavailable": "No variants are currently available.",
-    "bundle_price": "Bundle price",
-    "total": "Total",
-    "discount_badge": "Save {{ discount }}%",
-    "fixed_price_note": "Fixed price — your selections won’t change the total.",
-    "price_unavailable": "Price unavailable in your selected currency.",
-    "bundle_unavailable": "This bundle is temporarily unavailable.",
-    "loading": "Loading bundle…",
-    "adding": "Adding…",
-    "added": "Added",
-    "added_status": "Bundle added to cart.",
-    "add_error": "Couldn’t add the bundle. Please try again.",
-    "retry": "Try again",
-    "javascript_required": "JavaScript is required to build this bundle.",
     "editor_note": "Publish a valid Smart Bundle with components to show this block."
   }
 }

@@ -57,6 +57,7 @@ export async function publishPrepared(
   return {
     runtimeDigest: fields.runtime.compareDigest,
     presentationDigest: fields.presentation.compareDigest,
+    storefrontTextVersion: projected.presentation.tv,
   };
 }
 
@@ -71,6 +72,7 @@ function publicationGuard(bundleId: string, lockVersion: number): OperationGuard
 export interface PublicationResult {
   runtimeDigest: string;
   presentationDigest: string;
+  storefrontTextVersion: number;
 }
 
 function projectPublication(prepared: PreparedPublication, parentVariantId: string) {
@@ -81,7 +83,11 @@ function projectPublication(prepared: PreparedPublication, parentVariantId: stri
     });
     const identity = projectionIdentity(prepared, parentVariantId, prices);
     const runtime = buildRuntimeConfig(identity, prepared.selectors);
-    const presentation = buildPresentationConfig(identity, prepared.selectors);
+    const presentation = buildPresentationConfig(
+      identity,
+      prepared.selectors,
+      prepared.source.storefrontTextSource,
+    );
     return projectedPublication(prepared, runtime, presentation, prices);
   } catch (error) {
     throw bundleProjectionError(error);

@@ -7,7 +7,11 @@ import {
   jsonProjection,
   projectionHash,
 } from "../bundles/bundle-config.server";
-import type { BundleSelectorInput } from "../bundles/bundle.types";
+import type {
+  BundleSelectorInput,
+  PresentationConfig,
+  RuntimeConfig,
+} from "../bundles/bundle.types";
 import { bundleCompareAtPrice, calculateBundlePrices } from "../bundles/bundle-pricing";
 import {
   bundleProjectionError,
@@ -125,7 +129,11 @@ function buildProjection(active: ActiveBundle, selectors: BundleSelectorInput[])
     });
     const identity = projectionIdentity(active, variantId, prices);
     const runtime = buildRuntimeConfig(identity, selectors);
-    const presentation = buildPresentationConfig(identity, selectors);
+    const presentation = buildPresentationConfig(
+      identity,
+      selectors,
+      active.source.storefrontTextSource,
+    );
     return projectedValues(runtime, presentation, prices);
   } catch (error) {
     throw bundleProjectionError(error);
@@ -133,7 +141,7 @@ function buildProjection(active: ActiveBundle, selectors: BundleSelectorInput[])
 }
 
 function projectedValues(
-  runtime: unknown, presentation: unknown,
+  runtime: RuntimeConfig, presentation: PresentationConfig,
   prices: ReturnType<typeof calculateBundlePrices>,
 ) {
   return {
@@ -196,7 +204,7 @@ function reconciledState(
     runtimeDigest: fields.runtime.compareDigest,
     presentationMetafieldId: fields.presentation.id,
     presentationDigest: fields.presentation.compareDigest,
-    selectors,
+    storefrontTextVersion: projection.presentation.tv, selectors,
     lockVersion: active.bundle.lockVersion,
   };
 }

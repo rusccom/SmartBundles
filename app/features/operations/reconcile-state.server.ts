@@ -15,6 +15,7 @@ export interface ReconcileStateInput {
   runtimeDigest: string;
   presentationMetafieldId: string;
   presentationDigest: string;
+  storefrontTextVersion: number;
   selectors: BundleSelectorInput[];
   lockVersion: number;
 }
@@ -153,6 +154,7 @@ function projectionUpdate(input: ReconcileStateInput) {
     presentationMetafieldId: input.presentationMetafieldId,
     presentationDigest: input.presentationDigest,
     presentationHash: input.presentationHash,
+    storefrontTextVersion: input.storefrontTextVersion,
     productStatus: "ACTIVE",
     published: true,
     checkedAt: new Date(),
@@ -210,6 +212,7 @@ function emptyProjection() {
     presentationMetafieldId: null,
     presentationDigest: null,
     presentationHash: null,
+    storefrontTextVersion: null,
     productStatus: null,
     published: false,
     checkedAt: new Date(),

@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
+import { parseStoredStorefrontTexts } from "../settings/storefront-text-validation.server";
 import type { BundleSelectorInput } from "./bundle.types";
 
 const BUNDLE_PAGE_SIZE = 50;
@@ -142,7 +143,17 @@ const publicationBundleSelect = {
   activeRevision: true,
   draftRevision: true,
   lockVersion: true,
-  shop: true,
+  shop: {
+    select: {
+      currencyCode: true,
+      onlineStorePublicationGid: true,
+      eligibleForBundles: true,
+      ineligibilityReason: true,
+      cartTransformGid: true,
+      storefrontTexts: true,
+      storefrontTextVersion: true,
+    },
+  },
   projection: true,
 } satisfies Prisma.BundleSelect;
 
@@ -193,6 +204,10 @@ function publicationSource(bundle: PublicationBundle, revision: PublicationRevis
     discountPercent: revision.discountPercent.toString(),
     parentPrice: revision.parentPrice.toString(),
     currencyCode: requiredCurrencyCode(bundle.shop.currencyCode),
+    storefrontTextSource: {
+      version: bundle.shop.storefrontTextVersion,
+      texts: parseStoredStorefrontTexts(bundle.shop.storefrontTexts),
+    },
   };
 }
 

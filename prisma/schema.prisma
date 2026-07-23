@@ -87,7 +87,6 @@ model Session {
   emailVerified       Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
-
   @@index([shop])
   @@index([expires])
 }
@@ -96,6 +95,8 @@ model Shop {
   shopGid                   String?            @unique
   domain                    String             @unique
   currencyCode              String?
+  storefrontTexts           Json
+  storefrontTextVersion     Int                @default(1)
   installationStatus        InstallationStatus @default(INSTALLED)
   eligibleForBundles        Boolean            @default(false)
   ineligibilityReason       String?
@@ -128,7 +129,6 @@ model ShopEntitlement {
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   shop                  Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
   @@index([plan, billingPolledAt])
   @@index([plan, quotaEnforcedAt])
   @@index([pendingPlan, pendingEffectiveAt])
@@ -166,7 +166,6 @@ model Bundle {
   revisions              BundleRevision[]
   projection             ShopifyProjection?
   publicationJobs        PublicationJob[]
-
   @@unique([shopId, publicId])
   @@unique([shopId, parentProductGid])
   @@unique([shopId, parentVariantGid])
@@ -192,24 +191,22 @@ model BundleRevision {
   createdAt          DateTime         @default(now())
   bundle             Bundle           @relation(fields: [bundleId], references: [id], onDelete: Cascade)
   selectors          BundleSelector[]
-
   @@unique([bundleId, revision])
   @@index([bundleId, status])
   @@index([createdAt])
 }
 model BundleSelector {
-  id           String                @id @default(uuid()) @db.Uuid
-  revisionId   String                @db.Uuid
-  selectorKey  Int
-  position     Int
-  label        String
-  productGid   String
-  productTitle String
-  quantity     Int                   @default(1)
-  discountPercent Decimal            @default(0) @db.Decimal(5, 2)
-  revision     BundleRevision        @relation(fields: [revisionId], references: [id], onDelete: Cascade)
-  options      BundleVariantOption[]
-
+  id              String                @id @default(uuid()) @db.Uuid
+  revisionId      String                @db.Uuid
+  selectorKey     Int
+  position        Int
+  label           String
+  productGid      String
+  productTitle    String
+  quantity        Int                   @default(1)
+  discountPercent Decimal               @default(0) @db.Decimal(5, 2)
+  revision        BundleRevision        @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  options         BundleVariantOption[]
   @@unique([revisionId, selectorKey])
   @@unique([revisionId, position])
   @@index([productGid])
@@ -224,7 +221,6 @@ model BundleVariantOption {
   available  Boolean        @default(true)
   unitPrice  Decimal?       @db.Decimal(12, 2)
   selector   BundleSelector @relation(fields: [selectorId], references: [id], onDelete: Cascade)
-
   @@unique([selectorId, variantGid])
   @@index([variantGid])
 }
@@ -236,13 +232,13 @@ model ShopifyProjection {
   presentationMetafieldId String?
   presentationDigest      String?
   presentationHash        String?
+  storefrontTextVersion   Int?
   productStatus           String?
   published               Boolean   @default(false)
   checkedAt               DateTime?
   updatedAt               DateTime  @updatedAt
   bundle                  Bundle    @relation(fields: [bundleId], references: [id], onDelete: Cascade)
 }
-
 model PublicationJob {
   id             String             @id @default(uuid()) @db.Uuid
   shopId         String             @db.Uuid
@@ -261,11 +257,9 @@ model PublicationJob {
   updatedAt      DateTime           @updatedAt
   shop           Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
   bundle         Bundle?            @relation(fields: [bundleId], references: [id], onDelete: Cascade)
-
   @@index([state, nextAttemptAt])
   @@index([state, updatedAt])
 }
-
 model OutboxEvent {
   id          String    @id @default(uuid()) @db.Uuid
   shopId      String    @db.Uuid
@@ -275,10 +269,8 @@ model OutboxEvent {
   deliveredAt DateTime?
   createdAt   DateTime  @default(now())
   shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
   @@index([deliveredAt, createdAt])
 }
-
 model WebhookDelivery {
   id              String       @id @default(uuid()) @db.Uuid
   shopId          String?      @db.Uuid
@@ -294,7 +286,6 @@ model WebhookDelivery {
   updatedAt       DateTime     @updatedAt
   processedAt     DateTime?
   shop            Shop?        @relation(fields: [shopId], references: [id], onDelete: SetNull)
-
   @@index([state, updatedAt])
   @@index([shopDomain])
 }

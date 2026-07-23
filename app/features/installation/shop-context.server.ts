@@ -1,4 +1,6 @@
+import type { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
+import { defaultStorefrontTexts } from "../settings/storefront-text-defaults";
 import type { AdminClient } from "../shopify/admin-api.server";
 import { adminRequest, assertNoUserErrors } from "../shopify/admin-api.server";
 
@@ -110,7 +112,11 @@ function updateData(context: ShopQuery, transform: string | null, publication?: 
 }
 
 function createData(context: ShopQuery, transform: string | null, publication?: string) {
-  return { domain: context.shop.myshopifyDomain, ...updateData(context, transform, publication) };
+  return {
+    domain: context.shop.myshopifyDomain,
+    storefrontTexts: defaultStorefrontTexts() as unknown as Prisma.InputJsonValue,
+    ...updateData(context, transform, publication),
+  };
 }
 
 async function ensureEntitlement(shopId: string) {

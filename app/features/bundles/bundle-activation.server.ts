@@ -129,7 +129,11 @@ async function executeActivation(
 async function commitActivation(
   shopId: string,
   target: ClaimedBundleOperation,
-  result: { runtimeDigest: string; presentationDigest: string },
+  result: {
+    runtimeDigest: string;
+    presentationDigest: string;
+    storefrontTextVersion: number;
+  },
 ): Promise<void> {
   try {
     await markPublished({
