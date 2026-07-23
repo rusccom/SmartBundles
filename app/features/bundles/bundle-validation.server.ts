@@ -1,5 +1,6 @@
 import type {
   BundleContentSubmission,
+  BundleDesiredStatus,
   BundleDraftInput,
   BundlePricingMode,
   BundleSelectorInput,
@@ -17,14 +18,21 @@ const MAX_QUANTITY = 2_000;
 export function parseBundleForm(form: FormData): BundleValidationResult {
   const draft = bundleDraft(form);
   const content = contentSubmission(form);
+  const desiredStatus = parsedDesiredStatus(rawValue(form, "desiredStatus"));
   const bundleVersion = parseBundleVersion(rawValue(form, "bundleVersion"));
   const errors = validateBundle(draft);
   if (!validPricingMode(rawValue(form, "pricingMode"))) errors.pricingMode = "Choose a pricing mode.";
+  if (!desiredStatus) errors.desiredStatus = "Choose a bundle status.";
   if (bundleVersion === undefined) errors.form = "The bundle version is invalid. Reload and try again.";
   if (!validDirtyValue(rawValue(form, "descriptionDirty"))) errors.description = "Description state is invalid.";
-  if (bundleVersion === undefined) return { errors };
-  const data = { draft, content, bundleVersion, creationToken: rawValue(form, "creationToken") };
+  if (bundleVersion === undefined || !desiredStatus) return { errors };
+  const data = { draft, content, desiredStatus, bundleVersion, creationToken: rawValue(form, "creationToken") };
   return { data, errors };
+}
+
+function parsedDesiredStatus(value: string): BundleDesiredStatus | undefined {
+  if (value === "ACTIVE" || value === "DRAFT") return value;
+  return undefined;
 }
 
 function bundleDraft(form: FormData): BundleDraftInput {

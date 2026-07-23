@@ -13,7 +13,7 @@ import {
   saveBundleDraft,
 } from "./bundle-draft-repository.server";
 import { BundleVersionConflictError } from "./BundleVersionConflictError.server";
-import { pauseBundle } from "./bundle-pause.server";
+import { pauseSavedBundle, type SavedBundlePauseInput } from "./bundle-pause.server";
 import { QuotaExceededError } from "./bundle-quota.server";
 import { recoverBundleSaveClaim } from "./bundle-save-recovery.server";
 import {
@@ -50,7 +50,6 @@ export async function bundleEditorAction(request: Request, bundleId: string | nu
   const shop = await ensureShopContext(admin, session.shop);
   if (bundleWritesDisabled()) return maintenanceFailure();
   const form = await request.formData();
-  if (form.get("intent") === "pause") return pauseEditorBundle(admin, shop.id, bundleId);
   const parsed = parseBundleForm(form);
   if (Object.keys(parsed.errors).length || !parsed.data) return failure(400, undefined, parsed.errors);
   const context = { admin, shopId: shop.id, shopDomain: session.shop, bundleId, form };
@@ -87,10 +86,36 @@ async function saveClaimedSubmission(
     assertBundleVersion: () => assertBundleSaveClaim(claim),
     beforeMutation: () => beginRemoteMutation(claim, attempt),
   });
-  const activating = context.form.get("intent") === "activate";
-  const saved = await saveBundleDraft(claim, submission.draft, activating);
+  const activating = submission.desiredStatus === "ACTIVE";
+  const pausing = submission.desiredStatus === "DRAFT" && canPause(claim.status);
+  const saved = await saveBundleDraft(claim, submission.draft, activating || pausing);
   attempt.claim = undefined;
-  return finishEditorAction(context, saved.id, false, activating ? claim : undefined);
+  return finishEditorAction(context, saved.id, existingFinish(activating, pausing, claim, saved));
+}
+
+function existingFinish(
+  activating: boolean,
+  pausing: boolean,
+  claim: BundleSaveClaim,
+  saved: Awaited<ReturnType<typeof saveBundleDraft>>,
+): EditorFinish {
+  return {
+    activating, created: false,
+    pause: pausing ? savedPauseInput(claim, saved) : undefined,
+    saveClaim: activating ? claim : undefined,
+  };
+}
+
+function savedPauseInput(
+  claim: BundleSaveClaim,
+  saved: Awaited<ReturnType<typeof saveBundleDraft>>,
+): Omit<SavedBundlePauseInput, "shopId" | "bundleId"> {
+  const revision = saved.activeRevision ?? saved.draftRevision;
+  if (revision === null) throw new Error("Bundle has no revision to pause.");
+  return {
+    revision, lockVersion: saved.lockVersion,
+    status: claim.status, saveToken: claim.token,
+  };
 }
 
 async function beginRemoteMutation(claim: BundleSaveClaim, attempt: ExistingSaveAttempt) {
@@ -105,7 +130,10 @@ async function saveNewSubmission(context: ActionContext, submission: BundleEdito
       context.admin, context.shopDomain, submission.creationToken, submission.content,
     );
     const saved = await createBundleDraft(context.shopId, created.publicId, created.parent, submission.draft);
-    return finishEditorAction(context, saved.id, true);
+    return finishEditorAction(context, saved.id, {
+      activating: submission.desiredStatus === "ACTIVE",
+      created: true,
+    });
   } catch (error) {
     return knownSaveError(error, true);
   }
@@ -166,39 +194,47 @@ function failure(status: number, message: string | undefined, errors: Record<str
   return data<EditorActionError>({ errors, message }, { status });
 }
 
-async function pauseEditorBundle(
-  admin: Parameters<typeof pauseBundle>[0],
-  shopId: string,
-  bundleId: string | null,
-): Promise<Response> {
-  if (!bundleId) throw new Response("Bundle not found", { status: 404 });
+async function finishEditorAction(
+  context: ActionContext,
+  bundleId: string,
+  finish: EditorFinish,
+) {
+  if (finish.pause) return finishSavedPause(context, bundleId, finish.pause);
+  if (!finish.activating) return redirect(editorUrl(bundleId, "saved=1"));
+  const replacement = stringValue(context.form.get("replacementId"));
   try {
-    const recovery = await recoverBundleSaveClaim(admin, shopId, bundleId);
-    if (recovery === "WAITING") return redirect(editorUrl(bundleId, "save=pending"));
-    await pauseBundle(admin, shopId, bundleId);
+    await activateBundle(context.admin, context.shopId, bundleId, replacement, finish.saveClaim?.token);
+    return redirect(editorUrl(bundleId, "published=1"));
+  } catch (error) {
+    if (finish.saveClaim) await releaseFailedClaim(finish.saveClaim);
+    if (error instanceof QuotaExceededError) return redirect(editorUrl(bundleId, "quota=limit"));
+    if (error instanceof BundleComponentValidationError) return componentFailure(bundleId, finish.created, error);
+    return redirect(editorUrl(bundleId, "sync=failed"));
+  }
+}
+
+interface EditorFinish {
+  activating: boolean;
+  created: boolean;
+  pause?: Omit<SavedBundlePauseInput, "shopId" | "bundleId">;
+  saveClaim?: BundleSaveClaim;
+}
+
+async function finishSavedPause(
+  context: ActionContext,
+  bundleId: string,
+  pause: NonNullable<EditorFinish["pause"]>,
+): Promise<Response> {
+  try {
+    await pauseSavedBundle(context.admin, { ...pause, shopId: context.shopId, bundleId });
     return redirect(editorUrl(bundleId, "paused=1"));
   } catch {
     return redirect(editorUrl(bundleId, "sync=failed"));
   }
 }
 
-async function finishEditorAction(
-  context: ActionContext,
-  bundleId: string,
-  created: boolean,
-  saveClaim?: BundleSaveClaim,
-) {
-  if (context.form.get("intent") !== "activate") return redirect(editorUrl(bundleId, "saved=1"));
-  const replacement = stringValue(context.form.get("replacementId"));
-  try {
-    await activateBundle(context.admin, context.shopId, bundleId, replacement, saveClaim?.token);
-    return redirect(editorUrl(bundleId, "published=1"));
-  } catch (error) {
-    if (saveClaim) await releaseFailedClaim(saveClaim);
-    if (error instanceof QuotaExceededError) return redirect(editorUrl(bundleId, "quota=limit"));
-    if (error instanceof BundleComponentValidationError) return componentFailure(bundleId, created, error);
-    return redirect(editorUrl(bundleId, "sync=failed"));
-  }
+function canPause(status: string): boolean {
+  return status === "ACTIVE" || status === "NEEDS_ATTENTION";
 }
 
 function componentFailure(bundleId: string, created: boolean, error: BundleComponentValidationError) {

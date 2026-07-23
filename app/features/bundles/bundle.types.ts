@@ -17,6 +17,7 @@ export interface BundleSelectorInput {
 }
 
 export type BundlePricingMode = "FIXED" | "DYNAMIC";
+export type BundleDesiredStatus = "ACTIVE" | "DRAFT";
 
 export interface BundleDraftInput {
   pricingMode: BundlePricingMode;
@@ -35,6 +36,7 @@ export interface BundleContentSubmission {
 export interface BundleEditorSubmission {
   draft: BundleDraftInput;
   content: BundleContentSubmission;
+  desiredStatus: BundleDesiredStatus;
   bundleVersion: number | null;
   creationToken: string;
 }

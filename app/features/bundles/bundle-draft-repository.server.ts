@@ -19,6 +19,7 @@ const savedSelect = {
   draftRevision: true,
   activeRevision: true,
   lockVersion: true,
+  status: true,
 } satisfies Prisma.BundleSelect;
 
 export function saveBundleDraft(

@@ -9,6 +9,7 @@ import {
 } from "../operations/pause-job.server";
 import type { ReplacementRestoreClaim } from "../operations/replacement-quota-restore.server";
 import { serializable } from "./bundle-quota.server";
+import { clearedBundleSaveClaim } from "./bundle-save-claim.server";
 import { recoverBundleSaveClaim } from "./bundle-save-recovery.server";
 import { assertBundleWritesEnabled } from "../operations/bundle-write-gate.server";
 
@@ -24,6 +25,22 @@ export interface BundlePauseClaim {
   revision: number;
   claimVersion: number;
   recoveryJobId?: string;
+}
+
+export interface SavedBundlePauseInput {
+  shopId: string;
+  bundleId: string;
+  revision: number;
+  lockVersion: number;
+  status: BundleStatus;
+  saveToken: string;
+}
+
+export async function pauseSavedBundle(admin: AdminClient, input: SavedBundlePauseInput): Promise<void> {
+  assertBundleWritesEnabled();
+  const claim = await serializable((tx) => claimSavedPause(tx, input));
+  const result = await pauseClaimedBundle(admin, claim);
+  if (result === "QUEUED") throw new Error("Bundle pause was queued for retry.");
 }
 
 export async function pauseBundle(
@@ -84,6 +101,33 @@ async function claimManualPause(
     const recoveryJobId = await createPauseRecoveryJob(tx, pauseJobInput(claim));
     return { ...claim, recoveryJobId };
   });
+}
+
+async function claimSavedPause(
+  tx: Prisma.TransactionClient,
+  input: SavedBundlePauseInput,
+): Promise<BundlePauseClaim> {
+  const claim = savedPauseClaim(input);
+  const updated = await tx.bundle.updateMany({
+    where: {
+      id: input.bundleId, shopId: input.shopId, status: input.status,
+      lockVersion: input.lockVersion, editorSaveToken: input.saveToken,
+    },
+    data: {
+      status: "PAUSING", lockVersion: { increment: 1 }, ...clearedBundleSaveClaim(),
+      lastErrorCode: null, lastErrorMessage: null,
+    },
+  });
+  if (updated.count !== 1) throw new Error("Concurrent bundle operation detected.");
+  const recoveryJobId = await createPauseRecoveryJob(tx, pauseJobInput(claim));
+  return { ...claim, recoveryJobId };
+}
+
+function savedPauseClaim(input: SavedBundlePauseInput): BundlePauseClaim {
+  return {
+    shopId: input.shopId, bundleId: input.bundleId,
+    revision: input.revision, claimVersion: input.lockVersion + 1,
+  };
 }
 
 function pauseTarget(
