@@ -40,3 +40,34 @@ export function reorderSelectors(items: EditorSelector[], activeKey: number, ove
   next.splice(to, 0, item);
   return next;
 }
+
+export function toggleSelectorOption(items: EditorSelector[], index: number, id: string) {
+  return items.map((selector, current) =>
+    current === index && !isSimpleBundleComponent(selector)
+      ? { ...selector, options: selector.options.map((option) =>
+        option.id === id ? { ...option, allowed: !option.allowed } : option) }
+      : selector);
+}
+
+export function setSelectorQuantity(
+  items: EditorSelector[],
+  index: number,
+  quantity: number,
+) {
+  return items.map((selector, current) =>
+    current === index ? { ...selector, quantity } : selector);
+}
+
+export function setSelectorDiscount(
+  items: EditorSelector[],
+  index: number,
+  discountPercent: string,
+) {
+  return items.map((selector, current) =>
+    current === index ? { ...selector, discountPercent } : selector);
+}
+
+export function clearSelectorDiscounts(items: EditorSelector[]) {
+  return items.map((selector) =>
+    selector.discountPercent === "0" ? selector : { ...selector, discountPercent: "0" });
+}

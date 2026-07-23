@@ -1,4 +1,4 @@
-import { data, redirect } from "react-router";
+import { data } from "react-router";
 import { authenticate } from "../../shopify.server";
 import { ensureShopContext } from "../installation/shop-context.server";
 import { bundleWritesDisabled } from "../operations/bundle-write-gate.server";
@@ -24,12 +24,12 @@ import {
   type BundleSaveClaim,
 } from "./bundle-save-claim.server";
 import type { BundleEditorSubmission } from "./bundle.types";
+import type {
+  BundleEditorActionData,
+  BundleEditorReceipt,
+  BundleEditorReceiptKind,
+} from "./bundle-editor-action.types";
 import { parseBundleForm } from "./bundle-validation.server";
-
-export interface EditorActionError {
-  errors: Record<string, string>;
-  message?: string;
-}
 
 interface ActionContext {
   admin: AdminClient;
@@ -70,7 +70,7 @@ async function saveExistingSubmission(context: ActionContext, submission: Bundle
     return await saveClaimedSubmission(context, submission, attempt);
   } catch (error) {
     if (attempt.claim && !attempt.remoteStarted) await releaseFailedClaim(attempt.claim);
-    return knownSaveError(error, attempt.productSaved);
+    return knownSaveError(error, attempt.productSaved || attempt.remoteStarted);
   }
 }
 
@@ -100,7 +100,8 @@ function existingFinish(
   saved: Awaited<ReturnType<typeof saveBundleDraft>>,
 ): EditorFinish {
   return {
-    activating, created: false,
+    activating,
+    editorRevision: savedRevision(saved),
     pause: pausing ? savedPauseInput(claim, saved) : undefined,
     saveClaim: activating ? claim : undefined,
   };
@@ -125,17 +126,19 @@ async function beginRemoteMutation(claim: BundleSaveClaim, attempt: ExistingSave
 
 async function saveNewSubmission(context: ActionContext, submission: BundleEditorSubmission) {
   if (submission.bundleVersion !== null) return invalidVersion();
+  let productSaved = false;
   try {
     const created = await createSubmittedParent(
       context.admin, context.shopDomain, submission.creationToken, submission.content,
     );
+    productSaved = true;
     const saved = await createBundleDraft(context.shopId, created.publicId, created.parent, submission.draft);
     return finishEditorAction(context, saved.id, {
       activating: submission.desiredStatus === "ACTIVE",
-      created: true,
+      editorRevision: savedRevision(saved),
     });
   } catch (error) {
-    return knownSaveError(error, true);
+    return knownSaveError(error, productSaved);
   }
 }
 
@@ -162,9 +165,18 @@ async function releaseFailedClaim(claim: BundleSaveClaim): Promise<void> {
 
 function knownSaveError(error: unknown, productSaved: boolean) {
   if (error instanceof BundleContentError) {
+    if (productSaved || error.productSaved || error.status === 502) {
+      return uncertain(error.status, error.message, error.errors);
+    }
     return failure(error.status, error.message, error.errors);
   }
   if (error instanceof BundleVersionConflictError) return versionConflict(productSaved);
+  if (productSaved) {
+    console.error("[bundle-editor] Local save failed after Shopify changed.", error);
+    return uncertain(500,
+      "Shopify content may have been saved, but the bundle state could not be confirmed. Reload before continuing.",
+      {});
+  }
   throw error;
 }
 
@@ -180,7 +192,7 @@ function versionConflict(productSaved: boolean) {
   const message = productSaved
     ? "Shopify content was saved, but this bundle draft changed in another tab. Reload before saving the bundle settings again."
     : "This bundle changed in another tab. Reload before saving.";
-  return failure(409, message, {});
+  return productSaved ? uncertain(409, message, {}) : failure(409, message, {});
 }
 
 function recoveryConflict(recovery: "WAITING" | "RECOVERED") {
@@ -191,7 +203,11 @@ function recoveryConflict(recovery: "WAITING" | "RECOVERED") {
 }
 
 function failure(status: number, message: string | undefined, errors: Record<string, string>) {
-  return data<EditorActionError>({ errors, message }, { status });
+  return data<BundleEditorActionData>({ outcome: "rejected", errors, message }, { status });
+}
+
+function uncertain(status: number, message: string, errors: Record<string, string>) {
+  return data<BundleEditorActionData>({ outcome: "uncertain", errors, message }, { status });
 }
 
 async function finishEditorAction(
@@ -199,23 +215,21 @@ async function finishEditorAction(
   bundleId: string,
   finish: EditorFinish,
 ) {
-  if (finish.pause) return finishSavedPause(context, bundleId, finish.pause);
-  if (!finish.activating) return redirect(editorUrl(bundleId, "saved=1"));
+  if (finish.pause) return finishSavedPause(context, bundleId, finish);
+  if (!finish.activating) return accepted(bundleId, finish, "saved", "Bundle saved.");
   const replacement = stringValue(context.form.get("replacementId"));
   try {
     await activateBundle(context.admin, context.shopId, bundleId, replacement, finish.saveClaim?.token);
-    return redirect(editorUrl(bundleId, "published=1"));
+    return accepted(bundleId, finish, "published", "Bundle saved and published.");
   } catch (error) {
     if (finish.saveClaim) await releaseFailedClaim(finish.saveClaim);
-    if (error instanceof QuotaExceededError) return redirect(editorUrl(bundleId, "quota=limit"));
-    if (error instanceof BundleComponentValidationError) return componentFailure(bundleId, finish.created, error);
-    return redirect(editorUrl(bundleId, "sync=failed"));
+    return activationFailure(bundleId, finish, error);
   }
 }
 
 interface EditorFinish {
   activating: boolean;
-  created: boolean;
+  editorRevision: number;
   pause?: Omit<SavedBundlePauseInput, "shopId" | "bundleId">;
   saveClaim?: BundleSaveClaim;
 }
@@ -223,13 +237,15 @@ interface EditorFinish {
 async function finishSavedPause(
   context: ActionContext,
   bundleId: string,
-  pause: NonNullable<EditorFinish["pause"]>,
-): Promise<Response> {
+  finish: EditorFinish,
+) {
+  const pause = finish.pause!;
   try {
     await pauseSavedBundle(context.admin, { ...pause, shopId: context.shopId, bundleId });
-    return redirect(editorUrl(bundleId, "paused=1"));
+    return accepted(bundleId, finish, "paused", "Bundle saved and paused.");
   } catch {
-    return redirect(editorUrl(bundleId, "sync=failed"));
+    return accepted(bundleId, finish, "sync",
+      "Bundle draft saved, but Shopify publication needs retry.");
   }
 }
 
@@ -237,17 +253,39 @@ function canPause(status: string): boolean {
   return status === "ACTIVE" || status === "NEEDS_ATTENTION";
 }
 
-function componentFailure(bundleId: string, created: boolean, error: BundleComponentValidationError) {
-  if (created) return redirect(editorUrl(bundleId, componentQuery(error)));
-  return failure(400, undefined, { selectors: error.message });
+function componentMessage(error: BundleComponentValidationError): string {
+  const issue = error.code === "SOLD_OUT"
+    ? "Each component needs an available variant."
+    : "A component is no longer valid or published to Online Store.";
+  return `Bundle draft saved. ${issue}`;
 }
 
-function componentQuery(error: BundleComponentValidationError): string {
-  return error.code === "SOLD_OUT" ? "component=sold-out" : "component=invalid";
+function activationFailure(bundleId: string, finish: EditorFinish, error: unknown) {
+  if (error instanceof QuotaExceededError) {
+    return accepted(bundleId, finish, "quota", "Bundle draft saved. Choose an active bundle to replace.");
+  }
+  if (error instanceof BundleComponentValidationError) {
+    return accepted(bundleId, finish, "component", componentMessage(error));
+  }
+  return accepted(bundleId, finish, "sync", "Bundle draft saved, but Shopify publication needs retry.");
 }
 
-function editorUrl(bundleId: string, query: string): string {
-  return `/app/bundles/${bundleId}?${query}`;
+function accepted(
+  bundleId: string,
+  finish: Pick<EditorFinish, "editorRevision">,
+  kind: BundleEditorReceiptKind,
+  message: string,
+) {
+  const receipt: BundleEditorReceipt = {
+    bundleId, editorRevision: finish.editorRevision, kind, message,
+  };
+  return data<BundleEditorActionData>({ outcome: "accepted", receipt });
+}
+
+function savedRevision(saved: { draftRevision: number | null; activeRevision: number | null }): number {
+  const revision = saved.draftRevision ?? saved.activeRevision;
+  if (revision === null) throw new Error("Bundle has no editor revision.");
+  return revision;
 }
 
 function stringValue(value: FormDataEntryValue | null): string | undefined {

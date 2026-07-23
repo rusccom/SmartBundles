@@ -1,24 +1,19 @@
-import { useState } from "react";
 import { BundleEditorForm } from "./BundleEditorForm";
-import { BundleSaveToast } from "./BundleSaveToast";
-import type { BundleEditorInitial } from "./editor.types";
+import type { BundleEditorInitial, BundleEditorRecovery } from "./editor.types";
 
 export interface BundleEditorPageProps {
   initial: BundleEditorInitial;
-  errors?: Record<string, string>;
   quotaCandidates?: Array<{ id: string; title: string }>;
   pricingEnabled?: boolean;
-  serverMessage?: string;
+  recovery?: BundleEditorRecovery;
 }
 
-export function BundleEditorPage({ initial, errors = {}, quotaCandidates = [], pricingEnabled = false, serverMessage }: BundleEditorPageProps) {
-  const [discardVersion, setDiscardVersion] = useState(0);
-  const formKey = `${initial.id ?? "new"}:${initial.version}:${discardVersion}`;
-  return <s-page heading={initial.id ? `Edit ${initial.title}` : "Create bundle"}>
-    <BundleSaveToast />
+export function BundleEditorPage(props: BundleEditorPageProps) {
+  return <s-page heading={props.initial.id ? `Edit ${props.initial.title}` : "Create bundle"}>
     <s-link slot="breadcrumb-actions" href="/app/bundles">Bundles</s-link>
-    <BundleEditorForm key={formKey} initial={initial} errors={errors}
-      quotaCandidates={quotaCandidates} pricingEnabled={pricingEnabled} serverMessage={serverMessage}
-      onDiscard={() => setDiscardVersion((value) => value + 1)} />
+    <BundleEditorForm initial={props.initial}
+      quotaCandidates={props.quotaCandidates ?? []}
+      pricingEnabled={props.pricingEnabled ?? false}
+      recovery={props.recovery} />
   </s-page>;
 }

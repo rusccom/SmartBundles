@@ -1,101 +1,75 @@
 import { useCallback, useEffect, useState } from "react";
 import { useEditor } from "@tiptap/react";
+import type { DescriptionEditorProps } from "./DescriptionEditor";
 import type { DescriptionEditorInstance } from "./description-editor.types";
 import { descriptionExtensions } from "./description-extensions";
 import { sanitizeDescriptionClient } from "./description-sanitize.client";
 
 const NORMALIZED = "Visual editing normalizes this HTML to the supported formatting when you change the description.";
 
-interface DescriptionStateSetters {
-  value: (value: string) => void;
-  dirty: (value: boolean) => void;
-  htmlMode: (value: boolean) => void;
-  warning: (value: string) => void;
+interface DescriptionUiState {
+  canonicalValue: string;
+  htmlMode: boolean;
+  warning: string;
 }
 
-type DescriptionModeSetters = Pick<DescriptionStateSetters, "value" | "htmlMode" | "warning">;
-
-export function useDescriptionEditor(initialValue: string, error?: string) {
-  const state = useDescriptionFieldState(initialValue);
-  const editor = useDescriptionTiptap(error, state.sync);
-  const reset = state.reset;
-  useEffect(() => reset(editor, initialValue), [editor, initialValue, reset]);
-  const toggleMode = useCallback(() => toggleDescriptionMode(
-    editor, state.value, state.htmlMode, state.dirty, {
-      value: state.setValue, htmlMode: state.setHtmlMode, warning: state.setWarning,
-    },
-  ), [editor, state.dirty, state.htmlMode, state.setHtmlMode, state.setValue,
-    state.setWarning, state.value]);
-  return { editor, value: state.value, setRawValue: state.setRawValue, dirty: state.dirty,
-    htmlMode: state.htmlMode, toggleMode, warning: state.warning };
+export function useDescriptionEditor(input: DescriptionEditorProps) {
+  const [ui, setUi] = useState(() => initialUi(input.value));
+  const current = !input.dirty && ui.canonicalValue !== input.value
+    ? initialUi(input.value) : ui;
+  if (current !== ui) setUi(current);
+  const editor = useDescriptionTiptap(input);
+  useEffect(() => syncExternalValue(editor, input.value, current.htmlMode),
+    [current.htmlMode, editor, input.value]);
+  useEffect(() => editor?.setEditable(!input.disabled), [editor, input.disabled]);
+  const toggleMode = useCallback(() =>
+    toggleDescriptionMode(editor, input, current, setUi), [current, editor, input]);
+  const setRawValue = useCallback((value: string) => {
+    input.onChange(value, true);
+    setUi((state) => ({ ...state, warning: "" }));
+  }, [input]);
+  return { editor, htmlMode: current.htmlMode, warning: current.warning,
+    toggleMode, setRawValue };
 }
 
-function useDescriptionFieldState(initialValue: string) {
-  const [value, setValue] = useState(initialValue);
-  const [htmlMode, setHtmlMode] = useState(false), [dirty, setDirty] = useState(false);
-  const [warning, setWarning] = useState("");
-  const sync = useCallback((editor: DescriptionEditorInstance) => syncEditorValue(editor, setValue, setDirty), []);
-  const reset = useCallback((editor: DescriptionEditorInstance | null, initial: string) => resetDescription(editor, initial, {
-    value: setValue, dirty: setDirty, htmlMode: setHtmlMode, warning: setWarning,
-  }), []);
-  const setRawValue = useCallback((raw: string) => {
-    setValue(raw);
-    setDirty(true);
-    setWarning("");
-  }, []);
-  return { value, htmlMode, dirty, warning, sync, reset, setRawValue,
-    setValue, setHtmlMode, setWarning };
-}
-
-function syncEditorValue(
-  editor: DescriptionEditorInstance,
-  setValue: (value: string) => void,
-  setDirty: (value: boolean) => void,
-): void {
-  if (!editor.isEditable) return;
-  setValue(sanitizeDescriptionClient(editor.getHTML()));
-  setDirty(true);
-}
-
-function useDescriptionTiptap(
-  error: string | undefined,
-  sync: (editor: DescriptionEditorInstance) => void,
-) {
+function useDescriptionTiptap(input: DescriptionEditorProps) {
   return useEditor({
     immediatelyRender: false,
     extensions: descriptionExtensions,
     content: "",
-    editorProps: { attributes: editorAttributes(Boolean(error)) },
-    onUpdate: ({ editor }) => sync(editor),
+    editorProps: { attributes: editorAttributes(Boolean(input.error)) },
+    onUpdate: ({ editor }) => {
+      if (editor.isEditable) input.onChange(sanitizeDescriptionClient(editor.getHTML()), true);
+    },
   });
 }
 
-function resetDescription(
+function syncExternalValue(
   editor: DescriptionEditorInstance | null,
-  initialValue: string,
-  setters: DescriptionStateSetters,
+  value: string,
+  htmlMode: boolean,
 ): void {
-  if (!editor) return;
-  const visual = loadVisualContent(editor, initialValue);
-  setters.value(initialValue);
-  setters.dirty(false);
-  setters.htmlMode(false);
-  setters.warning(normalizationWarning(initialValue, visual));
+  if (!editor || htmlMode) return;
+  const current = sanitizeDescriptionClient(editor.getHTML());
+  const next = sanitizeDescriptionClient(value);
+  if (current === next) return;
+  editor.chain().setContent(next, { emitUpdate: false }).setMeta("addToHistory", false).run();
 }
 
 function toggleDescriptionMode(
   editor: DescriptionEditorInstance | null,
-  value: string,
-  htmlMode: boolean,
-  dirty: boolean,
-  setters: DescriptionModeSetters,
+  input: DescriptionEditorProps,
+  ui: DescriptionUiState,
+  setUi: React.Dispatch<React.SetStateAction<DescriptionUiState>>,
 ): void {
   if (!editor) return;
-  if (!htmlMode) return showHtmlMode(setters);
-  const visual = loadVisualContent(editor, value);
-  if (dirty) setters.value(visual);
-  setters.warning(normalizationWarning(value, visual));
-  setters.htmlMode(false);
+  if (!ui.htmlMode) {
+    setUi({ ...ui, htmlMode: true, warning: "" });
+    return;
+  }
+  const visual = loadVisualContent(editor, input.value);
+  if (input.dirty) input.onChange(visual, true);
+  setUi({ ...ui, htmlMode: false, warning: normalizationWarning(input.value, visual) });
 }
 
 function loadVisualContent(editor: DescriptionEditorInstance, raw: string): string {
@@ -104,9 +78,9 @@ function loadVisualContent(editor: DescriptionEditorInstance, raw: string): stri
   return sanitizeDescriptionClient(editor.getHTML());
 }
 
-function showHtmlMode(setters: DescriptionModeSetters): void {
-  setters.htmlMode(true);
-  setters.warning("");
+function initialUi(value: string): DescriptionUiState {
+  const visual = sanitizeDescriptionClient(value);
+  return { canonicalValue: value, htmlMode: false, warning: normalizationWarning(value, visual) };
 }
 
 function normalizationWarning(raw: string, visual: string): string {

@@ -1,29 +1,35 @@
-import type { BundleEditorInitial } from "./editor.types";
-import type { BundleDesiredStatus } from "../bundle.types";
 import { DescriptionEditor } from "../../rich-text/description/DescriptionEditor";
 import { BundleStatusSelect } from "./BundleStatusSelect";
+import type { BundleEditorController } from "./useBundleEditorController";
 
 export interface BundleDetailsFieldsProps {
-  initial: BundleEditorInitial;
-  errors: Record<string, string>;
-  status: BundleDesiredStatus;
-  statusDisabled: boolean;
-  onStatusChange: (value: BundleDesiredStatus) => void;
+  controller: BundleEditorController;
 }
 
-export function BundleDetailsFields(props: BundleDetailsFieldsProps) {
+export function BundleDetailsFields({ controller }: BundleDetailsFieldsProps) {
+  const { draft, errors } = controller;
   return <s-section>
     <div className="sb-details-header">
       <s-heading>Details</s-heading>
-      <BundleStatusSelect value={props.status} disabled={props.statusDisabled}
-        error={props.errors.desiredStatus} onChange={props.onStatusChange} />
+      <BundleStatusSelect value={draft.desiredStatus} disabled={controller.busy}
+        error={errors.desiredStatus}
+        onChange={(desiredStatus) => controller.patch({ desiredStatus })} />
     </div>
     <s-stack direction="block" gap="base">
-      <s-text-field label="Bundle title" name="title" defaultValue={props.initial.title}
-        required error={props.errors.title} />
-      <DescriptionEditor key={`${props.initial.id ?? "new"}:${props.initial.version}`}
-        initialValue={props.initial.descriptionHtml} error={props.errors.description} />
+      <s-text-field label="Bundle title" value={draft.title} disabled={controller.busy}
+        required error={errors.title}
+        onInput={(event) => controller.patch({ title: event.currentTarget.value })} />
+      {descriptionField(controller)}
       <s-paragraph>Title and description are loaded from and saved directly to Shopify.</s-paragraph>
     </s-stack>
   </s-section>;
+}
+
+function descriptionField(controller: BundleEditorController) {
+  const { draft, errors } = controller;
+  return <DescriptionEditor value={draft.descriptionHtml} dirty={draft.descriptionDirty}
+    disabled={controller.busy} error={errors.description}
+    onChange={(descriptionHtml, descriptionDirty) => controller.patch({
+      descriptionHtml, descriptionDirty,
+    })} />;
 }

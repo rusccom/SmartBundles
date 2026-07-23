@@ -1,33 +1,28 @@
 import { BundleComponentsSection } from "./BundleComponentsSection";
 import { BundleDetailsFields } from "./BundleDetailsFields";
+import { BundleEditorFeedback } from "./BundleEditorFeedback";
 import { BundlePricingFields } from "./BundlePricingFields";
 import { BundleQuotaNotice } from "./BundleQuotaNotice";
-import type { BundleEditorFormProps } from "./BundleEditorForm";
-import type { ReturnTypeBundleEditor } from "./bundle-editor-hook.types";
-import type { BundleDesiredStatus } from "../bundle.types";
+import type { BundleEditorInitial } from "./editor.types";
+import type { BundleEditorController } from "./useBundleEditorController";
 
-export interface BundleEditorSectionsProps extends BundleEditorFormProps {
-  editor: ReturnTypeBundleEditor;
-  status: BundleDesiredStatus;
-  busy: boolean;
-  onStatusChange: (status: BundleDesiredStatus) => void;
+export interface BundleEditorSectionsProps {
+  initial: BundleEditorInitial;
+  controller: BundleEditorController;
+  quotaCandidates: Array<{ id: string; title: string }>;
+  pricingEnabled: boolean;
 }
 
 export function BundleEditorSections(props: BundleEditorSectionsProps) {
-  const { initial, errors, editor } = props;
+  const { controller, initial } = props;
   return <>
-    {props.serverMessage ? <s-banner tone={messageTone(initial.status)}>{props.serverMessage}</s-banner> : null}
-    {props.quotaCandidates.length ? <BundleQuotaNotice candidates={props.quotaCandidates}
-      pricingEnabled={props.pricingEnabled} /> : null}
-    <BundleDetailsFields initial={initial} errors={errors} status={props.status}
-      statusDisabled={props.busy} onStatusChange={props.onStatusChange} />
-    <BundlePricingFields initial={initial} mode={editor.pricingMode} onModeChange={editor.changePricingMode}
-      fixedPriceError={errors.fixedPrice} modeError={errors.pricingMode} discountError={errors.discountPercent} />
-    <BundleComponentsSection editor={editor} currencyCode={initial.currencyCode}
-      locale={initial.locale} error={errors.selectors} />
+    <BundleEditorFeedback controller={controller} />
+    {controller.issue === "quota" ? <BundleQuotaNotice candidates={props.quotaCandidates}
+      pricingEnabled={props.pricingEnabled} value={controller.draft.replacementId}
+      onChange={(replacementId) => controller.patch({ replacementId })} /> : null}
+    <BundleDetailsFields controller={controller} />
+    <BundlePricingFields currencyCode={initial.currencyCode} controller={controller} />
+    <BundleComponentsSection controller={controller} currencyCode={initial.currencyCode}
+      locale={initial.locale} error={controller.errors.selectors} />
   </>;
-}
-
-function messageTone(status: string): "critical" | "success" {
-  return status === "PAUSED" ? "success" : "critical";
 }

@@ -6,6 +6,13 @@
   gap: 20px;
 }
 
+.sb-editor-fieldset {
+  display: contents;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .sb-details-header {
   display: flex;
   gap: 20px;

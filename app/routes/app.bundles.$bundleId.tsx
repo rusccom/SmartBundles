@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { useActionData, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { bundleEditorAction } from "../features/bundles/bundle-editor-action.server";
 import { getBundleForEditor, listReplacementCandidates } from "../features/bundles/bundle-repository.server";
@@ -14,6 +14,7 @@ import { isShopifyPricingEnabled } from "../features/billing/billing-config.serv
 import { authenticate } from "../shopify.server";
 import { hydrateEditorSelectors } from "../features/bundles/editor/bundle-editor-variant-display.server";
 import { editorLocale } from "../features/bundles/editor/bundle-editor-locale.server";
+import type { BundleEditorRecovery } from "../features/bundles/editor/editor.types";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
@@ -22,15 +23,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const recovery = await recoverBundleSaveClaim(admin, shop.id, id);
   const bundle = await getBundleForEditor(shop.id, id);
   if (!bundle.parentProductGid) throw new Response("Bundle product not found", { status: 404 });
-  const url = new URL(request.url);
-  const candidateLoad = Promise.resolve(url.searchParams.has("quota") ? listReplacementCandidates(shop.id, id) : []);
+  const candidateLoad = listReplacementCandidates(shop.id, id);
   const [content, candidates, display] = await loadRouteData(admin, bundle, candidateLoad);
   const quotaCandidates = await titledCandidates(admin, candidates);
   return {
     initial: { ...editorInitial(bundle, content, session.shop, display), locale: editorLocale(request) },
     quotaCandidates,
     pricingEnabled: isShopifyPricingEnabled(),
-    serverMessage: recoveryMessage(recovery) ?? statusMessage(url),
+    recovery: editorRecovery(recovery),
   };
 }
 
@@ -46,12 +46,20 @@ function loadRouteData(
   ]);
 }
 
-function recoveryMessage(recovery: Awaited<ReturnType<typeof recoverBundleSaveClaim>>): string | undefined {
-  if (recovery === "WAITING") return "A previous Shopify save is still being verified. Reload this page later.";
+function editorRecovery(
+  recovery: Awaited<ReturnType<typeof recoverBundleSaveClaim>>,
+): BundleEditorRecovery {
+  if (recovery === "WAITING") return {
+    state: "waiting",
+    message: "A previous Shopify save is still being verified. Reload this page later.",
+  };
   if (recovery === "RECOVERED" || recovery === "NOTICE") {
-    return "An interrupted Shopify save was recovered. Review the content before saving.";
+    return {
+      state: "recovered",
+      message: "An interrupted Shopify save was recovered. Review the content before saving.",
+    };
   }
-  return undefined;
+  return { state: "ready" };
 }
 
 export function action({ request, params }: ActionFunctionArgs) {
@@ -60,8 +68,7 @@ export function action({ request, params }: ActionFunctionArgs) {
 
 export default function EditBundleRoute() {
   const data = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
-  return <BundleEditorPage {...data} errors={actionData?.errors} serverMessage={actionData?.message ?? data.serverMessage} />;
+  return <BundleEditorPage {...data} />;
 }
 
 function requiredId(value?: string): string {
@@ -77,7 +84,9 @@ function editorInitial(
 ) {
   const productContent = editorContentData({ shopDomain, bundleId: bundle.id, lockVersion: bundle.lockVersion, content });
   return {
-    id: bundle.id, version: String(bundle.lockVersion), ...productContent,
+    id: bundle.id, version: String(bundle.lockVersion),
+    editorRevision: bundle.draftRevision ?? bundle.activeRevision,
+    ...productContent,
     pricingMode: bundle.pricingMode, fixedPrice: bundle.fixedPrice ?? "",
     discountPercent: bundle.discountPercent,
     status: bundle.status, ...display,
@@ -90,15 +99,6 @@ async function titledCandidates(
 ) {
   const titles = await bundleTitleMap(admin, candidates);
   return candidates.map(({ id, publicId }) => ({ id, title: titles.get(publicId)! }));
-}
-
-function statusMessage(url: URL): string | undefined {
-  if (url.searchParams.get("save") === "pending") return "A previous Shopify save is still being verified.";
-  if (url.searchParams.has("sync")) return "Shopify couldn't publish this bundle. The configuration was kept for retry.";
-  if (url.searchParams.has("paused")) return "The bundle is paused and no longer counts toward the active bundle limit.";
-  if (url.searchParams.get("component") === "sold-out") return "Each component needs an available variant.";
-  if (url.searchParams.get("component") === "invalid") return "A component is no longer valid or published to Online Store.";
-  return undefined;
 }
 
 export const headers: HeadersFunction = (args) => boundary.headers(args);

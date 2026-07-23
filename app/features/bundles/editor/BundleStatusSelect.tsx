@@ -9,7 +9,7 @@ export interface BundleStatusSelectProps {
 
 export function BundleStatusSelect(props: BundleStatusSelectProps) {
   return <div className="sb-status-select">
-    <s-select label="Status" name="desiredStatus" value={props.value}
+    <s-select label="Status" value={props.value}
       disabled={props.disabled} error={props.error}
       onChange={(event) => props.onChange(event.currentTarget.value as BundleDesiredStatus)}>
       <s-option value="ACTIVE">Active</s-option>
