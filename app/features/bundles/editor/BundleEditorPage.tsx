@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BundleEditorForm } from "./BundleEditorForm";
+import { BundleSaveToast } from "./BundleSaveToast";
 import type { BundleEditorInitial } from "./editor.types";
 
 export interface BundleEditorPageProps {
@@ -14,6 +15,7 @@ export function BundleEditorPage({ initial, errors = {}, quotaCandidates = [], p
   const [discardVersion, setDiscardVersion] = useState(0);
   const formKey = `${initial.id ?? "new"}:${initial.version}:${discardVersion}`;
   return <s-page heading={initial.id ? `Edit ${initial.title}` : "Create bundle"}>
+    <BundleSaveToast />
     <s-link slot="breadcrumb-actions" href="/app/bundles">Bundles</s-link>
     <BundleEditorForm key={formKey} initial={initial} errors={errors}
       quotaCandidates={quotaCandidates} pricingEnabled={pricingEnabled} serverMessage={serverMessage}
