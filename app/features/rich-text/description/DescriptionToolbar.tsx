@@ -10,12 +10,11 @@ import { DescriptionToolbarButton } from "./DescriptionToolbarButton";
 export interface DescriptionToolbarProps {
   editor: DescriptionEditorInstance | null;
   htmlMode: boolean;
-  previewOnly?: boolean;
   onToggleMode: () => void;
 }
 
-export function DescriptionToolbar({ editor, htmlMode, previewOnly = false, onToggleMode }: DescriptionToolbarProps) {
-  const control = { editor, disabled: htmlMode || previewOnly };
+export function DescriptionToolbar({ editor, htmlMode, onToggleMode }: DescriptionToolbarProps) {
+  const control = { editor, disabled: htmlMode };
   return <div className="sb-description-toolbar" role="toolbar" aria-label="Description formatting">
     <DescriptionBlockSelect {...control} />
     <DescriptionInlineControls {...control} />

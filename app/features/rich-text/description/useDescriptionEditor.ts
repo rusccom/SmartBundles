@@ -3,59 +3,48 @@ import { useEditor } from "@tiptap/react";
 import type { DescriptionEditorInstance } from "./description-editor.types";
 import { descriptionExtensions } from "./description-extensions";
 import { sanitizeDescriptionClient } from "./description-sanitize.client";
-import { descriptionSourceSupportsVisual } from "./description-visual-compatibility.client";
 
-const UNSUPPORTED = "This HTML cannot be previewed safely. Its exact source is preserved; edit it as HTML or in Shopify.";
-const PREVIEW_ONLY = "Preview only: the exact Shopify HTML is preserved. Switch to HTML to edit it without reformatting.";
-
-type VisualMode = "editable" | "preview";
+const NORMALIZED = "Visual editing normalizes this HTML to the supported formatting when you change the description.";
 
 interface DescriptionStateSetters {
   value: (value: string) => void;
   dirty: (value: boolean) => void;
   htmlMode: (value: boolean) => void;
-  previewOnly: (value: boolean) => void;
-  compatibilityError: (value: string) => void;
+  warning: (value: string) => void;
 }
 
-type DescriptionModeSetters = Pick<DescriptionStateSetters, "htmlMode" | "previewOnly" | "compatibilityError">;
+type DescriptionModeSetters = Pick<DescriptionStateSetters, "value" | "htmlMode" | "warning">;
 
 export function useDescriptionEditor(initialValue: string, error?: string) {
   const state = useDescriptionFieldState(initialValue);
   const editor = useDescriptionTiptap(error, state.sync);
   const reset = state.reset;
   useEffect(() => reset(editor, initialValue), [editor, initialValue, reset]);
-  useEffect(() => editor?.setEditable(!state.previewOnly, false), [editor, state.previewOnly]);
   const toggleMode = useCallback(() => toggleDescriptionMode(
-    editor, state.value, state.htmlMode, {
-      htmlMode: state.setHtmlMode, previewOnly: state.setPreviewOnly,
-      compatibilityError: state.setCompatibilityError,
+    editor, state.value, state.htmlMode, state.dirty, {
+      value: state.setValue, htmlMode: state.setHtmlMode, warning: state.setWarning,
     },
-  ), [editor, state.htmlMode, state.setCompatibilityError, state.setHtmlMode,
-    state.setPreviewOnly, state.value]);
+  ), [editor, state.dirty, state.htmlMode, state.setHtmlMode, state.setValue,
+    state.setWarning, state.value]);
   return { editor, value: state.value, setRawValue: state.setRawValue, dirty: state.dirty,
-    htmlMode: state.htmlMode, previewOnly: state.previewOnly,
-    toggleMode, compatibilityError: state.compatibilityError };
+    htmlMode: state.htmlMode, toggleMode, warning: state.warning };
 }
 
 function useDescriptionFieldState(initialValue: string) {
   const [value, setValue] = useState(initialValue);
   const [htmlMode, setHtmlMode] = useState(false), [dirty, setDirty] = useState(false);
-  const [previewOnly, setPreviewOnly] = useState(false);
-  const [compatibilityError, setCompatibilityError] = useState("");
+  const [warning, setWarning] = useState("");
   const sync = useCallback((editor: DescriptionEditorInstance) => syncEditorValue(editor, setValue, setDirty), []);
   const reset = useCallback((editor: DescriptionEditorInstance | null, initial: string) => resetDescription(editor, initial, {
-    value: setValue, dirty: setDirty, htmlMode: setHtmlMode, previewOnly: setPreviewOnly,
-    compatibilityError: setCompatibilityError,
+    value: setValue, dirty: setDirty, htmlMode: setHtmlMode, warning: setWarning,
   }), []);
   const setRawValue = useCallback((raw: string) => {
     setValue(raw);
     setDirty(true);
-    setPreviewOnly(false);
-    setCompatibilityError("");
+    setWarning("");
   }, []);
-  return { value, htmlMode, previewOnly, dirty, compatibilityError, sync, reset,
-    setRawValue, setHtmlMode, setPreviewOnly, setCompatibilityError };
+  return { value, htmlMode, dirty, warning, sync, reset, setRawValue,
+    setValue, setHtmlMode, setWarning };
 }
 
 function syncEditorValue(
@@ -87,45 +76,41 @@ function resetDescription(
   setters: DescriptionStateSetters,
 ): void {
   if (!editor) return;
-  const visual = visualMode(editor, initialValue);
+  const visual = loadVisualContent(editor, initialValue);
   setters.value(initialValue);
   setters.dirty(false);
-  setters.htmlMode(visual === null);
-  setters.previewOnly(visual === "preview");
-  setters.compatibilityError(visualMessage(visual));
+  setters.htmlMode(false);
+  setters.warning(normalizationWarning(initialValue, visual));
 }
 
 function toggleDescriptionMode(
   editor: DescriptionEditorInstance | null,
   value: string,
   htmlMode: boolean,
+  dirty: boolean,
   setters: DescriptionModeSetters,
 ): void {
   if (!editor) return;
   if (!htmlMode) return showHtmlMode(setters);
-  const visual = visualMode(editor, value);
-  setters.compatibilityError(visualMessage(visual));
-  setters.previewOnly(visual === "preview");
-  if (visual !== null) setters.htmlMode(false);
+  const visual = loadVisualContent(editor, value);
+  if (dirty) setters.value(visual);
+  setters.warning(normalizationWarning(value, visual));
+  setters.htmlMode(false);
 }
 
-function visualMode(editor: DescriptionEditorInstance, raw: string): VisualMode | null {
-  if (!descriptionSourceSupportsVisual(raw)) return null;
-  const sanitized = sanitizeDescriptionClient(raw);
-  editor.chain().setContent(sanitized, { emitUpdate: false }).setMeta("addToHistory", false).run();
-  const generated = sanitizeDescriptionClient(editor.getHTML());
-  return raw === "" || (sanitized === raw && generated === raw) ? "editable" : "preview";
+function loadVisualContent(editor: DescriptionEditorInstance, raw: string): string {
+  const visual = sanitizeDescriptionClient(raw);
+  editor.chain().setContent(visual, { emitUpdate: false }).setMeta("addToHistory", false).run();
+  return sanitizeDescriptionClient(editor.getHTML());
 }
 
 function showHtmlMode(setters: DescriptionModeSetters): void {
   setters.htmlMode(true);
-  setters.previewOnly(false);
-  setters.compatibilityError("");
+  setters.warning("");
 }
 
-function visualMessage(mode: VisualMode | null): string {
-  if (mode === null) return UNSUPPORTED;
-  return mode === "preview" ? PREVIEW_ONLY : "";
+function normalizationWarning(raw: string, visual: string): string {
+  return raw === visual ? "" : NORMALIZED;
 }
 
 function editorAttributes(hasError: boolean): Record<string, string> {
