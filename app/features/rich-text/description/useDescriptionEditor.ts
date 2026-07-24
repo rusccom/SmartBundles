@@ -38,10 +38,18 @@ function useDescriptionTiptap(input: DescriptionEditorProps) {
     extensions: descriptionExtensions,
     content: "",
     editorProps: { attributes: editorAttributes(Boolean(input.error)) },
-    onUpdate: ({ editor }) => {
-      if (editor.isEditable) input.onChange(sanitizeDescriptionClient(editor.getHTML()), true);
-    },
+    onUpdate: ({ editor }) => applyEditorUpdate(editor, input),
   });
+}
+
+function applyEditorUpdate(
+  editor: DescriptionEditorInstance,
+  input: DescriptionEditorProps,
+): void {
+  if (!editor.isEditable) return;
+  const next = sanitizeDescriptionClient(editor.getHTML());
+  if (!input.dirty && next === sanitizeDescriptionClient(input.value)) return;
+  input.onChange(next, true);
 }
 
 function syncExternalValue(
