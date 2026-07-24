@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor } from "@tiptap/react";
 import type { DescriptionEditorProps } from "./DescriptionEditor";
 import type { DescriptionEditorInstance } from "./description-editor.types";
@@ -13,14 +13,21 @@ interface DescriptionUiState {
   warning: string;
 }
 
+interface DescriptionSync {
+  ready: boolean;
+  running: boolean;
+  value: string;
+}
+
 export function useDescriptionEditor(input: DescriptionEditorProps) {
   const [ui, setUi] = useState(() => initialUi(input.value));
+  const sync = useRef<DescriptionSync>({ ready: false, running: false, value: "" });
   const current = !input.dirty && ui.canonicalValue !== input.value
     ? initialUi(input.value) : ui;
   if (current !== ui) setUi(current);
-  const editor = useDescriptionTiptap(input);
-  useEffect(() => syncExternalValue(editor, input.value, current.htmlMode),
-    [current.htmlMode, editor, input.value]);
+  const editor = useDescriptionTiptap(input, sync);
+  useEffect(() => syncExternalValue(editor, input.value, current.htmlMode, sync),
+    [current.htmlMode, editor, input.value, sync]);
   useEffect(() => editor?.setEditable(!input.disabled), [editor, input.disabled]);
   const toggleMode = useCallback(() =>
     toggleDescriptionMode(editor, input, current, setUi), [current, editor, input]);
@@ -32,36 +39,49 @@ export function useDescriptionEditor(input: DescriptionEditorProps) {
     toggleMode, setRawValue };
 }
 
-function useDescriptionTiptap(input: DescriptionEditorProps) {
+function useDescriptionTiptap(
+  input: DescriptionEditorProps,
+  sync: React.MutableRefObject<DescriptionSync>,
+) {
   return useEditor({
     immediatelyRender: false,
     extensions: descriptionExtensions,
     content: "",
     editorProps: { attributes: editorAttributes(Boolean(input.error)) },
-    onUpdate: ({ editor }) => applyEditorUpdate(editor, input),
+    onUpdate: ({ editor }) => applyEditorUpdate(editor, input, sync.current),
   });
 }
 
 function applyEditorUpdate(
   editor: DescriptionEditorInstance,
   input: DescriptionEditorProps,
+  sync: DescriptionSync,
 ): void {
-  if (!editor.isEditable) return;
+  if (!editor.isEditable || !sync.ready || sync.running) return;
   const next = sanitizeDescriptionClient(editor.getHTML());
-  if (!input.dirty && next === sanitizeDescriptionClient(input.value)) return;
+  if (!input.dirty && next === sync.value) return;
   input.onChange(next, true);
 }
 
 function syncExternalValue(
   editor: DescriptionEditorInstance | null,
-  value: string,
-  htmlMode: boolean,
+  value: string, htmlMode: boolean,
+  sync: React.MutableRefObject<DescriptionSync>,
 ): void {
   if (!editor || htmlMode) return;
-  const current = sanitizeDescriptionClient(editor.getHTML());
-  const next = sanitizeDescriptionClient(value);
-  if (current === next) return;
-  editor.chain().setContent(next, { emitUpdate: false }).setMeta("addToHistory", false).run();
+  const current = sanitizeDescriptionClient(editor.getHTML()), next = sanitizeDescriptionClient(value);
+  sync.current.running = true;
+  try {
+    if (current !== next) {
+      editor.chain().setContent(next, { emitUpdate: false }).setMeta("addToHistory", false).run();
+    }
+  }
+  finally {
+    sync.current = {
+      ready: true, running: false,
+      value: sanitizeDescriptionClient(editor.getHTML()),
+    };
+  }
 }
 
 function toggleDescriptionMode(
