@@ -3,7 +3,7 @@ import { hasExactKeys, isObject, isSelectorKey, isVariantGid } from "./validatio
 
 export function readSelection(value, runtime) {
   const input = parseAttribute(value);
-  if (!input || input.rv !== runtime.rv) return null;
+  if (!input) return null;
   const pairs = readPairs(input.s, runtime.selectors.length);
   if (!pairs) return null;
   const components = resolveComponents(pairs, runtime);
@@ -14,7 +14,7 @@ function parseAttribute(value) {
   if (typeof value !== "string" || value.length > MAX_SELECTION_BYTES) return null;
   try {
     const parsed = JSON.parse(value);
-    return isObject(parsed) && hasExactKeys(parsed, ["rv", "s"]) ? parsed : null;
+    return isObject(parsed) && hasExactKeys(parsed, ["s"]) ? parsed : null;
   } catch {
     return null;
   }

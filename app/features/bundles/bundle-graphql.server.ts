@@ -2,7 +2,7 @@ export const CREATE_PRODUCT = `#graphql
   mutation SmartBundleCreateProduct($product: ProductCreateInput!) {
     productCreate(product: $product) {
       product {
-        id title descriptionHtml updatedAt
+        id
         variants(first: 1) { nodes { id } }
       }
       userErrors { message }
@@ -14,9 +14,6 @@ export const FIND_PARENT_PRODUCT = `#graphql
   query SmartBundleFindParent($identifier: ProductIdentifierInput!) {
     product: productByIdentifier(identifier: $identifier) {
       id
-      title
-      descriptionHtml
-      updatedAt
       variants(first: 2) { nodes { id } }
       bundleId: metafield(namespace: "$app", key: "bundle_id") { value }
     }
@@ -26,7 +23,6 @@ export const FIND_PARENT_PRODUCT = `#graphql
 export const UPDATE_VARIANT = `#graphql
   mutation SmartBundleUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
     productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-      productVariants { id requiresComponents price compareAtPrice }
       userErrors { message }
     }
   }
@@ -35,7 +31,6 @@ export const UPDATE_VARIANT = `#graphql
 export const SET_METAFIELDS = `#graphql
   mutation SmartBundleSetMetafields($metafields: [MetafieldsSetInput!]!) {
     metafieldsSet(metafields: $metafields) {
-      metafields { id key compareDigest value }
       userErrors { message }
     }
   }
@@ -44,7 +39,6 @@ export const SET_METAFIELDS = `#graphql
 export const UPDATE_PRODUCT = `#graphql
   mutation SmartBundleUpdateProduct($product: ProductUpdateInput!) {
     productUpdate(product: $product) {
-      product { id }
       userErrors { message }
     }
   }
@@ -66,28 +60,11 @@ export const UNPUBLISH_PRODUCT = `#graphql
   }
 `;
 
-export const READ_PRODUCT = `#graphql
-  query SmartBundleReadback($id: ID!, $publicationId: ID!) {
-    product(id: $id) {
-      id
-      status
-      publishedOnPublication(publicationId: $publicationId)
-      variants(first: 2) { nodes { id requiresComponents price compareAtPrice } }
-      bundleId: metafield(namespace: "$app", key: "bundle_id") { value }
-      runtime: metafield(namespace: "$app", key: "bundle_runtime") {
-        id value compareDigest
-      }
-      presentation: metafield(namespace: "$app", key: "bundle_presentation") {
-        id value compareDigest
-      }
-    }
-  }
-`;
-
 export const READ_PRODUCT_CONTENT = `#graphql
   query SmartBundleReadProductContent($id: ID!) {
     product(id: $id) {
-      id title descriptionHtml updatedAt
+      title descriptionHtml
+      variants(first: 1) { nodes { id price compareAtPrice } }
       identity: metafield(namespace: "$app", key: "bundle_id") { value }
     }
   }
@@ -98,6 +75,7 @@ export const READ_PRODUCT_TITLES = `#graphql
     nodes(ids: $ids) {
       ... on Product {
         id title
+        variants(first: 1) { nodes { price compareAtPrice } }
         identity: metafield(namespace: "$app", key: "bundle_id") { value }
       }
     }

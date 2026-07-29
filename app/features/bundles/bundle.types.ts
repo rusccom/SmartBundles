@@ -31,15 +31,19 @@ export interface BundleDraftInput {
 export interface BundleContentSubmission {
   title: string;
   descriptionHtml: string;
-  descriptionDirty: boolean;
-  contentVersionToken: string;
+}
+
+export interface BundleContentPatch {
+  title?: string;
+  descriptionHtml?: string;
 }
 
 export interface BundleEditorSubmission {
   draft: BundleDraftInput;
-  content: BundleContentSubmission;
+  content: BundleContentPatch;
   desiredStatus: BundleDesiredStatus;
-  bundleVersion: number | null;
+  configurationDirty: boolean;
+  storedConfigurationDirty: boolean;
   creationToken: string;
 }
 
@@ -50,7 +54,6 @@ export interface BundleValidationResult {
 
 export interface RuntimeConfig {
   sv: 3;
-  rv: number;
   en: 0 | 1;
   b: string;
   p: string;
@@ -62,8 +65,6 @@ export interface RuntimeConfig {
 
 export interface PresentationConfig {
   sv: 4;
-  rv: number;
-  tv: number;
   en: 0 | 1;
   b: string;
   parentVariantId: string;

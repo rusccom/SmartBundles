@@ -1,5 +1,5 @@
 import type {
-  BundleContentSubmission,
+  BundleContentPatch,
   BundleDesiredStatus,
   BundleDraftInput,
   BundlePricingMode,
@@ -15,18 +15,23 @@ export const MAX_SELECTORS = 150;
 const MAX_OPTIONS = 200;
 const MAX_QUANTITY = 2_000;
 
-export function parseBundleForm(form: FormData): BundleValidationResult {
+export function parseBundleForm(form: FormData, isNew: boolean): BundleValidationResult {
   const draft = bundleDraft(form);
-  const content = contentSubmission(form);
+  const content = contentSubmission(form, isNew);
   const desiredStatus = parsedDesiredStatus(rawValue(form, "desiredStatus"));
-  const bundleVersion = parseBundleVersion(rawValue(form, "bundleVersion"));
-  const errors = validateBundle(draft);
-  if (!validPricingMode(rawValue(form, "pricingMode"))) errors.pricingMode = "Choose a pricing mode.";
+  const configurationDirty = rawValue(form, "configurationDirty") === "yes";
+  const errors = isNew || configurationDirty ? validateBundle(draft) : {};
+  if ((isNew || configurationDirty) && !validPricingMode(rawValue(form, "pricingMode"))) {
+    errors.pricingMode = "Choose a pricing mode.";
+  }
   if (!desiredStatus) errors.desiredStatus = "Choose a bundle status.";
-  if (bundleVersion === undefined) errors.form = "The bundle version is invalid. Reload and try again.";
-  if (!validDirtyValue(rawValue(form, "descriptionDirty"))) errors.description = "Description state is invalid.";
-  if (bundleVersion === undefined || !desiredStatus) return { errors };
-  const data = { draft, content, desiredStatus, bundleVersion, creationToken: rawValue(form, "creationToken") };
+  if (!desiredStatus) return { errors };
+  const data = {
+    draft, content, desiredStatus,
+    configurationDirty,
+    storedConfigurationDirty: rawValue(form, "storedConfigurationDirty") === "yes",
+    creationToken: rawValue(form, "creationToken"),
+  };
   return { data, errors };
 }
 
@@ -45,13 +50,13 @@ function bundleDraft(form: FormData): BundleDraftInput {
   };
 }
 
-function contentSubmission(form: FormData): BundleContentSubmission {
-  return {
-    title: rawValue(form, "title"),
-    descriptionHtml: rawValue(form, "descriptionHtml"),
-    descriptionDirty: rawValue(form, "descriptionDirty") === "yes",
-    contentVersionToken: rawValue(form, "contentVersionToken"),
-  };
+function contentSubmission(form: FormData, required: boolean): BundleContentPatch {
+  const content: BundleContentPatch = {};
+  if (required || form.has("title")) content.title = rawValue(form, "title");
+  if (required || form.has("descriptionHtml")) {
+    content.descriptionHtml = rawValue(form, "descriptionHtml");
+  }
+  return content;
 }
 
 function textValue(form: FormData, key: string): string {
@@ -61,17 +66,6 @@ function textValue(form: FormData, key: string): string {
 function rawValue(form: FormData, key: string): string {
   const value = form.get(key);
   return typeof value === "string" ? value : "";
-}
-
-function parseBundleVersion(value: string): number | null | undefined {
-  if (value === "new") return null;
-  if (!/^\d+$/.test(value)) return undefined;
-  const version = Number(value);
-  return Number.isSafeInteger(version) ? version : undefined;
-}
-
-function validDirtyValue(value: string): boolean {
-  return value === "yes" || value === "no";
 }
 
 function parseSelectors(value: string): BundleSelectorInput[] {
@@ -153,7 +147,7 @@ function validateRuntimeProjection(
 
 function runtimeSizeIdentity(data: BundleDraftInput) {
   return {
-    publicId: "x".repeat(32), revision: 2_147_483_647,
+    publicId: "x".repeat(32),
     parentVariantId: "gid://shopify/ProductVariant/99999999999999999999",
     pricingMode: data.pricingMode, currencyCode: "XXX", discountPercent: data.discountPercent,
     originalPrice: "9999999999.99", parentPrice: "9999999999.99",

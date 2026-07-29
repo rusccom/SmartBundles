@@ -1,4 +1,4 @@
-import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
+import type { HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs } from "react-router";
 import { Outlet, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
@@ -7,6 +7,7 @@ import { ensureShopContext } from "../features/installation/shop-context.server"
 import { StorefrontActivationBanner } from "../features/installation/StorefrontActivationBanner";
 import { storefrontEditorUrl } from "../features/installation/storefront-editor-url.server";
 import { authenticate } from "../shopify.server";
+import { isBundleEditorActionData } from "../features/bundles/bundle-editor-action.types";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -30,6 +31,10 @@ export default function App() {
       <Outlet />
     </AppProvider>
   );
+}
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs): boolean {
+  return isBundleEditorActionData(args.actionResult) ? false : args.defaultShouldRevalidate;
 }
 
 function shopSetupError(shop: Awaited<ReturnType<typeof ensureShopContext>>): string | undefined {

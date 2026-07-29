@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { pricingModeCode } from "./bundle-pricing";
 import type {
   BundlePricingMode,
@@ -13,7 +12,6 @@ const MAX_RUNTIME_COMPONENTS = 200;
 
 export interface BundleProjectionIdentity {
   publicId: string;
-  revision: number;
   parentVariantId: string;
   pricingMode: BundlePricingMode;
   currencyCode: string;
@@ -33,7 +31,7 @@ export function buildRuntimeConfig(
   const slots = selectors.map((selector) =>
     buildSlot(selector, dictionary, indexes, identity.pricingMode));
   const config: RuntimeConfig = {
-    sv: 3, rv: identity.revision, en: 1, b: identity.publicId,
+    sv: 3, en: 1, b: identity.publicId,
     p: identity.parentVariantId, m: pricingModeCode(identity.pricingMode),
     d: identity.discountPercent, c: dictionary, s: slots,
   };
@@ -92,7 +90,7 @@ export function buildPresentationConfig(
   textSource: StorefrontTextSource,
 ): PresentationConfig {
   return {
-    sv: 4, rv: identity.revision, tv: textSource.version, en: 1, b: identity.publicId,
+    sv: 4, en: 1, b: identity.publicId,
     parentVariantId: identity.parentVariantId,
     pricing: presentationPricing(identity),
     selectors,
@@ -117,20 +115,11 @@ function presentationPricing(identity: BundleProjectionIdentity): PresentationCo
   };
 }
 
-export function jsonProjection(value: unknown): string {
-  return JSON.stringify(value);
-}
-
-export function projectionHash(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
 export function disabledRuntime(
   publicId: string,
-  revision: number,
   parentVariantId: string,
 ) {
-  return { sv: 3 as const, rv: revision, en: 0 as const, b: publicId, p: parentVariantId };
+  return { sv: 3 as const, en: 0 as const, b: publicId, p: parentVariantId };
 }
 
 function assertRuntimeLimits(config: RuntimeConfig): void {

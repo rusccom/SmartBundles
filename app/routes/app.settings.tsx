@@ -1,4 +1,8 @@
-import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
+import type {
+  ActionFunctionArgs,
+  HeadersFunction,
+  LoaderFunctionArgs,
+} from "react-router";
 import { useActionData, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { ensureShopContext } from "../features/installation/shop-context.server";
@@ -12,8 +16,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
   const shop = await ensureShopContext(admin, session.shop);
   const settings = await getShopStorefrontSettings(shop.id);
-  const saved = new URL(request.url).searchParams.get("saved");
-  return { settings, savedMessage: savedMessage(saved) };
+  const params = new URL(request.url).searchParams;
+  return {
+    settings,
+    savedMessage: savedMessage(params.get("saved"), params.get("failed")),
+  };
 }
 
 export function action({ request }: ActionFunctionArgs) {
@@ -23,17 +30,28 @@ export function action({ request }: ActionFunctionArgs) {
 export default function SettingsRoute() {
   const route = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
-  return <StorefrontSettingsPage {...route} errors={actionData?.errors}
-    message={actionData?.message} />;
+  return (
+    <StorefrontSettingsPage
+      {...route}
+      errors={actionData?.errors}
+      message={actionData?.message}
+    />
+  );
 }
 
-function savedMessage(value: string | null): string | undefined {
+function savedMessage(saved: string | null, failed: string | null): string | undefined {
+  const synced = countParam(saved);
+  const failures = countParam(failed);
+  if (synced === undefined || failures === undefined) return undefined;
+  if (failures) return `Texts saved. Updated ${synced} bundles; ${failures} could not be updated.`;
+  if (!synced) return "Texts saved. There are no active bundles to update.";
+  return `Texts saved and applied to ${synced} active ${synced === 1 ? "bundle" : "bundles"}.`;
+}
+
+function countParam(value: string | null): number | undefined {
   if (value === null || !/^\d+$/.test(value)) return undefined;
   const count = Number(value);
-  if (!Number.isSafeInteger(count)) return undefined;
-  if (!count) return "Texts saved. They will be used by future bundle publications.";
-  const noun = count === 1 ? "bundle" : "bundles";
-  return `Texts saved. Storefront updates were queued for ${count} active ${noun}.`;
+  return Number.isSafeInteger(count) ? count : undefined;
 }
 
 export const headers: HeadersFunction = (args) => boundary.headers(args);

@@ -5,38 +5,40 @@ import type { DescriptionEditorInstance } from "./description-editor.types";
 import { descriptionExtensions } from "./description-extensions";
 import { sanitizeDescriptionClient } from "./description-sanitize.client";
 
-const NORMALIZED = "Visual editing normalizes this HTML to the supported formatting when you change the description.";
-
-interface DescriptionUiState {
-  canonicalValue: string;
-  htmlMode: boolean;
-  warning: string;
-}
+const NORMALIZED = "Visual editing normalizes this HTML to the supported formatting.";
 
 interface DescriptionSync {
   ready: boolean;
   running: boolean;
   value: string;
+  onChange: DescriptionEditorProps["onChange"];
 }
 
 export function useDescriptionEditor(input: DescriptionEditorProps) {
-  const [ui, setUi] = useState(() => initialUi(input.value));
-  const sync = useRef<DescriptionSync>({ ready: false, running: false, value: "" });
-  const current = !input.dirty && ui.canonicalValue !== input.value
-    ? initialUi(input.value) : ui;
-  if (current !== ui) setUi(current);
+  const [ui, setUi] = useState(() => ({
+    htmlMode: false,
+    warning: normalizationWarning(input.value),
+  }));
+  const sync = useDescriptionSync(input.onChange);
   const editor = useDescriptionTiptap(input, sync);
-  useEffect(() => syncExternalValue(editor, input.value, current.htmlMode, sync),
-    [current.htmlMode, editor, input.value, sync]);
+  useEffect(() => syncExternalValue(editor, input.value, ui.htmlMode, sync),
+    [editor, input.value, ui.htmlMode, sync]);
   useEffect(() => editor?.setEditable(!input.disabled), [editor, input.disabled]);
   const toggleMode = useCallback(() =>
-    toggleDescriptionMode(editor, input, current, setUi), [current, editor, input]);
+    toggleDescriptionMode(editor, input, ui.htmlMode, setUi), [editor, input, ui.htmlMode]);
   const setRawValue = useCallback((value: string) => {
-    input.onChange(value, true);
+    input.onChange(value);
     setUi((state) => ({ ...state, warning: "" }));
   }, [input]);
-  return { editor, htmlMode: current.htmlMode, warning: current.warning,
-    toggleMode, setRawValue };
+  return { editor, ...ui, toggleMode, setRawValue };
+}
+
+function useDescriptionSync(onChange: DescriptionEditorProps["onChange"]) {
+  const sync = useRef<DescriptionSync>({
+    ready: false, running: false, value: "", onChange,
+  });
+  useEffect(() => { sync.current.onChange = onChange; }, [onChange, sync]);
+  return sync;
 }
 
 function useDescriptionTiptap(
@@ -48,56 +50,49 @@ function useDescriptionTiptap(
     extensions: descriptionExtensions,
     content: "",
     editorProps: { attributes: editorAttributes(Boolean(input.error)) },
-    onUpdate: ({ editor }) => applyEditorUpdate(editor, input, sync.current),
+    onUpdate: ({ editor }) => applyEditorUpdate(editor, sync.current),
   });
 }
 
 function applyEditorUpdate(
   editor: DescriptionEditorInstance,
-  input: DescriptionEditorProps,
   sync: DescriptionSync,
 ): void {
   if (!editor.isEditable || !sync.ready || sync.running) return;
   const next = sanitizeDescriptionClient(editor.getHTML());
-  if (!input.dirty && next === sync.value) return;
-  input.onChange(next, true);
+  if (next === sync.value) return;
+  sync.value = next;
+  sync.onChange(next);
 }
 
 function syncExternalValue(
   editor: DescriptionEditorInstance | null,
-  value: string, htmlMode: boolean,
+  value: string,
+  htmlMode: boolean,
   sync: React.MutableRefObject<DescriptionSync>,
 ): void {
   if (!editor || htmlMode) return;
-  const current = sanitizeDescriptionClient(editor.getHTML()), next = sanitizeDescriptionClient(value);
+  const next = sanitizeDescriptionClient(value);
   sync.current.running = true;
-  try {
-    if (current !== next) {
-      editor.chain().setContent(next, { emitUpdate: false }).setMeta("addToHistory", false).run();
-    }
+  if (sanitizeDescriptionClient(editor.getHTML()) !== next) {
+    editor.chain().setContent(next, { emitUpdate: false }).setMeta("addToHistory", false).run();
   }
-  finally {
-    sync.current = {
-      ready: true, running: false,
-      value: sanitizeDescriptionClient(editor.getHTML()),
-    };
-  }
+  sync.current = {
+    ready: true, running: false, value: next, onChange: sync.current.onChange,
+  };
 }
 
 function toggleDescriptionMode(
   editor: DescriptionEditorInstance | null,
   input: DescriptionEditorProps,
-  ui: DescriptionUiState,
-  setUi: React.Dispatch<React.SetStateAction<DescriptionUiState>>,
+  htmlMode: boolean,
+  setUi: React.Dispatch<React.SetStateAction<{ htmlMode: boolean; warning: string }>>,
 ): void {
   if (!editor) return;
-  if (!ui.htmlMode) {
-    setUi({ ...ui, htmlMode: true, warning: "" });
-    return;
-  }
+  if (!htmlMode) return setUi((state) => ({ ...state, htmlMode: true }));
   const visual = loadVisualContent(editor, input.value);
-  if (input.dirty) input.onChange(visual, true);
-  setUi({ ...ui, htmlMode: false, warning: normalizationWarning(input.value, visual) });
+  if (visual !== input.value) input.onChange(visual);
+  setUi({ htmlMode: false, warning: visual === input.value ? "" : NORMALIZED });
 }
 
 function loadVisualContent(editor: DescriptionEditorInstance, raw: string): string {
@@ -106,13 +101,8 @@ function loadVisualContent(editor: DescriptionEditorInstance, raw: string): stri
   return sanitizeDescriptionClient(editor.getHTML());
 }
 
-function initialUi(value: string): DescriptionUiState {
-  const visual = sanitizeDescriptionClient(value);
-  return { canonicalValue: value, htmlMode: false, warning: normalizationWarning(value, visual) };
-}
-
-function normalizationWarning(raw: string, visual: string): string {
-  return raw === visual ? "" : NORMALIZED;
+function normalizationWarning(value: string): string {
+  return value === sanitizeDescriptionClient(value) ? "" : NORMALIZED;
 }
 
 function editorAttributes(hasError: boolean): Record<string, string> {

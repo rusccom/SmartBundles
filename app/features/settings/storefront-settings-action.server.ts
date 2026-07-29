@@ -1,9 +1,10 @@
 import { data, redirect } from "react-router";
 import { authenticate } from "../../shopify.server";
 import { ensureShopContext } from "../installation/shop-context.server";
-import { bundleWritesDisabled } from "../operations/bundle-write-gate.server";
+import type { AdminClient } from "../shopify/admin-api.server";
 import { StorefrontSettingsConflictError } from "./StorefrontSettingsConflictError.server";
 import { saveShopStorefrontTexts } from "./storefront-settings-repository.server";
+import { syncActiveBundleTexts } from "./storefront-text-sync.server";
 import { parseStorefrontTextsForm } from "./storefront-text-validation.server";
 
 export interface StorefrontSettingsActionData {
@@ -14,29 +15,38 @@ export interface StorefrontSettingsActionData {
 export async function storefrontSettingsAction(request: Request) {
   const { admin, session } = await authenticate.admin(request);
   const shop = await ensureShopContext(admin, session.shop);
-  if (bundleWritesDisabled()) return failure(503, "Bundle changes are temporarily unavailable.", {});
   const form = await request.formData();
   const parsed = parseStorefrontTextsForm(form);
   const expectedTextVersion = integerValue(form, "expectedTextVersion");
-  if (expectedTextVersion === undefined) parsed.errors.form = "Reload the settings and try again.";
-  if (!parsed.data || Object.keys(parsed.errors).length) return failure(400, undefined, parsed.errors);
-  return saveSettings(shop.id, expectedTextVersion!, parsed.data);
+  if (expectedTextVersion === undefined)
+    parsed.errors.form = "Reload the settings and try again.";
+  if (!parsed.data || Object.keys(parsed.errors).length)
+    return failure(400, undefined, parsed.errors);
+  return saveSettings(admin, shop.id, expectedTextVersion!, parsed.data);
 }
 
 async function saveSettings(
+  admin: AdminClient,
   shopId: string,
   expectedTextVersion: number,
   texts: NonNullable<ReturnType<typeof parseStorefrontTextsForm>["data"]>,
 ) {
   try {
-    const result = await saveShopStorefrontTexts({ shopId, expectedTextVersion, texts });
-    return redirect(`/app/settings?saved=${result.queued}`);
+    await saveShopStorefrontTexts({ shopId, expectedTextVersion, texts });
+    const result = await syncActiveBundleTexts(admin, shopId);
+    return redirect(`/app/settings?saved=${result.synced}&failed=${result.failed}`);
   } catch (error) {
-    if (error instanceof StorefrontSettingsConflictError) {
-      return failure(409, "Storefront texts changed in another tab. Reload before saving.", {});
-    }
+    if (error instanceof StorefrontSettingsConflictError) return conflict();
     throw error;
   }
+}
+
+function conflict() {
+  return failure(
+    409,
+    "Storefront texts changed in another tab. Reload before saving.",
+    {},
+  );
 }
 
 function integerValue(form: FormData, key: string): number | undefined {
@@ -46,6 +56,10 @@ function integerValue(form: FormData, key: string): number | undefined {
   return Number.isSafeInteger(parsed) && parsed >= 1 ? parsed : undefined;
 }
 
-function failure(status: number, message: string | undefined, errors: Record<string, string>) {
+function failure(
+  status: number,
+  message: string | undefined,
+  errors: Record<string, string>,
+) {
   return data<StorefrontSettingsActionData>({ errors, message }, { status });
 }

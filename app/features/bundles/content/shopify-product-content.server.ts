@@ -8,25 +8,25 @@ import {
   UPDATE_PRODUCT,
 } from "../bundle-graphql.server";
 import type { ParentProductIds } from "../shopify-product.server";
-import { descriptionsSemanticallyEqual } from "../../rich-text/description/description-sanitize.server";
+import type { BundleContentPatch } from "../bundle.types";
 import { BundleContentError } from "./BundleContentError.server";
 import type {
   ParentProductContentInput,
-  ProductContentPatch,
   ShopifyProductContent,
+  ShopifyProductSummary,
 } from "./content.types";
 
 interface ProductNode {
-  id: string;
   title: string;
   descriptionHtml: string;
-  updatedAt: string;
+  variants: { nodes: Array<{ id: string; price: string; compareAtPrice: string | null }> };
   identity?: { value: string } | null;
 }
 
 interface ProductTitleNode {
   id: string;
   title: string;
+  variants: { nodes: Array<{ price: string; compareAtPrice: string | null }> };
   identity?: { value: string } | null;
 }
 
@@ -50,9 +50,8 @@ async function requestProductContent(
 ): Promise<ShopifyProductContent> {
   const result = await adminRequest<{ product?: ProductNode | null }>(admin, READ_PRODUCT_CONTENT, { id: productId });
   if (!result.product) throw new BundleContentError("The Shopify product no longer exists.", 409);
-  const content = toContent(result.product);
-  if (publicId && content.bundlePublicId !== publicId) throw identityConflict();
-  return content;
+  if (publicId && result.product.identity?.value !== publicId) throw identityConflict();
+  return toContent(result.product);
 }
 
 export async function readProductTitles(
@@ -64,6 +63,15 @@ export async function readProductTitles(
     () => requestProductTitles(admin, productIds),
     "Shopify product titles could not be loaded.",
   );
+}
+
+export function productSummary(node: ProductTitleNode): ShopifyProductSummary {
+  const variant = node.variants.nodes[0];
+  return {
+    title: node.title,
+    price: variant?.price ?? null,
+    compareAtPrice: variant?.compareAtPrice ?? null,
+  };
 }
 
 async function requestProductTitles(
@@ -81,14 +89,16 @@ export async function findOrCreateParentProduct(
 ): Promise<ParentProductIds> {
   return upstream(async () => {
     const existing = await findParentProduct(admin, input.publicId);
-    return existing ? existingParent(existing, input) : createParentProduct(admin, input);
+    return existing
+      ? reuseParentProduct(admin, existing, input)
+      : createParentProduct(admin, input);
   }, "Shopify bundle product could not be created.");
 }
 
 export async function updateProductContent(
   admin: AdminClient,
-  input: { productId: string; publicId: string; patch: ProductContentPatch },
-): Promise<ShopifyProductContent> {
+  input: { productId: string; content: BundleContentPatch },
+): Promise<void> {
   return upstream(
     () => requestProductUpdate(admin, input),
     "Shopify product content could not be saved.",
@@ -97,12 +107,11 @@ export async function updateProductContent(
 
 async function requestProductUpdate(
   admin: AdminClient,
-  input: { productId: string; publicId: string; patch: ProductContentPatch },
-): Promise<ShopifyProductContent> {
-  const product = { id: input.productId, ...input.patch };
+  input: { productId: string; content: BundleContentPatch },
+): Promise<void> {
+  const product = { id: input.productId, ...input.content };
   const result = await adminRequest<UpdateResult>(admin, UPDATE_PRODUCT, { product });
   assertNoUserErrors(result.productUpdate.userErrors, "Bundle product content update failed");
-  return verifySavedContent(admin, input.productId, input.publicId, input.patch);
 }
 
 async function findParentProduct(
@@ -123,8 +132,20 @@ function existingParent(
   if (product.bundleId?.value !== input.publicId || product.variants.nodes.length !== 1 || !variant) {
     throw new BundleContentError("The deterministic bundle product handle is already in use.", 409);
   }
-  assertPatch(toContent(product), targetPatch(input), false);
   return { productId: product.id, variantId: variant.id };
+}
+
+async function reuseParentProduct(
+  admin: AdminClient,
+  product: FoundParent,
+  input: ParentProductContentInput,
+): Promise<ParentProductIds> {
+  const parent = existingParent(product, input);
+  await requestProductUpdate(admin, {
+    productId: parent.productId,
+    content: { title: input.title, descriptionHtml: input.descriptionHtml },
+  });
+  return parent;
 }
 
 async function createParentProduct(
@@ -135,34 +156,7 @@ async function createParentProduct(
   assertNoUserErrors(result.productCreate.userErrors, "Bundle product creation failed");
   const created = result.productCreate.product;
   if (!created?.variants.nodes[0]) throw new Error("Shopify did not create a parent variant.");
-  await verifySavedContent(admin, created.id, input.publicId, targetPatch(input));
   return { productId: created.id, variantId: created.variants.nodes[0].id };
-}
-
-async function verifySavedContent(
-  admin: AdminClient,
-  productId: string,
-  publicId: string,
-  patch: ProductContentPatch,
-): Promise<ShopifyProductContent> {
-  try {
-    const content = await readProductContent(admin, productId, publicId);
-    assertPatch(content, patch, true);
-    return content;
-  } catch (error) {
-    if (error instanceof BundleContentError && error.productSaved) throw error;
-    throw savedReadbackError(error);
-  }
-}
-
-function savedReadbackError(error: unknown): BundleContentError {
-  const errors = error instanceof BundleContentError ? error.errors : {};
-  return new BundleContentError(
-    "Shopify content was written, but it could not be verified. Reload before continuing.",
-    502,
-    errors,
-    true,
-  );
 }
 
 function createInput(input: ParentProductContentInput) {
@@ -176,45 +170,18 @@ function createInput(input: ParentProductContentInput) {
   };
 }
 
-function targetPatch(input: ParentProductContentInput): ProductContentPatch {
-  return { title: input.title, descriptionHtml: input.descriptionHtml };
-}
-
-function assertPatch(
-  content: ShopifyProductContent,
-  patch: ProductContentPatch,
-  productSaved: boolean,
-): void {
-  const errors: Record<string, string> = {};
-  if (patch.title !== undefined && content.title !== patch.title) errors.title = "Shopify title changed during save.";
-  if (patch.descriptionHtml !== undefined && !descriptionMatches(content.descriptionHtml, patch.descriptionHtml)) {
-    errors.description = "Shopify description changed during save.";
-  }
-  if (Object.keys(errors).length) throw postReadConflict(errors, productSaved);
-}
-
-function descriptionMatches(actual: string, expected: string): boolean {
-  return actual === expected || descriptionsSemanticallyEqual(actual, expected);
-}
-
-function postReadConflict(errors: Record<string, string>, productSaved: boolean): BundleContentError {
-  const message = productSaved
-    ? "Shopify content was written, but the readback no longer matches. Reload before continuing."
-    : "This Shopify product has different content. Reload before continuing.";
-  return new BundleContentError(message, productSaved ? 502 : 409, errors, productSaved);
-}
-
 function parentHandle(publicId: string): string {
   return `smartbundle-${publicId}`.toLowerCase();
 }
 
 function toContent(product: ProductNode): ShopifyProductContent {
+  const variant = product.variants.nodes[0];
+  if (!variant) throw new BundleContentError("The Shopify product has no bundle variant.", 409);
   return {
-    productId: product.id,
     title: product.title,
     descriptionHtml: product.descriptionHtml,
-    updatedAt: product.updatedAt,
-    bundlePublicId: product.identity?.value ?? null,
+    price: variant.price,
+    compareAtPrice: variant.compareAtPrice,
   };
 }
 
@@ -235,7 +202,8 @@ async function upstream<T>(operation: () => Promise<T>, message: string): Promis
   }
 }
 
-interface FoundParent extends ProductNode {
+interface FoundParent {
+  id: string;
   variants: { nodes: Array<{ id: string }> };
   bundleId?: { value: string } | null;
 }
@@ -244,7 +212,7 @@ interface FindResult { product?: FoundParent | null }
 
 interface CreateResult {
   productCreate: {
-    product?: ProductNode & { variants: { nodes: Array<{ id: string }> } } | null;
+    product?: { id: string; variants: { nodes: Array<{ id: string }> } } | null;
     userErrors: UserError[];
   };
 }

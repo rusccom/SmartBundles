@@ -5,10 +5,9 @@ import "./description-editor.css";
 
 export interface DescriptionEditorProps {
   value: string;
-  dirty: boolean;
   disabled: boolean;
   error?: string;
-  onChange: (value: string, dirty: boolean) => void;
+  onChange: (value: string) => void;
 }
 
 export function DescriptionEditor(props: DescriptionEditorProps) {
@@ -18,7 +17,7 @@ export function DescriptionEditor(props: DescriptionEditorProps) {
       htmlFor="sb-description-input">Description</label>
     {descriptionControl(props, state)}
     <span id="sb-description-help" className="sb-description-help">
-      Shopify is the source of truth. HTML is sent only after you edit this field.
+      Shopify is the source of truth.
     </span>
     <span id="sb-description-warning" className="sb-description-warning"
       role={state.warning ? "status" : undefined}>{state.warning}</span>

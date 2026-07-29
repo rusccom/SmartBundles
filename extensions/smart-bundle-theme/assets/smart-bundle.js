@@ -215,7 +215,7 @@ class SmartBundle extends HTMLElement {
     const selections = this.components.map((component) => [
       JSON.parse(component.dataset.selectorKey), selectedInput(component)?.value,
     ]);
-    return { rv: JSON.parse(this.dataset.revision), s: selections };
+    return { s: selections };
   }
   parentId() {
     const gid = this.dataset.parentVariantGid || "";

@@ -27,9 +27,7 @@ export function BundleDetailsFields({ controller }: BundleDetailsFieldsProps) {
 
 function descriptionField(controller: BundleEditorController) {
   const { draft, errors } = controller;
-  return <DescriptionEditor value={draft.descriptionHtml} dirty={draft.descriptionDirty}
+  return <DescriptionEditor value={draft.descriptionHtml}
     disabled={controller.busy} error={errors.description}
-    onChange={(descriptionHtml, descriptionDirty) => controller.patch({
-      descriptionHtml, descriptionDirty,
-    })} />;
+    onChange={(descriptionHtml) => controller.patch({ descriptionHtml })} />;
 }

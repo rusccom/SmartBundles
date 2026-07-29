@@ -3,7 +3,6 @@ import {
   isObject,
   isDiscountPercent,
   isQuantity,
-  isRevision,
   isSelectorKey,
   isUnitPrice,
   isVariantGid,
@@ -17,20 +16,20 @@ export function readRuntime(line) {
   if (!components) return null;
   const selectors = readSelectors(value.s, components, value.m);
   return selectors ? {
-    rv: value.rv, mode: value.m, discountPercent: value.d,
+    mode: value.m, discountPercent: value.d,
     parentVariantId: value.p, components, selectors,
   } : null;
 }
 
 export function isDisabledRuntime(value) {
   if (!isObject(value) || value.sv !== 3 || value.en !== 0) return false;
-  if (!isRevision(value.rv) || !isVariantGid(value.p)) return false;
+  if (!isVariantGid(value.p)) return false;
   return typeof value.b === "string" && value.b.length > 0 && value.b.length <= 128;
 }
 
 function isRuntimeHeader(value) {
   if (!isObject(value) || value.sv !== 3 || value.en !== 1) return false;
-  if (!isRevision(value.rv) || !isVariantGid(value.p)) return false;
+  if (!isVariantGid(value.p)) return false;
   if (value.m !== 0 && value.m !== 1) return false;
   if (!isDiscountPercent(value.d)) return false;
   return typeof value.b === "string" && value.b.length > 0 && value.b.length <= 128;

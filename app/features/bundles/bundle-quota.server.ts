@@ -1,10 +1,8 @@
-import { Plan, Prisma } from "@prisma/client";
+import { Plan } from "@prisma/client";
 import prisma from "../../db.server";
 import { getBillingState } from "../billing/index.server";
-export { QuotaExceededError } from "./quota-exceeded-error";
 
 export const FREE_ACTIVE_BUNDLE_LIMIT = 3;
-const MAX_TRANSACTION_ATTEMPTS = 4;
 
 export interface BundleQuotaSnapshot {
   plan: Plan;
@@ -18,9 +16,7 @@ export async function getBundleQuota(
   shopId: string,
 ): Promise<BundleQuotaSnapshot> {
   const billing = await getBillingState(shopId, "quota");
-  const used = await prisma.bundle.count({
-    where: { shopId, countsTowardQuota: true },
-  });
+  const used = await prisma.bundle.count({ where: { shopId, status: "ACTIVE" } });
   return quotaSnapshot(billing.plan, used);
 }
 
@@ -35,29 +31,4 @@ function quotaSnapshot(plan: Plan, used: number): BundleQuotaSnapshot {
     remaining,
     canActivate: remaining > 0,
   };
-}
-
-export async function serializable<T>(
-  work: (transaction: Prisma.TransactionClient) => Promise<T>,
-  timeout = 5_000,
-): Promise<T> {
-  for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
-    try {
-      return await prisma.$transaction(work, {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-        timeout,
-      });
-    } catch (error) {
-      if (!isRetryable(error) || attempt === MAX_TRANSACTION_ATTEMPTS)
-        throw error;
-    }
-  }
-  throw new Error("Quota transaction failed.");
-}
-
-function isRetryable(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2034"
-  );
 }

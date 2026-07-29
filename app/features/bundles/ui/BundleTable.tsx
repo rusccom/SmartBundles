@@ -7,8 +7,7 @@ export function BundleTable({ bundles }: BundleTableProps) {
   return <s-table>
     <s-table-header-row>
       <s-table-header listSlot="primary">Bundle</s-table-header>
-      <s-table-header listSlot="secondary">Lifecycle</s-table-header>
-      <s-table-header listSlot="secondary">Health</s-table-header>
+      <s-table-header listSlot="secondary">Status</s-table-header>
       <s-table-header listSlot="labeled" format="numeric">Components</s-table-header>
       <s-table-header listSlot="labeled">Pricing</s-table-header>
       <s-table-header listSlot="secondary">Updated</s-table-header>

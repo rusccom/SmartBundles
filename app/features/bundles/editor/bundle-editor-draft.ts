@@ -1,4 +1,3 @@
-import { desiredStatus } from "./bundle-editor-status";
 import { initialEditorSelectors, serializedSelectors } from "./editor-state";
 import type { BundleEditorDraft, BundleEditorInitial } from "./editor.types";
 
@@ -6,13 +5,11 @@ export function initialBundleEditorDraft(initial: BundleEditorInitial): BundleEd
   return {
     title: initial.title,
     descriptionHtml: initial.descriptionHtml,
-    descriptionDirty: false,
-    desiredStatus: desiredStatus(initial.status),
+    desiredStatus: initial.status,
     pricingMode: initial.pricingMode,
     fixedPrice: initial.fixedPrice,
     discountPercent: initial.discountPercent,
     selectors: initialEditorSelectors(initial.selectors),
-    replacementId: "",
   };
 }
 
@@ -25,25 +22,32 @@ export function bundleEditorDraftEqual(
 
 export function bundleEditorFormData(
   initial: BundleEditorInitial,
+  baseline: BundleEditorDraft,
   draft: BundleEditorDraft,
 ): FormData {
   const form = new FormData();
   appendIdentity(form, initial);
-  appendContent(form, draft);
+  appendContent(form, initial.id, baseline, draft);
   appendBundle(form, draft);
+  form.set("configurationDirty", configurationChanged(initial.id, baseline, draft) ? "yes" : "no");
+  form.set("storedConfigurationDirty", storedConfigurationChanged(initial.id, baseline, draft) ? "yes" : "no");
   return form;
 }
 
 function appendIdentity(form: FormData, initial: BundleEditorInitial): void {
-  form.set("bundleVersion", initial.version);
-  form.set("contentVersionToken", initial.contentVersionToken ?? "");
   form.set("creationToken", initial.creationToken ?? "");
 }
 
-function appendContent(form: FormData, draft: BundleEditorDraft): void {
-  form.set("title", draft.title);
-  form.set("descriptionHtml", draft.descriptionHtml);
-  form.set("descriptionDirty", draft.descriptionDirty ? "yes" : "no");
+function appendContent(
+  form: FormData,
+  id: string | undefined,
+  baseline: BundleEditorDraft,
+  draft: BundleEditorDraft,
+): void {
+  if (!id || baseline.title !== draft.title) form.set("title", draft.title);
+  if (!id || baseline.descriptionHtml !== draft.descriptionHtml) {
+    form.set("descriptionHtml", draft.descriptionHtml);
+  }
 }
 
 function appendBundle(form: FormData, draft: BundleEditorDraft): void {
@@ -52,7 +56,39 @@ function appendBundle(form: FormData, draft: BundleEditorDraft): void {
   form.set("fixedPrice", draft.fixedPrice);
   form.set("discountPercent", draft.discountPercent);
   form.set("selectors", serializedSelectors(draft.selectors));
-  form.set("replacementId", draft.replacementId);
+}
+
+function configurationChanged(
+  id: string | undefined,
+  baseline: BundleEditorDraft,
+  draft: BundleEditorDraft,
+): boolean {
+  if (!id) return true;
+  return JSON.stringify(configurationValue(baseline)) !== JSON.stringify(configurationValue(draft));
+}
+
+function configurationValue(draft: BundleEditorDraft) {
+  return {
+    ...storedConfigurationValue(draft),
+    fixedPrice: draft.fixedPrice,
+  };
+}
+
+function storedConfigurationChanged(
+  id: string | undefined,
+  baseline: BundleEditorDraft,
+  draft: BundleEditorDraft,
+): boolean {
+  if (!id) return true;
+  return JSON.stringify(storedConfigurationValue(baseline))
+    !== JSON.stringify(storedConfigurationValue(draft));
+}
+
+function storedConfigurationValue(draft: BundleEditorDraft) {
+  return {
+    pricingMode: draft.pricingMode, discountPercent: draft.discountPercent,
+    selectors: serializedSelectors(draft.selectors),
+  };
 }
 
 function draftFingerprint(draft: BundleEditorDraft): string {

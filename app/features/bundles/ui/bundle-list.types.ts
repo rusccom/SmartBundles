@@ -3,11 +3,10 @@ export interface BundleListItem {
   title: string;
   pricingMode: "FIXED" | "DYNAMIC";
   fixedPrice: string | null;
-  status: string;
-  health: string;
+  status: "DRAFT" | "ACTIVE";
   componentCount: number;
   updatedAt: string;
-  parentProductGid: string | null;
+  parentProductGid: string;
 }
 
 export interface BundleListPageProps {

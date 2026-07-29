@@ -2,7 +2,7 @@ import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { activeBundleCount, listBundles } from "../features/bundles/bundle-repository.server";
-import { bundleTitleMap } from "../features/bundles/content/bundle-titles.server";
+import { bundleProductMap } from "../features/bundles/content/bundle-titles.server";
 import { BundleListPage } from "../features/bundles/ui/BundleListPage";
 import { ensureShopContext } from "../features/installation/shop-context.server";
 import { authenticate } from "../shopify.server";
@@ -12,8 +12,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const shop = await ensureShopContext(admin, session.shop);
   const page = pageNumber(new URL(request.url).searchParams.get("page"));
   const [result, activeCount] = await Promise.all([listBundles(shop.id, page), activeBundleCount(shop.id)]);
-  const titles = await bundleTitleMap(admin, result.bundles);
-  const bundles = result.bundles.map((bundle) => ({ ...bundle, title: titles.get(bundle.publicId)! }));
+  const products = await bundleProductMap(admin, result.bundles);
+  const bundles = result.bundles.map((bundle) => {
+    const product = products.get(bundle.publicId);
+    const fixedPrice = product?.compareAtPrice ?? product?.price ?? null;
+    return { ...bundle, title: product?.title ?? "Unavailable bundle", fixedPrice };
+  });
   return { ...result, bundles, page, activeCount, plan: shop.entitlement?.plan ?? "FREE" };
 }
 

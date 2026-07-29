@@ -4,7 +4,7 @@ import type { BundleSelectorInput } from "./bundle.types";
 import { BundleComponentValidationError } from "./bundle-component-validation-error";
 
 const VARIANTS_QUERY = `#graphql
-  query SmartBundleVariants($ids: [ID!]!, $publicationId: ID!) {
+  query SmartBundleProjectionVariants($ids: [ID!]!) {
     nodes(ids: $ids) {
       ... on ProductVariant {
         id
@@ -20,7 +20,6 @@ const VARIANTS_QUERY = `#graphql
           media(first: 1, query: "media_type:IMAGE", sortKey: POSITION) {
             nodes { ... on MediaImage { image { url } } }
           }
-          publishedOnPublication(publicationId: $publicationId)
           bundleComponents(first: 1) { nodes { componentProduct { id } } }
           bundleId: metafield(namespace: "$app", key: "bundle_id") { value }
         }
@@ -28,7 +27,6 @@ const VARIANTS_QUERY = `#graphql
     }
   }
 `;
-const VARIANT_QUERY_BATCH = 40;
 
 interface VariantNode {
   id: string;
@@ -42,7 +40,6 @@ interface VariantNode {
     id: string;
     title: string;
     media: { nodes: MediaNode[] };
-    publishedOnPublication: boolean;
     bundleComponents: { nodes: Array<{ componentProduct: { id: string } }> };
     bundleId?: { value: string } | null;
   };
@@ -52,60 +49,35 @@ interface MediaNode { image?: { url: string } | null }
 
 interface VariantQuery { nodes: Array<VariantNode | null> }
 
-export async function verifyBundleSelectors(
+export async function hydrateProjectionSelectors(
   admin: AdminClient,
   selectors: BundleSelectorInput[],
-  publicationId: string,
 ): Promise<BundleSelectorInput[]> {
   const ids = [...new Set(selectors.flatMap(({ options }) => options.map(({ id }) => id)))];
-  const variants = await loadVariants(admin, ids, publicationId);
-  const verified = selectors.map((selector) => verifiedSelector(selector, variants));
-  if (verified.some(isSoldOut)) {
-    throw new BundleComponentValidationError(
-      "SOLD_OUT",
-      "Each component needs an available variant.",
-      verified,
-    );
-  }
-  return verified;
+  const variants = await loadVariants(admin, ids);
+  return selectors.map((selector) => hydratedSelector(selector, variants));
 }
 
 async function loadVariants(
   admin: AdminClient,
   ids: string[],
-  publicationId: string,
 ): Promise<Map<string, VariantNode>> {
-  const variants = new Map<string, VariantNode>();
-  for (let index = 0; index < ids.length; index += VARIANT_QUERY_BATCH) {
-    const batch = ids.slice(index, index + VARIANT_QUERY_BATCH);
-    const result = await adminRequest<VariantQuery>(admin, VARIANTS_QUERY, { ids: batch, publicationId });
-    addVariants(variants, result.nodes);
-  }
-  return variants;
+  const result = await adminRequest<VariantQuery>(admin, VARIANTS_QUERY, { ids });
+  const nodes = result.nodes.filter(isVariantNode);
+  return new Map(nodes.map((node) => [node.id, node]));
 }
 
-function addVariants(
-  variants: Map<string, VariantNode>,
-  nodes: Array<VariantNode | null>,
-): void {
-  nodes.forEach((node) => { if (node?.id) variants.set(node.id, node); });
-}
-
-function isSoldOut(selector: BundleSelectorInput): boolean {
-  return !selector.options.some(({ available }) => available);
-}
-
-function verifiedSelector(
+function hydratedSelector(
   selector: BundleSelectorInput,
   variants: Map<string, VariantNode>,
 ): BundleSelectorInput {
-  const options = selector.options.map(({ id }) => verifiedOption(id, selector.productId, variants));
+  const options = selector.options.map(({ id }) => hydratedOption(id, selector.productId, variants));
   const product = variants.get(options[0].id)?.product;
   const productTitle = product?.title ?? selector.productTitle;
   return { ...selector, label: productTitle, productTitle, options };
 }
 
-function verifiedOption(
+function hydratedOption(
   id: string,
   productId: string,
   variants: Map<string, VariantNode>,
@@ -113,7 +85,6 @@ function verifiedOption(
   const variant = variants.get(id);
   if (!variant || variant.product.id !== productId) invalidComponent("A selected variant no longer exists.");
   if (isBundleVariant(variant)) invalidComponent("Nested bundle components aren't supported.");
-  if (!variant.product.publishedOnPublication) invalidComponent("Component products must be published to Online Store.");
   return {
     id,
     title: variant.title,
@@ -128,7 +99,11 @@ function variantImageUrl(variant: VariantNode): string | undefined {
 }
 
 function invalidComponent(message: string): never {
-  throw new BundleComponentValidationError("INVALID", message);
+  throw new BundleComponentValidationError(message);
+}
+
+function isVariantNode(value: VariantNode | null): value is VariantNode {
+  return Boolean(value?.id);
 }
 
 function isBundleVariant(variant: VariantNode): boolean {

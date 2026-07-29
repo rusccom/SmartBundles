@@ -1,36 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { BundleContentError } from "./BundleContentError.server";
-import { contentFieldHash } from "./content-hash.server";
-import type {
-  ContentTokenSource,
-  ContentVersionPayload,
-  CreationTokenPayload,
-} from "./content.types";
+import type { CreationTokenPayload } from "./content.types";
 
-type SignedPayload = ContentVersionPayload | CreationTokenPayload;
-
-export function signContentVersion(source: ContentTokenSource): string {
-  return encode({
-    v: 1,
-    kind: "content",
-    shopDomain: source.shopDomain,
-    bundleId: source.bundleId,
-    productId: source.content.productId,
-    lockVersion: source.lockVersion,
-    titleHash: contentFieldHash(source.content.title),
-    descriptionHash: contentFieldHash(source.content.descriptionHtml),
-    updatedAt: source.content.updatedAt,
-  });
-}
+type SignedPayload = CreationTokenPayload;
 
 export function signCreationToken(shopDomain: string, publicId: string): string {
   return encode({ v: 1, kind: "create", shopDomain, publicId });
-}
-
-export function verifyContentVersion(token: string): ContentVersionPayload {
-  const payload = decode(token);
-  if (!isContentPayload(payload)) throw invalidToken();
-  return payload;
 }
 
 export function verifyCreationToken(token: string): CreationTokenPayload {
@@ -70,12 +45,6 @@ function tokenSecret(): string {
   return secret;
 }
 
-function isContentPayload(value: unknown): value is ContentVersionPayload {
-  if (!isRecord(value) || value.v !== 1 || value.kind !== "content") return false;
-  return strings(value, ["shopDomain", "bundleId", "productId", "titleHash", "descriptionHash", "updatedAt"])
-    && Number.isSafeInteger(value.lockVersion) && Number(value.lockVersion) >= 0;
-}
-
 function isCreationPayload(value: unknown): value is CreationTokenPayload {
   return isRecord(value) && value.v === 1 && value.kind === "create"
     && strings(value, ["shopDomain", "publicId"]);
@@ -90,5 +59,5 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function invalidToken(): BundleContentError {
-  return new BundleContentError("The signed content token is invalid. Reload and try again.", 400);
+  return new BundleContentError("The signed creation token is invalid. Reload and try again.", 400);
 }

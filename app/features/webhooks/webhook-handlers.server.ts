@@ -1,5 +1,9 @@
 import prisma from "../../db.server";
-import { bundleWritesDisabled } from "../operations/bundle-write-gate.server";
+import { unauthenticated } from "../../shopify.server";
+import {
+  draftBundle,
+  syncActiveBundle,
+} from "../bundles/bundle-projection.server";
 
 export async function handleUninstalled(shop: string): Promise<void> {
   await prisma.$transaction([
@@ -18,14 +22,27 @@ export async function handleScopeUpdate(shop: string, scopes: string[]): Promise
 export async function handleProductWebhook(
   topic: string,
   payload: unknown,
-  webhookId: string,
+  _webhookId: string,
   shop: string,
 ): Promise<void> {
-  if (bundleWritesDisabled()) return;
   const productGid = productId(payload);
   if (!productGid) return;
+  const deleted = topic.includes("DELETE");
+  if (deleted) await draftDeletedParents(shop, productGid);
   const bundles = await relatedBundles(shop, productGid);
-  await queueReconciliation(bundles, webhookId, productGid);
+  if (!bundles.length) return;
+  const { admin } = await unauthenticated.admin(shop);
+  const operation = deleted ? draftBundle : syncActiveBundle;
+  await Promise.all(bundles.map(({ id, shopId }) => operation(admin, shopId, id)));
+}
+
+function draftDeletedParents(shop: string, productGid: string) {
+  return prisma.bundle.updateMany({
+    where: {
+      shop: { domain: shop }, status: "ACTIVE", parentProductGid: productGid,
+    },
+    data: { status: "DRAFT" },
+  });
 }
 
 function productId(payload: unknown): string | undefined {
@@ -35,42 +52,14 @@ function productId(payload: unknown): string | undefined {
 }
 
 async function relatedBundles(shop: string, productGid: string) {
-  const bundles = await prisma.bundle.findMany({
+  return prisma.bundle.findMany({
     where: {
       shop: { domain: shop },
-      activeRevision: { not: null },
-      OR: [
-        { parentProductGid: productGid },
-        { revisions: { some: { selectors: { some: { productGid } } } } },
-      ],
+      status: "ACTIVE",
+      parentProductGid: { not: productGid },
+      selectors: { some: { productGid } },
     },
-    select: {
-      id: true, shopId: true, parentProductGid: true, activeRevision: true,
-      revisions: { where: { selectors: { some: { productGid } } }, select: { revision: true } },
-    },
-  });
-  return bundles.filter((bundle) => activeBundleUsesProduct(bundle, productGid));
-}
-
-function activeBundleUsesProduct(
-  bundle: { parentProductGid: string | null; activeRevision: number | null; revisions: Array<{ revision: number }> },
-  productGid: string,
-): boolean {
-  if (bundle.parentProductGid === productGid) return true;
-  return bundle.revisions.some(({ revision }) => revision === bundle.activeRevision);
-}
-
-async function queueReconciliation(
-  bundles: Array<{ id: string; shopId: string }>,
-  webhookId: string,
-  productGid: string,
-): Promise<void> {
-  if (!bundles.length) return;
-  await prisma.publicationJob.createMany({
-    data: bundles.map(({ id, shopId }) => ({
-      shopId, bundleId: id, type: "RECONCILE", idempotencyKey: `${webhookId}:${id}`, payload: { productGid },
-    })),
-    skipDuplicates: true,
+    select: { id: true, shopId: true },
   });
 }
 

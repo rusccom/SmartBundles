@@ -2,22 +2,22 @@ import {
   descriptionsSemanticallyEqual,
   sanitizeDescription,
 } from "../../rich-text/description/description-sanitize.server";
-import type { ProductContentPatch } from "./content.types";
+import type { BundleContentPatch } from "../bundle.types";
 
 const MAX_TITLE_LENGTH = 255;
-
-export function validateContentPatch(patch: ProductContentPatch): Record<string, string> {
-  const errors: Record<string, string> = {};
-  if (patch.title !== undefined) validateTitle(patch.title, errors);
-  if (patch.descriptionHtml !== undefined) validateDescription(patch.descriptionHtml, errors);
-  return errors;
-}
 
 export function validateCreationContent(
   title: string,
   descriptionHtml: string,
 ): Record<string, string> {
   return validateContentPatch({ title, descriptionHtml });
+}
+
+export function validateContentPatch(patch: BundleContentPatch): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (patch.title !== undefined) validateTitle(patch.title, errors);
+  if (patch.descriptionHtml !== undefined) validateDescription(patch.descriptionHtml, errors);
+  return errors;
 }
 
 function validateTitle(value: string, errors: Record<string, string>): void {

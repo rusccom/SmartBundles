@@ -62,9 +62,8 @@ test("rejects missing or malformed selections", () => {
   assert.throws(() => run(selection(VARIANTS), fixedDiscount));
 });
 
-test("rejects forged variants and revision mismatches", () => {
+test("rejects forged variants", () => {
   assert.throws(() => run(selection(["101", "102", "103", "999"])));
-  assert.throws(() => run(selection(VARIANTS, 2)));
 });
 
 test("rejects a different cart-line parent variant", () => {
@@ -103,7 +102,7 @@ function inputFor(attribute, runtime = validRuntime(), presentmentCurrencyRate =
 
 function validRuntime() {
   return {
-    sv: 3, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0, d: "0",
+    sv: 3, en: 1, b: "bundle-1", p: PARENT, m: 0, d: "0",
     c: VARIANTS.map((id) => [id, 1]),
     s: VARIANTS.map((_, index) => ({ k: index + 1, o: [index], d: "0" })),
   };
@@ -133,15 +132,14 @@ function duplicateRuntime() {
 function repeatedRuntime(count) {
   const ids = Array.from({ length: count }, (_, index) => String(1_000 + index));
   return {
-    sv: 3, rv: 1, en: 1, b: "bundle-1", p: PARENT, m: 0, d: "0",
+    sv: 3, en: 1, b: "bundle-1", p: PARENT, m: 0, d: "0",
     c: ids.map((id) => [id, 1]),
     s: ids.map((_, index) => ({ k: index + 1, o: [index], d: "0" })),
   };
 }
 
-function selection(ids, revision = 1) {
+function selection(ids) {
   return JSON.stringify({
-    rv: revision,
     s: ids.map((id, index) => [index + 1, `gid://shopify/ProductVariant/${id}`]),
   });
 }
