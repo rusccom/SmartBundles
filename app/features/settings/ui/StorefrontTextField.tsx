@@ -1,5 +1,4 @@
 import type { StorefrontTextFieldDefinition, StorefrontTextKey } from "../storefront-text.types";
-import { StorefrontTextFieldHelp } from "./StorefrontTextFieldHelp";
 
 export interface StorefrontTextFieldProps {
   definition: StorefrontTextFieldDefinition;
@@ -9,20 +8,26 @@ export interface StorefrontTextFieldProps {
 }
 
 export function StorefrontTextField(props: StorefrontTextFieldProps) {
-  const id = `storefront-text-${props.definition.key}`, errorId = `${id}-error`;
-  const change = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    props.onChange(props.definition.key, event.target.value);
-  const controlProps = {
-    id, name: `texts.${props.definition.key}`, value: props.value,
-    maxLength: props.definition.maxLength, required: true,
-    "aria-invalid": Boolean(props.error),
-    "aria-describedby": props.error ? errorId : undefined,
-    onChange: change,
+  const { definition } = props;
+  const common = {
+    label: definition.label,
+    name: `texts.${definition.key}`,
+    value: props.value,
+    maxLength: definition.maxLength,
+    error: props.error,
+    details: helpText(definition),
   };
-  return <label className="sb-settings-field" htmlFor={id}>
-    <span className="sb-settings-field-label">{props.definition.label}</span>
-    {props.definition.multiline ? <textarea {...controlProps} rows={3} /> : <input {...controlProps} type="text" />}
-    <StorefrontTextFieldHelp definition={props.definition} />
-    {props.error ? <span id={errorId} className="sb-settings-error" role="alert">{props.error}</span> : null}
-  </label>;
+  const change = (value: string) => props.onChange(definition.key, value);
+  if (definition.multiline) {
+    return <s-text-area {...common} rows={3}
+      onInput={(event) => change(event.currentTarget.value)} />;
+  }
+  return <s-text-field {...common}
+    onInput={(event) => change(event.currentTarget.value)} />;
+}
+
+function helpText(definition: StorefrontTextFieldDefinition): string {
+  const tokens = definition.requiredTokens;
+  if (!tokens?.length) return `${definition.maxLength} characters maximum.`;
+  return `Required placeholders: ${tokens.join(", ")}`;
 }

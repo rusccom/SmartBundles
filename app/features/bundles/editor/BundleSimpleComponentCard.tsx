@@ -19,13 +19,13 @@ export interface BundleSimpleComponentCardProps {
 export function BundleSimpleComponentCard(props: BundleSimpleComponentCardProps) {
   const option = props.selector.options[0];
   if (!option) return null;
-  const status = option.available === false ? "Sold out" : "Available";
-  const statusClass = option.available === false ? " sb-simple-component-status-sold-out" : "";
   return <div className="sb-simple-component">
     {props.dragHandle}
     <BundleProductThumbnail imageUrl={option.imageUrl} title={props.selector.productTitle} />
     <span className="sb-simple-component-info"><strong>{props.selector.productTitle}</strong>
-      <span className={`sb-simple-component-status${statusClass}`}>{status}</span></span>
+      {option.available === false
+        ? <s-badge tone="warning">Sold out</s-badge>
+        : <s-badge>Available</s-badge>}</span>
     <BundleComponentControls selector={props.selector} discountDisabled={props.discountDisabled}
       onQuantity={(value) => props.onQuantity(props.index, value)}
       onDiscount={(value) => props.onDiscount(props.index, value)} />

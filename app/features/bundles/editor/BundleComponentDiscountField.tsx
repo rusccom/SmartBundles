@@ -8,13 +8,11 @@ const DYNAMIC_ONLY = "Component discounts are available with dynamic pricing.";
 
 export function BundleComponentDiscountField(props: BundleComponentDiscountFieldProps) {
   const error = props.disabled ? undefined : discountError(props.value);
-  return <label className="sb-component-field sb-discount-field" title={props.disabled ? DYNAMIC_ONLY : undefined}>
-    Discount (%)
-    <input type="number" min="0" max="100" step="0.01" value={props.value} disabled={props.disabled}
-      aria-invalid={Boolean(error)} aria-label="Component discount percentage"
-      onChange={(event) => props.onChange(event.target.value)} />
-    {error ? <span className="sb-component-field-error" role="alert">{error}</span> : null}
-  </label>;
+  return <span className="sb-discount-field" title={props.disabled ? DYNAMIC_ONLY : undefined}>
+    <s-number-field label="Discount" suffix="%" value={props.value}
+      min={0} max={100} step={0.01} disabled={props.disabled} error={error}
+      onInput={(event) => props.onChange(event.currentTarget.value)} />
+  </span>;
 }
 
 function discountError(value: string): string | undefined {

@@ -4,10 +4,10 @@ export interface BundleComponentQuantityFieldProps {
 }
 
 export function BundleComponentQuantityField({ quantity, onChange }: BundleComponentQuantityFieldProps) {
-  return <label className="sb-quantity-field">Quantity
-    <input type="number" min="1" max="2000" step="1" value={quantity}
-      onChange={(event) => onChange(normalizeQuantity(event.target.valueAsNumber))} />
-  </label>;
+  return <span className="sb-quantity-field">
+    <s-number-field label="Quantity" value={String(quantity)} min={1} max={2000} step={1}
+      onInput={(event) => onChange(normalizeQuantity(Number(event.currentTarget.value)))} />
+  </span>;
 }
 
 function normalizeQuantity(value: number): number {

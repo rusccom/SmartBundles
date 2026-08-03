@@ -15,70 +15,8 @@
   border: 0;
 }
 
-.sb-settings-group {
-  border: 1px solid #d5d7da;
-  border-radius: 12px;
-  padding: 20px;
-  background: #fff;
-}
-
-.sb-settings-group h2 {
-  margin: 0 0 16px;
-  font-size: 18px;
-}
-
 .sb-settings-fields {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.sb-settings-field {
-  display: grid;
-  gap: 6px;
-  align-content: start;
-}
-
-.sb-settings-field input,
-.sb-settings-field textarea {
-  box-sizing: border-box;
-  width: 100%;
-  border: 1px solid #8c9196;
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: inherit;
-  background: #fff;
-  font: inherit;
-}
-
-.sb-settings-field input {
-  min-height: 44px;
-}
-
-.sb-settings-field textarea {
-  min-height: 88px;
-  resize: vertical;
-}
-
-.sb-settings-field input:focus-visible,
-.sb-settings-field textarea:focus-visible {
-  outline: 2px solid #005bd3;
-  outline-offset: 2px;
-}
-
-.sb-settings-field-label {
-  font-weight: 550;
-}
-
-.sb-settings-field small {
-  color: #616161;
-}
-
-.sb-settings-field code {
-  overflow-wrap: anywhere;
-}
-
-.sb-settings-error {
-  color: #8e1f0b;
-  font-size: 13px;
 }
 
 .sb-settings-save-bar {
@@ -92,21 +30,6 @@
   padding: 16px;
   border-top: 1px solid #d5d7da;
   background: #f6f6f7;
-}
-
-.sb-settings-save-bar button {
-  min-height: 44px;
-  border: 1px solid #303030;
-  border-radius: 8px;
-  padding: 0 16px;
-  color: #fff;
-  background: #303030;
-  cursor: pointer;
-}
-
-.sb-settings-save-bar button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 .sb-settings-visually-hidden {
@@ -127,9 +50,5 @@
   .sb-settings-save-bar {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .sb-settings-save-bar button {
-    width: 100%;
   }
 }

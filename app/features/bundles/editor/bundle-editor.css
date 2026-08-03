@@ -43,7 +43,7 @@
 .sb-component-header {
   display: grid;
   box-sizing: border-box;
-  grid-template-columns: 44px 44px 48px minmax(140px, 1fr) 160px 120px 44px;
+  grid-template-columns: 44px 44px 48px minmax(140px, 1fr) 224px 120px 44px;
   gap: 10px;
   align-items: center;
   min-height: 72px;
@@ -164,7 +164,7 @@
 .sb-option {
   display: grid;
   box-sizing: border-box;
-  grid-template-columns: 24px minmax(0, 1fr) minmax(90px, auto);
+  grid-template-columns: minmax(0, 1fr) auto minmax(90px, auto);
   gap: 12px;
   align-items: center;
   min-height: 46px;
@@ -173,23 +173,9 @@
   background: #fff;
 }
 
-.sb-option input {
-  width: 20px;
-  height: 20px;
-  margin: 0;
-  accent-color: #303030;
-}
-
-.sb-option:has(input:disabled) {
+.sb-option:has(s-checkbox[disabled]) {
   color: #8c9196;
   background: #f6f6f7;
-}
-
-.sb-option-sold-out {
-  margin-left: 8px;
-  color: #8e1f0b;
-  font-size: 12px;
-  white-space: nowrap;
 }
 
 .sb-option-price {
@@ -209,31 +195,6 @@
   width: 44px;
   height: 44px;
   place-items: center;
-}
-
-.sb-component-remove-action button {
-  display: grid;
-  box-sizing: border-box;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  place-items: center;
-  color: #8e1f0b;
-  background: transparent;
-  font-size: 28px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.sb-component-remove-action button:hover {
-  background: #fff1ee;
-}
-
-.sb-component-remove-action button:focus-visible {
-  outline: 2px solid #b42318;
-  outline-offset: 2px;
 }
 
 .sb-replacement {
@@ -281,12 +242,12 @@
   }
 
   .sb-option {
-    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     padding-inline: 16px;
   }
 
   .sb-option-price {
-    grid-column: 2;
+    grid-column: 1;
     justify-self: start;
     color: #616161;
   }

@@ -5,10 +5,7 @@ export interface BundleDiscountFieldProps {
 }
 
 export function BundleDiscountField(props: BundleDiscountFieldProps) {
-  return <label className="sb-editor-field">Discount (%)
-    <input type="number" value={props.value} min="0" max="100" step="0.01" required
-      aria-invalid={Boolean(props.error)}
-      onChange={(event) => props.onChange(event.target.value)} />
-    {props.error ? <span className="sb-editor-field-error" role="alert">{props.error}</span> : null}
-  </label>;
+  return <s-number-field label="Discount" suffix="%" value={props.value}
+    min={0} max={100} step={0.01} error={props.error}
+    onInput={(event) => props.onChange(event.currentTarget.value)} />;
 }

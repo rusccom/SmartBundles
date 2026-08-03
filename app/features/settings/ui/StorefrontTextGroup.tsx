@@ -15,12 +15,11 @@ export interface StorefrontTextGroupProps {
 
 export function StorefrontTextGroup(props: StorefrontTextGroupProps) {
   const fields = STOREFRONT_TEXT_FIELDS.filter(({ group }) => group === props.group);
-  return <section className="sb-settings-group">
-    <h2>{props.group}</h2>
+  return <s-section heading={props.group}>
     <div className="sb-settings-fields">
       {fields.map((definition) => <StorefrontTextField key={definition.key}
         definition={definition} value={props.texts[definition.key]}
         error={props.errors[definition.key]} onChange={props.onChange} />)}
     </div>
-  </section>;
+  </s-section>;
 }
