@@ -4,6 +4,7 @@
 .sb-editor-form {
   display: grid;
   gap: 20px;
+  contain: inline-size;
   min-width: 0;
   max-width: 100%;
 }
