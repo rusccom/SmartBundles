@@ -22,7 +22,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 720px) {
+@container (max-width: 800px) {
   .sb-simple-component {
     grid-template-columns: 44px 44px minmax(0, 1fr) auto;
     padding-inline: 12px;

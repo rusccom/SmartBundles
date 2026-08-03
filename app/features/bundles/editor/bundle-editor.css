@@ -3,8 +3,9 @@
 
 .sb-editor-form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
-  contain: inline-size;
+  container-type: inline-size;
   min-width: 0;
   max-width: 100%;
 }
@@ -219,7 +220,7 @@
   background: #fff;
 }
 
-@media (max-width: 720px) {
+@container (max-width: 800px) {
   .sb-details-header {
     display: grid;
   }
