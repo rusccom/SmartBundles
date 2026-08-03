@@ -1,10 +1,22 @@
-.sb-preview-frame {
-  display: block;
+.sb-preview-viewport {
+  position: relative;
   box-sizing: border-box;
   width: 100%;
   height: min(70vh, 760px);
+  overflow: hidden;
   border: 1px solid #e3e3e3;
   border-radius: 12px;
   background: #fff;
   color-scheme: light;
+}
+
+.sb-preview-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  border: 0;
+  background: #fff;
+  color-scheme: light;
+  transform-origin: top left;
 }
