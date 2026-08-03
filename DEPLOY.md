@@ -4,8 +4,10 @@
 
 | Дорожка | Что уезжает | Чем |
 |---|---|---|
-| Backend | Remix/React Router приложение, миграции БД | Railway (Docker) |
-| Shopify | Конфиг приложения, theme extension, Cart Transform функция | `shopify app deploy` |
+| Backend | React Router приложение, миграции БД | автодеплой Railway на пуш в `main` |
+| Shopify | Конфиг приложения, theme extension, Cart Transform функция | `shopify app deploy` вручную |
+
+Бэкенд выкатывается **сам** после каждого пуша в `main`; расширения Shopify — только руками.
 
 Дорожки не связаны друг с другом: Railway ничего не знает о расширениях, а Shopify CLI не трогает сервер. Порядок между ними важен только тогда, когда изменения в расширении зависят от новых данных с бэкенда (см. «Порядок выката»).
 
@@ -80,7 +82,20 @@ npm run deploy
 
 ## 4. Деплой бэкенда
 
-Railway собирает образ по [Dockerfile](Dockerfile), конфигурация — в [railway.toml](railway.toml). Триггер сборки (обычно push в `main` репозитория `rusccom/SmartBundles`) настраивается на стороне Railway.
+Сервис на Railway подключён к репозиторию `rusccom/SmartBundles`, ветка `main`. **Каждый пуш в `main` автоматически собирает и выкатывает бэкенд** — отдельной команды деплоя нет. Поэтому в `main` попадает только то, что готово к проду; перед пушем прогоняй `npm run check`.
+
+Рабочий цикл:
+
+```bash
+npm run check          # гейт
+git push origin main   # → Railway сам собирает и выкатывает
+railway logs           # смотреть логи сборки/приложения
+railway status         # какой деплой сейчас активен
+```
+
+CLI привязан к проекту (`railway link`): проект `SmartBundle`, окружение `production`, сервис `SmartBundle`. Ручной деплой на крайний случай — `railway up` (заливает текущий каталог как есть, включая незакоммиченное — пользоваться осознанно).
+
+Railway собирает образ по [Dockerfile](Dockerfile), параметры сборки и health-пробы — в [railway.toml](railway.toml).
 
 Что происходит в контейнере:
 
