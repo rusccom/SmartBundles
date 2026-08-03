@@ -17,11 +17,9 @@ export function BundleEditorPage(props: BundleEditorPageProps) {
     <BundleEditorSaveBar dirty={controller.dirty} saving={controller.saving}
       blocked={controller.busy}
       onSave={controller.submit} onDiscard={controller.discard} />
-    <div className="sb-preview-layout">
-      <BundleEditorForm initial={initial} controller={controller}
-        pricingEnabled={props.pricingEnabled ?? false} />
-      <BundlePreviewPanel draft={controller.draft} currencyCode={initial.currencyCode}
-        locale={initial.locale} texts={initial.texts} />
-    </div>
+    <BundleEditorForm initial={initial} controller={controller}
+      pricingEnabled={props.pricingEnabled ?? false} />
+    <BundlePreviewPanel draft={controller.draft} currencyCode={initial.currencyCode}
+      locale={initial.locale} texts={initial.texts} />
   </s-page>;
 }

@@ -5,12 +5,12 @@ import { useBundlePreview } from "./useBundlePreview";
 export function BundlePreviewPanel(props: BundlePreviewInput) {
   const frame = useRef<HTMLIFrameElement>(null);
   const { load, source } = useBundlePreview(frame, props);
-  return <aside className="sb-preview">
-    <div className="sb-preview-header">
+  return <s-section slot="aside">
+    <s-stack direction="block" gap="base">
       <s-heading>Preview bundle</s-heading>
       <s-paragraph>How this bundle appears on the product page.</s-paragraph>
-    </div>
-    <iframe className="sb-preview-frame" title="Bundle storefront preview"
-      ref={frame} srcDoc={source} onLoad={load} />
-  </aside>;
+      <iframe className="sb-preview-frame" title="Bundle storefront preview"
+        ref={frame} srcDoc={source} onLoad={load} />
+    </s-stack>
+  </s-section>;
 }
