@@ -4,6 +4,13 @@
 .sb-editor-form {
   display: grid;
   gap: 20px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sb-editor-form s-section {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .sb-editor-fieldset {
