@@ -7,6 +7,9 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { bundleEditorAction } from "../features/bundles/bundle-editor-action.server";
 import "../features/bundles/editor/bundle-editor.css";
 import { BundleEditorPage } from "../features/bundles/editor/BundleEditorPage";
+import "../features/bundles/preview/bundle-preview.css";
+import { ensureShopContext } from "../features/installation/shop-context.server";
+import { getShopStorefrontSettings } from "../features/settings/storefront-settings-repository.server";
 import { authenticate } from "../shopify.server";
 import { signCreationToken } from "../features/bundles/content/content-token.server";
 import { loadShopCurrencyCode } from "../features/bundles/editor/bundle-editor-variant-display.server";
@@ -16,11 +19,15 @@ import { isBundleEditorActionData } from "../features/bundles/bundle-editor-acti
 export async function loader({ request }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
   const creationToken = signCreationToken(session.shop, randomUUID());
-  const currencyCode = await loadShopCurrencyCode(admin);
+  const [shop, currencyCode] = await Promise.all([
+    ensureShopContext(admin, session.shop),
+    loadShopCurrencyCode(admin),
+  ]);
+  const settings = await getShopStorefrontSettings(shop.id);
   return { initial: {
     title: "", descriptionHtml: "", creationToken,
     pricingMode: "FIXED" as const, fixedPrice: "", discountPercent: "0", status: "DRAFT" as const, currencyCode,
-    locale: editorLocale(request), selectors: [] } };
+    locale: editorLocale(request), texts: settings.texts, selectors: [] } };
 }
 
 export function action({ request }: ActionFunctionArgs) {

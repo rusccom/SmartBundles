@@ -1,0 +1,185 @@
+import { componentSection } from "./smart-bundle-component-markup.js";
+import { attributes, element, fillTemplate } from "./smart-bundle-dom.js";
+
+const MIN_SELECTORS = 1;
+const MAX_SELECTORS = 150;
+
+export function hydrateHost(host) {
+  const config = hostPresentation(host);
+  const markup = bundleMarkup(config, hostSettings(host));
+  if (markup.status !== "ready") {
+    host.dataset.parentVariantId = host.dataset.themeVariantId || "";
+    host.replaceChildren(unavailableNote(config));
+    return markup.status;
+  }
+  Object.assign(host.dataset, markup.dataset);
+  host.replaceChildren(markup.fragment);
+  return markup.status;
+}
+
+export function bundleMarkup(config, settings) {
+  if (!ready(config)) return { status: "unavailable" };
+  const context = {
+    texts: config.texts, priceMode: config.pricing.mode, idPrefix: settings.idPrefix,
+  };
+  const fragment = document.createDocumentFragment();
+  fragment.append(heading(config, settings), componentList(config, context), actions(config));
+  return { status: "ready", dataset: bundleDataset(config), fragment };
+}
+
+export function unavailableNote(config) {
+  const note = element("p", "sb__editor-note", config?.texts?.bundleUnavailable ?? "");
+  note.setAttribute("role", "status");
+  return note;
+}
+
+function hostPresentation(host) {
+  try {
+    return JSON.parse(host.querySelector("script[data-presentation]")?.textContent || "null");
+  } catch {
+    return null;
+  }
+}
+
+function hostSettings(host) {
+  return {
+    idPrefix: `sb-${host.dataset.blockId || "block"}`,
+    showProgress: host.dataset.showProgress !== "false",
+  };
+}
+
+function ready(config) {
+  if (!config || config.sv !== 4 || config.en !== 1) return false;
+  if (!config.texts || !config.parentVariantId) return false;
+  const count = config.selectors?.length ?? 0;
+  if (count < MIN_SELECTORS || count > MAX_SELECTORS) return false;
+  return validPricing(config.pricing);
+}
+
+function validPricing(pricing) {
+  if (!pricing || !present(pricing.discountPercent)) return false;
+  if (pricing.mode === "fixed") {
+    return present(pricing.originalAmount) && present(pricing.amount);
+  }
+  return pricing.mode === "dynamic"
+    && present(pricing.maximumOriginalAmount) && present(pricing.maximumAmount);
+}
+
+function present(value) {
+  return value !== undefined && value !== null && String(value) !== "";
+}
+
+function bundleDataset(config) {
+  const { pricing } = config;
+  return {
+    parentVariantGid: config.parentVariantId,
+    parentVariantId: String(config.parentVariantId).split("/").pop(),
+    priceMode: pricing.mode,
+    currencyCode: pricing.currencyCode,
+    discountPercent: pricing.discountPercent,
+    originalAmount: pricing.originalAmount ?? "",
+    amount: pricing.amount ?? "",
+    maximumOriginalAmount: pricing.maximumOriginalAmount ?? "",
+    maximumAmount: pricing.maximumAmount ?? "",
+    ...textDataset(config.texts),
+  };
+}
+
+function textDataset(texts) {
+  return {
+    progressTemplate: texts.progressTemplate,
+    selectOne: texts.selectOneMore,
+    selectMany: texts.selectManyMoreTemplate,
+    chooseVariant: texts.chooseVariant,
+    priceUnavailable: texts.priceUnavailable,
+    optionUnavailable: texts.optionUnavailable,
+    bundleUnavailable: texts.bundleUnavailable,
+    addingLabel: texts.addingLabel,
+    addedLabel: texts.addedLabel,
+    addedStatus: texts.addedStatus,
+    addError: texts.addError,
+    addLabel: texts.buttonLabel,
+  };
+}
+
+function heading(config, settings) {
+  const box = element("div", "sb__heading");
+  box.append(element("h2", "sb__title", config.texts.heading));
+  if (settings.showProgress) box.append(progress(config));
+  return box;
+}
+
+function progress(config) {
+  const node = element("span", "sb__progress", fillTemplate(config.texts.progressTemplate, {
+    selected: preselectedCount(config.selectors), total: config.selectors.length,
+  }));
+  return attributes(node, { "data-progress": true, "aria-live": "polite" });
+}
+
+function preselectedCount(selectors) {
+  return selectors.filter((selector) =>
+    selector.options.length === 1 && selector.options[0].available !== false).length;
+}
+
+function componentList(config, context) {
+  const list = element("div", "sb__components");
+  list.setAttribute("data-components", "");
+  config.selectors.forEach((selector, index) =>
+    list.append(componentSection(selector, { ...context, index })));
+  return list;
+}
+
+function actions(config) {
+  const { pricing, texts } = config;
+  const box = element("div", "sb__actions");
+  box.append(totalRow(pricing, texts), discountBadge(pricing, texts));
+  if (pricing.mode === "fixed") box.append(element("p", "sb__price-note", texts.fixedPriceNote));
+  box.append(
+    message("sb__hint", "data-hint"), message("sb__status", "data-status"),
+    errorMessage(), addButton(texts),
+  );
+  return box;
+}
+
+function totalRow(pricing, texts) {
+  const row = element("div", "sb__total-row");
+  const prices = element("span", "sb__total-prices");
+  const original = attributes(element("s", "sb__original-total"), {
+    "data-original-total": true, hidden: true,
+  });
+  const total = element("strong", undefined, "—");
+  total.setAttribute("data-total", "");
+  prices.append(original, total);
+  row.append(element("span", undefined, label(pricing, texts)), prices);
+  return row;
+}
+
+function label(pricing, texts) {
+  return pricing.mode === "fixed" ? texts.bundlePrice : texts.total;
+}
+
+function discountBadge(pricing, texts) {
+  const badge = element("p", "sb__discount",
+    fillTemplate(texts.discountBadgeTemplate, { discount: pricing.discountPercent }));
+  return attributes(badge, { "data-discount-badge": true, hidden: true });
+}
+
+function message(className, flag) {
+  return attributes(element("p", className), { [flag]: true, "aria-live": "polite" });
+}
+
+function errorMessage() {
+  return attributes(element("p", "sb__error"), {
+    "data-error": true, role: "alert", hidden: true,
+  });
+}
+
+function addButton(texts) {
+  return attributes(element("button", "sb__button", texts.buttonLabel), {
+    type: "button", "data-add-button": true, disabled: true, "aria-disabled": "true",
+  });
+}
+
+if (typeof window !== "undefined") {
+  window.SmartBundleMarkup = Object.freeze({ bundleMarkup, hydrateHost, unavailableNote });
+}

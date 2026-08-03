@@ -1,0 +1,55 @@
+html {
+  --color-background: 255 255 255;
+  --color-foreground: 18 18 18;
+  --color-button: 18 18 18;
+  --color-button-text: 255 255 255;
+  background: rgb(var(--color-background));
+}
+
+body {
+  margin: 0;
+  padding: 24px 20px 40px;
+  color: rgb(var(--color-foreground));
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.sbp {
+  margin: 0 auto;
+  max-width: 640px;
+}
+
+.sbp__title {
+  margin: 0 0 12px;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.sbp__title:empty::before {
+  color: rgba(18, 18, 18, 0.38);
+  content: "Untitled bundle";
+}
+
+.sbp__description {
+  color: rgba(18, 18, 18, 0.78);
+  overflow-wrap: anywhere;
+}
+
+.sbp__description img {
+  max-width: 100%;
+}
+
+.sbp__description :first-child {
+  margin-top: 0;
+}
+
+.sbp__notice {
+  border: 1px dashed rgba(18, 18, 18, 0.28);
+  border-radius: 8px;
+  margin-top: 24px;
+  padding: 24px 16px;
+  color: rgba(18, 18, 18, 0.6);
+  text-align: center;
+}

@@ -1,15 +1,16 @@
 const FORM_SELECTOR = 'form[action*="/cart/add"]';
-const { fillTemplate, priceContext, selectedInput, validQuantity } = window.SmartBundleCore;
+const { priceContext, selectedInput, validQuantity } = window.SmartBundleCore;
+const { fillTemplate, placeholder } = window.SmartBundleDom;
+const { hydrateHost } = window.SmartBundleMarkup;
 const pricing = window.SmartBundlePricing;
 class SmartBundle extends HTMLElement {
   connectedCallback() {
-    if (this.initialized || !this.prepareMount() || this.initialized) return;
+    if (this.initialized) return;
+    this.status ||= hydrateHost(this);
+    if (this.status !== "ready") return this.mountUnavailable();
+    if (!this.prepareMount() || this.initialized) return;
     this.initialized = true;
-    this.components = [...this.querySelectorAll("[data-component]")];
-    this.inputs = [...this.querySelectorAll("[data-selector]")];
-    this.button = this.querySelector("[data-add-button]");
-    this.context = priceContext(this);
-    this.nativePrice = window.SmartBundleNativePrice.mount(this);
+    this.collectParts();
     this.priceValid = pricing.validContract(this, this.inputs, this.context);
     this.contractValid = this.validContract();
     this.state = this.contractValid ? "incomplete" : "unavailable";
@@ -32,6 +33,17 @@ class SmartBundle extends HTMLElement {
     this.nativePrice = null;
     this.initialized = false;
   }
+  collectParts() {
+    this.components = [...this.querySelectorAll("[data-component]")];
+    this.inputs = [...this.querySelectorAll("[data-selector]")];
+    this.button = this.querySelector("[data-add-button]");
+    this.context = priceContext(this);
+    this.nativePrice = window.SmartBundleNativePrice.mount(this);
+  }
+  mountUnavailable() {
+    this.guardForm();
+    this.hidden = false;
+  }
   prepareMount() {
     if (this.dataset.autoMount !== "true" || this.dataset.mounted === "true") return true;
     const form = this.productForm();
@@ -47,7 +59,8 @@ class SmartBundle extends HTMLElement {
     return forms.find((form) => form.querySelector('[name="add"]')) || forms[0] || null;
   }
   productForms() {
-    const id = this.dataset.parentVariantId;
+    const id = this.dataset.parentVariantId || "";
+    if (!/^[1-9]\d*$/.test(id)) return [];
     return [...document.querySelectorAll(FORM_SELECTOR)]
       .filter((form) => form.querySelector('[name="id"]')?.value === id);
   }
@@ -162,11 +175,8 @@ class SmartBundle extends HTMLElement {
   }
   showPlaceholder(wrapper) {
     if (wrapper.querySelector("[data-image-placeholder]")) return;
-    const placeholder = document.createElement("span");
     const option = wrapper.classList.contains("sb__option-media");
-    placeholder.className = option ? "sb__option-placeholder" : "sb__image-placeholder";
-    placeholder.setAttribute("data-image-placeholder", "");
-    wrapper.replaceChildren(placeholder);
+    wrapper.replaceChildren(placeholder(option ? "sb__option-placeholder" : "sb__image-placeholder"));
   }
   renderProgress(selected) {
     const progress = this.querySelector("[data-progress]");

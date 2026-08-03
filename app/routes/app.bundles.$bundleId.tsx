@@ -14,7 +14,9 @@ import "../features/bundles/editor/bundle-editor.css";
 import { BundleEditorPage } from "../features/bundles/editor/BundleEditorPage";
 import { hydrateEditorSelectors } from "../features/bundles/editor/bundle-editor-variant-display.server";
 import { editorLocale } from "../features/bundles/editor/bundle-editor-locale.server";
+import "../features/bundles/preview/bundle-preview.css";
 import { ensureShopContext } from "../features/installation/shop-context.server";
+import { getShopStorefrontSettings } from "../features/settings/storefront-settings-repository.server";
 import { isShopifyPricingEnabled } from "../features/billing/billing-config.server";
 import { authenticate } from "../shopify.server";
 
@@ -22,16 +24,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
   const shop = await ensureShopContext(admin, session.shop);
   const bundle = await getBundleForEditor(shop.id, requiredId(params.bundleId));
-  const [content, display] = await Promise.all([
+  const [content, display, settings] = await Promise.all([
     readProductContent(admin, bundle.parentProductGid, bundle.publicId),
     hydrateEditorSelectors(admin, bundle.selectors),
+    getShopStorefrontSettings(shop.id),
   ]);
   return {
     initial: {
       id: bundle.id, title: content.title, descriptionHtml: content.descriptionHtml,
       pricingMode: bundle.pricingMode, fixedPrice: fixedPrice(content, bundle.discountPercent),
       discountPercent: bundle.discountPercent, status: bundle.status,
-      locale: editorLocale(request), ...display,
+      locale: editorLocale(request), texts: settings.texts, ...display,
     },
     pricingEnabled: isShopifyPricingEnabled(),
   };

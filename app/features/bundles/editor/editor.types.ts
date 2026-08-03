@@ -1,3 +1,4 @@
+import type { StorefrontTexts } from "../../settings/storefront-text.types";
 import type { BundleSelectorInput, BundleVariantInput } from "../bundle.types";
 
 export interface EditorOption extends BundleVariantInput {
@@ -19,6 +20,7 @@ export interface BundleEditorInitial {
   status: "ACTIVE" | "DRAFT";
   currencyCode: string;
   locale: string;
+  texts: StorefrontTexts;
   selectors: EditorSelector[];
 }
 

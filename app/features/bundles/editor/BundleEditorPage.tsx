@@ -1,5 +1,8 @@
+import { BundlePreviewPanel } from "../preview/BundlePreviewPanel";
 import { BundleEditorForm } from "./BundleEditorForm";
+import { BundleEditorSaveBar } from "./BundleEditorSaveBar";
 import type { BundleEditorInitial } from "./editor.types";
+import { useBundleEditorController } from "./useBundleEditorController";
 
 export interface BundleEditorPageProps {
   initial: BundleEditorInitial;
@@ -7,9 +10,18 @@ export interface BundleEditorPageProps {
 }
 
 export function BundleEditorPage(props: BundleEditorPageProps) {
-  return <s-page heading={props.initial.id ? "Edit bundle" : "Create bundle"}>
+  const { initial } = props;
+  const controller = useBundleEditorController(initial);
+  return <s-page heading={initial.id ? "Edit bundle" : "Create bundle"}>
     <s-link slot="breadcrumb-actions" href="/app/bundles">Bundles</s-link>
-    <BundleEditorForm initial={props.initial}
-      pricingEnabled={props.pricingEnabled ?? false} />
+    <BundleEditorSaveBar dirty={controller.dirty} saving={controller.saving}
+      blocked={controller.busy}
+      onSave={controller.submit} onDiscard={controller.discard} />
+    <div className="sb-preview-layout">
+      <BundleEditorForm initial={initial} controller={controller}
+        pricingEnabled={props.pricingEnabled ?? false} />
+      <BundlePreviewPanel draft={controller.draft} currencyCode={initial.currencyCode}
+        locale={initial.locale} texts={initial.texts} />
+    </div>
   </s-page>;
 }
