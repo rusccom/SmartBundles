@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { sanitizeDescriptionClient } from "../../rich-text/description/description-sanitize.client";
 import type { StorefrontTexts } from "../../settings/storefront-text.types";
 import type { BundleEditorDraft } from "../editor/editor.types";
 import { bundlePreviewConfig } from "./bundle-preview-config";
@@ -25,7 +24,7 @@ export function useBundlePreview(
   const load = useCallback(() => {
     setReady(frame.current ? bootstrapPreviewFrame(frame.current) : false);
   }, [frame]);
-  usePreviewContent(frame, ready, input);
+  usePreviewTitle(frame, ready, input.draft.title);
   useBundleHost(frame, ready, input, previewConfigKey(input));
   return { load, source };
 }
@@ -35,20 +34,15 @@ function previewConfigKey(input: BundlePreviewInput): string {
   return config ? JSON.stringify(config) : "";
 }
 
-function usePreviewContent(
+function usePreviewTitle(
   frame: React.RefObject<HTMLIFrameElement | null>,
   ready: boolean,
-  input: BundlePreviewInput,
+  title: string,
 ): void {
-  const { descriptionHtml, title } = input.draft;
   useEffect(() => {
     const node = previewSlot(frame.current, "[data-preview-title]");
     if (node) node.textContent = title;
   }, [frame, ready, title]);
-  useEffect(() => {
-    const node = previewSlot(frame.current, "[data-preview-description]");
-    if (node) node.innerHTML = sanitizeDescriptionClient(descriptionHtml);
-  }, [descriptionHtml, frame, ready]);
 }
 
 function useBundleHost(

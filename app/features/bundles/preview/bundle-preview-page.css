@@ -44,19 +44,6 @@ body {
   color: rgba(18, 18, 18, 0.62);
 }
 
-.sbp__description {
-  color: rgba(18, 18, 18, 0.78);
-  overflow-wrap: anywhere;
-}
-
-.sbp__description img {
-  max-width: 100%;
-}
-
-.sbp__description :first-child {
-  margin-top: 0;
-}
-
 .sbp__notice {
   border: 1px dashed rgba(18, 18, 18, 0.28);
   border-radius: 8px;

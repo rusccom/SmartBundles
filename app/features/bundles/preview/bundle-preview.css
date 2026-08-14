@@ -1,8 +1,3 @@
-#sb-preview-panel > s-stack {
-  box-sizing: border-box;
-  padding: 20px 8px;
-}
-
 .sb-preview-viewport {
   position: relative;
   box-sizing: border-box;

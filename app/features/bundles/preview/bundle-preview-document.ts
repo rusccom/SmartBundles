@@ -14,7 +14,6 @@ export function previewDocument(locale: string): string {
     '<s class="sbp__price-original" data-original-price hidden></s>',
     '<strong data-current-price>—</strong></div>',
     '<div data-preview-bundle></div>',
-    '<div class="sbp__description" data-preview-description></div>',
     "</main></body></html>",
   ].join("");
 }
