@@ -4,7 +4,7 @@ import { BundlePreviewHeader } from "./BundlePreviewHeader";
 import type { BundlePreviewInput } from "./useBundlePreview";
 
 export function BundlePreviewPanel(props: BundlePreviewInput) {
-  return <s-section slot="aside" padding="none">
+  return <s-section padding="none">
     <s-box padding="small">
       <s-stack direction="block" gap="base">
         <BundlePreviewHeader />

@@ -1,5 +1,4 @@
 import { DescriptionEditor } from "../../rich-text/description/DescriptionEditor";
-import { BundleStatusSelect } from "./BundleStatusSelect";
 import type { BundleEditorController } from "./useBundleEditorController";
 
 export interface BundleDetailsFieldsProps {
@@ -9,13 +8,8 @@ export interface BundleDetailsFieldsProps {
 export function BundleDetailsFields({ controller }: BundleDetailsFieldsProps) {
   const { draft, errors } = controller;
   return <s-section>
-    <div className="sb-details-header">
-      <s-heading>Details</s-heading>
-      <BundleStatusSelect value={draft.desiredStatus} disabled={controller.busy}
-        error={errors.desiredStatus}
-        onChange={(desiredStatus) => controller.patch({ desiredStatus })} />
-    </div>
     <s-stack direction="block" gap="base">
+      <s-heading>Details</s-heading>
       <s-text-field label="Bundle title" value={draft.title} disabled={controller.busy}
         required error={errors.title}
         onInput={(event) => controller.patch({ title: event.currentTarget.value })} />

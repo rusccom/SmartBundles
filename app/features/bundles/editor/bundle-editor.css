@@ -22,16 +22,14 @@
   border: 0;
 }
 
-.sb-details-header {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 16px;
+.sb-editor-aside {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 
 .sb-status-select {
-  width: min(200px, 100%);
+  width: 100%;
 }
 
 .sb-component-list {
@@ -221,14 +219,6 @@
 }
 
 @container (max-width: 800px) {
-  .sb-details-header {
-    display: grid;
-  }
-
-  .sb-status-select {
-    width: 100%;
-  }
-
   .sb-component-header {
     grid-template-columns: 44px 44px 44px minmax(0, 1fr) 44px;
     gap: 10px;

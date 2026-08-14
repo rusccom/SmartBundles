@@ -2,6 +2,7 @@ import { BundlePreviewPanel } from "../preview/BundlePreviewPanel";
 import { BundleEditorForm } from "./BundleEditorForm";
 import { BundleEditorProductActions } from "./BundleEditorProductActions";
 import { BundleEditorSaveBar } from "./BundleEditorSaveBar";
+import { BundleStatusPanel } from "./BundleStatusPanel";
 import type { BundleEditorInitial } from "./editor.types";
 import { useBundleEditorController } from "./useBundleEditorController";
 
@@ -24,7 +25,10 @@ export function BundleEditorPage(props: BundleEditorPageProps) {
       onSave={controller.submit} onDiscard={controller.discard} />
     <BundleEditorForm initial={initial} controller={controller}
       pricingEnabled={props.pricingEnabled ?? false} />
-    <BundlePreviewPanel draft={controller.draft} currencyCode={initial.currencyCode}
-      image={initial.image} locale={initial.locale} texts={initial.texts} />
+    <div slot="aside" className="sb-editor-aside">
+      <BundleStatusPanel controller={controller} />
+      <BundlePreviewPanel draft={controller.draft} currencyCode={initial.currencyCode}
+        image={initial.image} locale={initial.locale} texts={initial.texts} />
+    </div>
   </s-page>;
 }
