@@ -64,6 +64,9 @@ export const READ_PRODUCT_CONTENT = `#graphql
   query SmartBundleReadProductContent($id: ID!) {
     product(id: $id) {
       title descriptionHtml onlineStoreUrl onlineStorePreviewUrl
+      media(first: 1, query: "media_type:IMAGE", sortKey: POSITION) {
+        nodes { ... on MediaImage { image { url altText width height } } }
+      }
       variants(first: 1) { nodes { id price compareAtPrice } }
       identity: metafield(namespace: "$app", key: "bundle_id") { value }
     }

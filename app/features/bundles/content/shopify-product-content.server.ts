@@ -13,6 +13,7 @@ import { BundleContentError } from "./BundleContentError.server";
 import type {
   ParentProductContentInput,
   ShopifyProductContent,
+  ShopifyProductImage,
   ShopifyProductSummary,
 } from "./content.types";
 
@@ -21,6 +22,7 @@ interface ProductNode {
   descriptionHtml: string;
   onlineStoreUrl: string | null;
   onlineStorePreviewUrl: string | null;
+  media: { nodes: Array<{ image?: ShopifyProductImage | null }> };
   variants: { nodes: Array<{ id: string; price: string; compareAtPrice: string | null }> };
   identity?: { value: string } | null;
 }
@@ -182,6 +184,7 @@ function toContent(product: ProductNode): ShopifyProductContent {
   return {
     title: product.title,
     descriptionHtml: product.descriptionHtml,
+    image: product.media.nodes[0]?.image ?? null,
     price: variant.price,
     compareAtPrice: variant.compareAtPrice,
     onlineStoreUrl: product.onlineStoreUrl,

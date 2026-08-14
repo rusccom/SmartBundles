@@ -9,6 +9,7 @@ export function previewDocument(locale: string): string {
     `<html lang="${escapeAttribute(locale)}"><head><meta charset="utf-8">`,
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<style>${PREVIEW_STYLES}</style></head><body><main class="sbp product__info-container">`,
+    '<img class="sbp__image" data-preview-image hidden alt="">',
     '<h1 class="sbp__title" data-preview-title></h1>',
     '<div class="sbp__price" data-product-price aria-live="polite">',
     '<s class="sbp__price-original" data-original-price hidden></s>',

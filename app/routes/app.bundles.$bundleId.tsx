@@ -31,7 +31,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   ]);
   return {
     initial: {
-      id: bundle.id, title: content.title, descriptionHtml: content.descriptionHtml,
+      id: bundle.id, title: content.title, descriptionHtml: content.descriptionHtml, image: content.image,
       pricingMode: bundle.pricingMode, fixedPrice: fixedPrice(content, bundle.discountPercent),
       discountPercent: bundle.discountPercent, status: bundle.status,
       locale: editorLocale(request), texts: settings.texts, ...display,

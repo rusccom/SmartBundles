@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { StorefrontTexts } from "../../settings/storefront-text.types";
+import type { ShopifyProductImage } from "../content/content.types";
 import type { BundleEditorDraft } from "../editor/editor.types";
 import { bundlePreviewConfig } from "./bundle-preview-config";
 import {
@@ -11,6 +12,7 @@ const EMPTY_NOTICE = "Add components and a price to preview the bundle.";
 export interface BundlePreviewInput {
   draft: BundleEditorDraft;
   currencyCode: string;
+  image: ShopifyProductImage | null;
   locale: string;
   texts: StorefrontTexts;
 }
@@ -24,7 +26,7 @@ export function useBundlePreview(
   const load = useCallback(() => {
     setReady(frame.current ? bootstrapPreviewFrame(frame.current) : false);
   }, [frame]);
-  usePreviewTitle(frame, ready, input.draft.title);
+  usePreviewProduct(frame, ready, input.draft.title, input.image);
   useBundleHost(frame, ready, input, previewConfigKey(input));
   return { load, source };
 }
@@ -34,15 +36,27 @@ function previewConfigKey(input: BundlePreviewInput): string {
   return config ? JSON.stringify(config) : "";
 }
 
-function usePreviewTitle(
+function usePreviewProduct(
   frame: React.RefObject<HTMLIFrameElement | null>,
   ready: boolean,
   title: string,
+  image: ShopifyProductImage | null,
 ): void {
   useEffect(() => {
-    const node = previewSlot(frame.current, "[data-preview-title]");
-    if (node) node.textContent = title;
-  }, [frame, ready, title]);
+    const titleNode = previewSlot(frame.current, "[data-preview-title]");
+    if (titleNode) titleNode.textContent = title;
+    syncPreviewImage(previewImage(frame.current), image);
+  }, [frame, image, ready, title]);
+}
+
+function syncPreviewImage(node: HTMLImageElement | null, image: ShopifyProductImage | null): void {
+  if (!node) return;
+  node.hidden = !image;
+  if (!image) return node.removeAttribute("src");
+  node.src = image.url;
+  node.alt = image.altText ?? "";
+  node.width = image.width;
+  node.height = image.height;
 }
 
 function useBundleHost(
@@ -64,4 +78,8 @@ function useBundleHost(
 
 function previewSlot(frame: HTMLIFrameElement | null, selector: string): HTMLElement | null {
   return frame?.contentDocument?.querySelector(selector) ?? null;
+}
+
+function previewImage(frame: HTMLIFrameElement | null): HTMLImageElement | null {
+  return frame?.contentDocument?.querySelector("[data-preview-image]") ?? null;
 }

@@ -1,5 +1,6 @@
 import type { StorefrontTexts } from "../../settings/storefront-text.types";
 import type { BundleSelectorInput, BundleVariantInput } from "../bundle.types";
+import type { ShopifyProductImage } from "../content/content.types";
 
 export interface EditorOption extends BundleVariantInput {
   allowed: boolean;
@@ -13,6 +14,7 @@ export interface BundleEditorInitial {
   id?: string;
   title: string;
   descriptionHtml: string;
+  image: ShopifyProductImage | null;
   creationToken?: string;
   pricingMode: "FIXED" | "DYNAMIC";
   fixedPrice: string;

@@ -25,6 +25,6 @@ export function BundleEditorPage(props: BundleEditorPageProps) {
     <BundleEditorForm initial={initial} controller={controller}
       pricingEnabled={props.pricingEnabled ?? false} />
     <BundlePreviewPanel draft={controller.draft} currencyCode={initial.currencyCode}
-      locale={initial.locale} texts={initial.texts} />
+      image={initial.image} locale={initial.locale} texts={initial.texts} />
   </s-page>;
 }

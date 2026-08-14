@@ -25,7 +25,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   ]);
   const settings = await getShopStorefrontSettings(shop.id);
   return { initial: {
-    title: "", descriptionHtml: "", creationToken,
+    title: "", descriptionHtml: "", image: null, creationToken,
     pricingMode: "FIXED" as const, fixedPrice: "", discountPercent: "0", status: "DRAFT" as const, currencyCode,
     locale: editorLocale(request), texts: settings.texts, selectors: [] } };
 }
