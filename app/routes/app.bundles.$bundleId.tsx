@@ -36,7 +36,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       discountPercent: bundle.discountPercent, status: bundle.status,
       locale: editorLocale(request), texts: settings.texts, ...display,
     },
-    pricingEnabled: isShopifyPricingEnabled(),
+    pricingEnabled: isShopifyPricingEnabled(), productGid: bundle.parentProductGid,
+    storefrontUrl: content.onlineStoreUrl ?? content.onlineStorePreviewUrl,
   };
 }
 

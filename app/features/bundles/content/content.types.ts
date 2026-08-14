@@ -3,6 +3,8 @@ export interface ShopifyProductContent {
   descriptionHtml: string;
   price: string;
   compareAtPrice: string | null;
+  onlineStoreUrl: string | null;
+  onlineStorePreviewUrl: string | null;
 }
 
 export interface ShopifyProductSummary {

@@ -19,6 +19,8 @@ import type {
 interface ProductNode {
   title: string;
   descriptionHtml: string;
+  onlineStoreUrl: string | null;
+  onlineStorePreviewUrl: string | null;
   variants: { nodes: Array<{ id: string; price: string; compareAtPrice: string | null }> };
   identity?: { value: string } | null;
 }
@@ -182,6 +184,8 @@ function toContent(product: ProductNode): ShopifyProductContent {
     descriptionHtml: product.descriptionHtml,
     price: variant.price,
     compareAtPrice: variant.compareAtPrice,
+    onlineStoreUrl: product.onlineStoreUrl,
+    onlineStorePreviewUrl: product.onlineStorePreviewUrl,
   };
 }
 

@@ -63,7 +63,7 @@ export const UNPUBLISH_PRODUCT = `#graphql
 export const READ_PRODUCT_CONTENT = `#graphql
   query SmartBundleReadProductContent($id: ID!) {
     product(id: $id) {
-      title descriptionHtml
+      title descriptionHtml onlineStoreUrl onlineStorePreviewUrl
       variants(first: 1) { nodes { id price compareAtPrice } }
       identity: metafield(namespace: "$app", key: "bundle_id") { value }
     }
