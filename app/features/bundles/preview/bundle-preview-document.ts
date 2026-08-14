@@ -3,10 +3,12 @@ import * as smartBundleMarkup from "../../../../extensions/smart-bundle-theme/as
 import type { PresentationConfig } from "../bundle.types";
 import { PREVIEW_SCRIPTS, PREVIEW_STYLES } from "./bundle-preview-assets";
 
-export function previewDocument(locale: string): string {
+export type BundlePreviewMode = "mobile" | "desktop";
+
+export function previewDocument(locale: string, mode: BundlePreviewMode): string {
   return [
     "<!doctype html>",
-    `<html lang="${escapeAttribute(locale)}"><head><meta charset="utf-8">`,
+    `<html lang="${escapeAttribute(locale)}" data-preview-mode="${mode}"><head><meta charset="utf-8">`,
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     `<style>${PREVIEW_STYLES}</style></head><body><main class="sbp sbp--without-image product__info-container">`,
     '<img class="sbp__image" data-preview-image hidden alt="">',

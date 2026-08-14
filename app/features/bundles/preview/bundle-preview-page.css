@@ -71,7 +71,7 @@ body {
     padding: 32px;
   }
 
-  .sbp {
+  html:not([data-preview-mode="mobile"]) .sbp {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
     gap: 48px;
@@ -80,19 +80,19 @@ body {
     margin: 0 auto;
   }
 
-  .sbp--without-image {
+  html:not([data-preview-mode="mobile"]) .sbp--without-image {
     grid-template-columns: minmax(0, 720px);
     justify-content: center;
   }
 
-  .sbp__image {
+  html:not([data-preview-mode="mobile"]) .sbp__image {
     position: sticky;
     top: 32px;
     max-height: calc(100vh - 64px);
     margin-bottom: 0;
   }
 
-  .sbp__details {
+  html:not([data-preview-mode="mobile"]) .sbp__details {
     padding-top: 8px;
   }
 

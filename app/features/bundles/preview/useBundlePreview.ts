@@ -3,6 +3,7 @@ import type { StorefrontTexts } from "../../settings/storefront-text.types";
 import type { ShopifyProductImage } from "../content/content.types";
 import type { BundleEditorDraft } from "../editor/editor.types";
 import { bundlePreviewConfig } from "./bundle-preview-config";
+import type { BundlePreviewMode } from "./bundle-preview-document";
 import {
   bootstrapPreviewFrame, previewDocument, previewHost, previewNotice,
 } from "./bundle-preview-document";
@@ -20,9 +21,10 @@ export interface BundlePreviewInput {
 export function useBundlePreview(
   frame: React.RefObject<HTMLIFrameElement | null>,
   input: BundlePreviewInput,
+  mode: BundlePreviewMode,
 ) {
   const [ready, setReady] = useState(false);
-  const source = useMemo(() => previewDocument(input.locale), [input.locale]);
+  const source = useMemo(() => previewDocument(input.locale, mode), [input.locale, mode]);
   const load = useCallback(() => {
     setReady(frame.current ? bootstrapPreviewFrame(frame.current) : false);
   }, [frame]);
