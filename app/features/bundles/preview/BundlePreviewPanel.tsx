@@ -1,22 +1,16 @@
-import { useRef } from "react";
+import { BundleDesktopPreviewModal } from "./BundleDesktopPreviewModal";
+import { BundlePreviewFrame } from "./BundlePreviewFrame";
+import { BundlePreviewHeader } from "./BundlePreviewHeader";
 import type { BundlePreviewInput } from "./useBundlePreview";
-import { useBundlePreview } from "./useBundlePreview";
-import { useBundlePreviewScale } from "./useBundlePreviewScale";
 
 export function BundlePreviewPanel(props: BundlePreviewInput) {
-  const frame = useRef<HTMLIFrameElement>(null);
-  const viewport = useRef<HTMLDivElement>(null);
-  const { load, source } = useBundlePreview(frame, props);
-  useBundlePreviewScale(viewport, frame);
   return <s-section slot="aside" padding="none">
     <s-box padding="small">
       <s-stack direction="block" gap="base">
-        <s-heading>Preview</s-heading>
-        <div className="sb-preview-viewport" ref={viewport}>
-          <iframe className="sb-preview-frame" title="Bundle storefront preview"
-            ref={frame} srcDoc={source} onLoad={load} />
-        </div>
+        <BundlePreviewHeader />
+        <BundlePreviewFrame {...props} mode="mobile" />
       </s-stack>
     </s-box>
+    <BundleDesktopPreviewModal {...props} />
   </s-section>;
 }

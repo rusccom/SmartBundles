@@ -1,3 +1,18 @@
+.sb-preview-header,
+.sb-preview-actions {
+  display: flex;
+  align-items: center;
+}
+
+.sb-preview-header {
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.sb-preview-actions {
+  gap: 4px;
+}
+
 .sb-preview-viewport {
   position: relative;
   box-sizing: border-box;
@@ -8,6 +23,12 @@
   border-radius: 12px;
   background: #fff;
   color-scheme: light;
+}
+
+.sb-preview-viewport--desktop {
+  height: min(76vh, 900px);
+  border: 0;
+  border-radius: 0;
 }
 
 .sb-preview-frame {
