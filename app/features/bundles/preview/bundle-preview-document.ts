@@ -8,10 +8,13 @@ export function previewDocument(locale: string): string {
     "<!doctype html>",
     `<html lang="${escapeAttribute(locale)}"><head><meta charset="utf-8">`,
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
-    `<style>${PREVIEW_STYLES}</style></head><body><main class="sbp">`,
+    `<style>${PREVIEW_STYLES}</style></head><body><main class="sbp product__info-container">`,
     '<h1 class="sbp__title" data-preview-title></h1>',
-    '<div class="sbp__description" data-preview-description></div>',
+    '<div class="sbp__price" data-product-price aria-live="polite">',
+    '<s class="sbp__price-original" data-original-price hidden></s>',
+    '<strong data-current-price>—</strong></div>',
     '<div data-preview-bundle></div>',
+    '<div class="sbp__description" data-preview-description></div>',
     "</main></body></html>",
   ].join("");
 }

@@ -1,18 +1,13 @@
 const { activeMinor, formatMinor, selectedInput, sourceMinor } = window.SmartBundleCore;
-
-function percentValue(value) {
-  value = String(value ?? "");
-  if (!/^\d{1,3}(\.\d{1,2})?$/.test(value)) return null;
-  const percent = Number(value);
-  return percent >= 0 && percent <= 100 ? percent : null;
-}
+const price = window.SmartBundlePrice;
+const PRICE_CONTAINER = '[id^="price-"], [data-product-price], .product__price';
 
 function bundleDiscount(element) {
-  return percentValue(element.dataset.discountPercent);
+  return price.percentValue(element.dataset.discountPercent);
 }
 
 function componentDiscount(component) {
-  return percentValue(component?.dataset.discountPercent);
+  return price.percentValue(component?.dataset.discountPercent);
 }
 
 function inputSourceMinor(input, context) {
@@ -21,12 +16,10 @@ function inputSourceMinor(input, context) {
 
 function discountedActiveMinor(source, context, componentPercent, bundlePercent) {
   if (source === null || !context || componentPercent === null || bundlePercent === null) return null;
-  const amount = source / context.sourceScale;
-  const component = (100 - componentPercent) / 100;
-  const bundle = (100 - bundlePercent) / 100;
-  const converted = amount * component * bundle * context.rate * context.activeScale;
-  const minor = Math.round(converted);
-  return Number.isSafeInteger(minor) ? minor : null;
+  return price.convertedMinor({
+    source, sourceScale: context.sourceScale, activeScale: context.activeScale,
+    rate: context.rate, componentPercent, bundlePercent,
+  });
 }
 
 function validContract(element, inputs, context) {
@@ -137,4 +130,80 @@ function dynamicTotalResult(element, context, discounted, globalDiscount, values
   };
 }
 
-window.SmartBundlePricing = Object.freeze({ lineText, optionText, previewTotals, totals, validContract });
+function productRoot(element) {
+  return element.closest("product-info")
+    || element.closest(".product__info-container")
+    || element.parentElement;
+}
+
+function currentPrice(container) {
+  const managed = container.querySelector("[data-current-price]");
+  const sale = container.querySelector(".price--on-sale .price-item--sale");
+  const regular = container.querySelector(".price__regular .price-item--regular");
+  const generic = container.querySelector("[data-product-price], [data-price], .money");
+  return managed || sale || regular || generic || fallbackContainer(container);
+}
+
+function fallbackContainer(container) {
+  if (container.matches("[data-product-price], [data-price]")) return container;
+  return container.matches(".product__price") && !container.children.length ? container : null;
+}
+
+function originalPrice(container) {
+  return container.querySelector("[data-original-price]")
+    || container.querySelector(".price--on-sale .price__sale .price-item--regular");
+}
+
+class SmartBundlePriceController {
+  constructor(element) {
+    this.element = element;
+    this.context = window.SmartBundleCore.priceContext(element);
+    const container = productRoot(element)?.querySelector(PRICE_CONTAINER);
+    this.nativeCurrent = container ? currentPrice(container) : null;
+    this.nativeOriginal = container ? originalPrice(container) : null;
+    this.nativeCurrentText = this.nativeCurrent?.textContent;
+    this.nativeOriginalText = this.nativeOriginal?.textContent;
+  }
+
+  validContract(inputs) {
+    return validContract(this.element, inputs, this.context);
+  }
+
+  renderOptions() {
+    this.element.querySelectorAll("[data-option-price]").forEach((output) => {
+      const input = output.closest("label")?.querySelector("[data-selector]");
+      output.textContent = optionText(this.element, input, this.context);
+    });
+  }
+
+  renderLine(component, input) {
+    component.querySelector("[data-line-price]").textContent = lineText(
+      this.element, component, input, this.context);
+  }
+
+  render(components, complete) {
+    const resolved = totals(this.element, components, this.context, complete);
+    this.renderNative(previewTotals(this.element, components, this.context));
+    return resolved;
+  }
+
+  renderNative(resolved) {
+    if (this.nativeCurrent && resolved?.current) this.nativeCurrent.textContent = resolved.current;
+    if (!this.nativeOriginal) return;
+    if (this.nativeOriginal.matches("[data-original-price]")) {
+      this.nativeOriginal.textContent = resolved?.original || "";
+      this.nativeOriginal.hidden = !resolved?.original;
+    } else if (resolved?.original) this.nativeOriginal.textContent = resolved.original;
+  }
+
+  destroy() {
+    if (this.nativeCurrent && this.nativeCurrentText !== undefined) {
+      this.nativeCurrent.textContent = this.nativeCurrentText;
+    }
+    if (this.nativeOriginal && this.nativeOriginalText !== undefined) {
+      this.nativeOriginal.textContent = this.nativeOriginalText;
+    }
+  }
+}
+
+price.mount = (element) => new SmartBundlePriceController(element);

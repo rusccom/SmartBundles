@@ -26,8 +26,7 @@
 .sb__title,
 .sb__hint,
 .sb__status,
-.sb__error,
-.sb__price-note, .sb__discount {
+.sb__error {
   margin: 0;
 }
 .sb__progress {
@@ -126,7 +125,6 @@
 }
 .sb__selection,
 .sb__quantity,
-.sb__price-note,
 .sb__hint,
 .sb__option-copy small {
   color: var(--sb-muted);
@@ -140,8 +138,7 @@
   white-space: nowrap;
 }
 .sb__line-price,
-.sb__option-price,
-.sb__total-row {
+.sb__option-price {
   font-size: inherit;
   font-weight: 650;
 }
@@ -214,13 +211,6 @@
   gap: 0.5rem;
   margin-top: 1rem;
 }
-.sb__total-row {
-  align-items: baseline;
-  display: flex;
-  justify-content: space-between;
-}
-.sb__total-prices { display: inline-flex; gap: 0.5rem; }
-.sb__total-prices strong { font-weight: inherit; }
 .sb__button {
   background: rgb(var(--color-button, 18 18 18));
   border: 0;

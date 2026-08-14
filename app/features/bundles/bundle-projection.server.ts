@@ -1,6 +1,6 @@
 import type { AdminClient } from "../shopify/admin-api.server";
 import { buildPresentationConfig, buildRuntimeConfig, disabledRuntime } from "./bundle-config.server";
-import { bundleCompareAtPrice, calculateBundlePrices } from "./bundle-pricing";
+import { bundlePrice } from "./bundle-pricing";
 import {
   getBundleForAction,
   getBundleForProjection,
@@ -116,10 +116,10 @@ export async function saveDraftPrice(
 }
 
 function parentVariantInput(bundle: ParentBundle, draft: BundleDraftInput) {
-  const prices = calculateBundlePrices(draft);
+  const prices = bundlePrice.calculate(draft);
   return {
     productId: bundle.parentProductGid, variantId: bundle.parentVariantGid,
-    price: prices.finalPrice, compareAtPrice: bundleCompareAtPrice(prices),
+    price: prices.finalPrice, compareAtPrice: bundlePrice.compareAt(prices),
   };
 }
 
@@ -170,7 +170,7 @@ function undiscountedPrice(price: string, discountPercent: string): string {
 }
 
 function buildProjection(bundle: ProjectionBundle, draft: BundleDraftInput) {
-  const prices = calculateBundlePrices(draft);
+  const prices = bundlePrice.calculate(draft);
   const identity = projectionIdentity(bundle, draft, prices);
   const presentation = {
     key: "bundle_presentation" as const,
@@ -181,7 +181,7 @@ function buildProjection(bundle: ProjectionBundle, draft: BundleDraftInput) {
   };
   return {
     price: prices.finalPrice,
-    compareAtPrice: bundleCompareAtPrice(prices),
+    compareAtPrice: bundlePrice.compareAt(prices),
     presentation,
     fields: [
       { key: "bundle_runtime" as const, value: JSON.stringify(buildRuntimeConfig(identity, draft.selectors)) },
@@ -193,7 +193,7 @@ function buildProjection(bundle: ProjectionBundle, draft: BundleDraftInput) {
 function projectionIdentity(
   bundle: ProjectionBundle,
   draft: BundleDraftInput,
-  prices: ReturnType<typeof calculateBundlePrices>,
+  prices: ReturnType<typeof bundlePrice.calculate>,
 ) {
   return {
     publicId: bundle.publicId, parentVariantId: bundle.parentVariantGid,

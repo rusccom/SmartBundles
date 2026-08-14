@@ -8,7 +8,7 @@ import type {
   BundleVariantInput,
 } from "./bundle.types";
 import { buildRuntimeConfig } from "./bundle-config.server";
-import { calculateBundlePrices } from "./bundle-pricing";
+import { bundlePrice } from "./bundle-pricing";
 
 export const MIN_SELECTORS = 1;
 export const MAX_SELECTORS = 150;
@@ -127,7 +127,7 @@ function validateParentPrice(
   if (errors.fixedPrice || errors.discountPercent || errors.selectors) return;
   if (Object.keys(errors).some((key) => key.startsWith("selector."))) return;
   try {
-    calculateBundlePrices(data);
+    bundlePrice.calculate(data);
   } catch {
     errors.selectors = "The maximum bundle total exceeds the supported price limit.";
   }

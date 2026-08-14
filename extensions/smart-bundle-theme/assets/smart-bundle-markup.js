@@ -1,5 +1,5 @@
 import { componentSection } from "./smart-bundle-component-markup.js";
-import { attributes, element, fillTemplate } from "./smart-bundle-dom.js";
+import { attributes, element } from "./smart-bundle-dom.js";
 
 const MIN_SELECTORS = 1;
 const MAX_SELECTORS = 150;
@@ -23,7 +23,7 @@ export function bundleMarkup(config, settings) {
     texts: config.texts, priceMode: config.pricing.mode, idPrefix: settings.idPrefix,
   };
   const fragment = document.createDocumentFragment();
-  fragment.append(heading(config, settings), componentList(config, context), actions(config));
+  fragment.append(componentList(config, context), actions(config));
   return { status: "ready", dataset: bundleDataset(config), fragment };
 }
 
@@ -42,10 +42,7 @@ function hostPresentation(host) {
 }
 
 function hostSettings(host) {
-  return {
-    idPrefix: `sb-${host.dataset.blockId || "block"}`,
-    showProgress: host.dataset.showProgress !== "false",
-  };
+  return { idPrefix: `sb-${host.dataset.blockId || "block"}` };
 }
 
 function ready(config) {
@@ -102,25 +99,6 @@ function textDataset(texts) {
   };
 }
 
-function heading(config, settings) {
-  const box = element("div", "sb__heading");
-  box.append(element("h2", "sb__title", config.texts.heading));
-  if (settings.showProgress) box.append(progress(config));
-  return box;
-}
-
-function progress(config) {
-  const node = element("span", "sb__progress", fillTemplate(config.texts.progressTemplate, {
-    selected: preselectedCount(config.selectors), total: config.selectors.length,
-  }));
-  return attributes(node, { "data-progress": true, "aria-live": "polite" });
-}
-
-function preselectedCount(selectors) {
-  return selectors.filter((selector) =>
-    selector.options.length === 1 && selector.options[0].available !== false).length;
-}
-
 function componentList(config, context) {
   const list = element("div", "sb__components");
   list.setAttribute("data-components", "");
@@ -130,38 +108,13 @@ function componentList(config, context) {
 }
 
 function actions(config) {
-  const { pricing, texts } = config;
+  const { texts } = config;
   const box = element("div", "sb__actions");
-  box.append(totalRow(pricing, texts), discountBadge(pricing, texts));
-  if (pricing.mode === "fixed") box.append(element("p", "sb__price-note", texts.fixedPriceNote));
   box.append(
     message("sb__hint", "data-hint"), message("sb__status", "data-status"),
     errorMessage(), addButton(texts),
   );
   return box;
-}
-
-function totalRow(pricing, texts) {
-  const row = element("div", "sb__total-row");
-  const prices = element("span", "sb__total-prices");
-  const original = attributes(element("s", "sb__original-total"), {
-    "data-original-total": true, hidden: true,
-  });
-  const total = element("strong", undefined, "—");
-  total.setAttribute("data-total", "");
-  prices.append(original, total);
-  row.append(element("span", undefined, label(pricing, texts)), prices);
-  return row;
-}
-
-function label(pricing, texts) {
-  return pricing.mode === "fixed" ? texts.bundlePrice : texts.total;
-}
-
-function discountBadge(pricing, texts) {
-  const badge = element("p", "sb__discount",
-    fillTemplate(texts.discountBadgeTemplate, { discount: pricing.discountPercent }));
-  return attributes(badge, { "data-discount-badge": true, hidden: true });
 }
 
 function message(className, flag) {

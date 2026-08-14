@@ -32,6 +32,18 @@ body {
   content: "Untitled bundle";
 }
 
+.sbp__price {
+  align-items: baseline;
+  display: flex;
+  font-size: 1rem;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sbp__price-original {
+  color: rgba(18, 18, 18, 0.62);
+}
+
 .sbp__description {
   color: rgba(18, 18, 18, 0.78);
   overflow-wrap: anywhere;

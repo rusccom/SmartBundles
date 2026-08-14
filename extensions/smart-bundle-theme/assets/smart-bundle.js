@@ -1,8 +1,7 @@
 const FORM_SELECTOR = 'form[action*="/cart/add"]';
-const { priceContext, selectedInput, validQuantity } = window.SmartBundleCore;
+const { selectedInput, validQuantity } = window.SmartBundleCore;
 const { fillTemplate, placeholder } = window.SmartBundleDom;
 const { hydrateHost } = window.SmartBundleMarkup;
-const pricing = window.SmartBundlePricing;
 class SmartBundle extends HTMLElement {
   connectedCallback() {
     if (this.initialized) return;
@@ -11,13 +10,13 @@ class SmartBundle extends HTMLElement {
     if (!this.prepareMount() || this.initialized) return;
     this.initialized = true;
     this.collectParts();
-    this.priceValid = pricing.validContract(this, this.inputs, this.context);
+    this.priceValid = this.price.validContract(this.inputs);
     this.contractValid = this.validContract();
     this.state = this.contractValid ? "incomplete" : "unavailable";
     this.bindEvents();
     this.guardForm();
     this.bindImageErrors();
-    this.renderOptions();
+    this.price.renderOptions();
     this.render();
     this.hidden = false;
   }
@@ -29,16 +28,15 @@ class SmartBundle extends HTMLElement {
     clearTimeout(this.mountTimer);
     clearTimeout(this.successTimer);
     this.restoreNativeControls();
-    this.nativePrice?.destroy();
-    this.nativePrice = null;
+    this.price?.destroy();
+    this.price = null;
     this.initialized = false;
   }
   collectParts() {
     this.components = [...this.querySelectorAll("[data-component]")];
     this.inputs = [...this.querySelectorAll("[data-selector]")];
     this.button = this.querySelector("[data-add-button]");
-    this.context = priceContext(this);
-    this.nativePrice = window.SmartBundleNativePrice.mount(this);
+    this.price = window.SmartBundlePrice.mount(this);
   }
   mountUnavailable() {
     this.guardForm();
@@ -119,12 +117,6 @@ class SmartBundle extends HTMLElement {
     const count = this.components.length >= 1 && this.components.length <= 150;
     return count && this.components.every(validQuantity) && this.parentId() !== null && this.priceValid;
   }
-  renderOptions() {
-    this.querySelectorAll("[data-option-price]").forEach((output) => {
-      const input = output.closest("label")?.querySelector("[data-selector]");
-      output.textContent = pricing.optionText(this, input, this.context);
-    });
-  }
   render() {
     this.components.forEach((component) => this.renderComponent(component));
     const selected = this.selectionCount();
@@ -132,7 +124,6 @@ class SmartBundle extends HTMLElement {
     if (this.state === "incomplete" && complete) this.state = "complete";
     this.renderProgress(selected);
     this.renderFooter(complete);
-    this.nativePrice?.render(pricing.previewTotals(this, this.components, this.context));
     this.dataset.state = this.state;
   }
   renderComponent(component) {
@@ -143,8 +134,7 @@ class SmartBundle extends HTMLElement {
     if (label) label.textContent = input?.dataset.optionTitle || fallback;
     component.dataset.state = input ? "selected" : (available ? "required" : "unavailable");
     if (input) this.updateImage(component, input);
-    component.querySelector("[data-line-price]").textContent = pricing.lineText(
-      this, component, input, this.context);
+    this.price.renderLine(component, input);
   }
   updateImage(component, input) {
     const wrapper = component?.querySelector("[data-image-wrap]");
@@ -185,24 +175,16 @@ class SmartBundle extends HTMLElement {
     progress.textContent = fillTemplate(this.dataset.progressTemplate, values);
   }
   renderFooter(complete) {
-    const totals = pricing.totals(this, this.components, this.context, complete);
+    const totals = this.price.render(this.components, complete);
     const total = totals?.current ?? null;
     const busy = this.state === "submitting" || this.state === "success";
     const unavailable = this.state === "unavailable" || (complete && total === null);
     const disabled = busy || unavailable || !complete;
-    this.renderTotals(totals);
     this.querySelector("[data-hint]").textContent = this.hintText(complete, unavailable, total);
     this.button.disabled = disabled;
     this.button.setAttribute("aria-disabled", String(disabled));
     this.button.textContent = this.buttonLabel();
     this.setAttribute("aria-busy", String(this.state === "submitting"));
-  }
-  renderTotals(totals) {
-    this.querySelector("[data-total]").textContent = totals?.current || this.dataset.priceUnavailable;
-    const original = this.querySelector("[data-original-total]");
-    original.textContent = totals?.original || "";
-    original.hidden = !totals?.original;
-    this.querySelector("[data-discount-badge]").hidden = !totals?.globalDiscount;
   }
   hintText(complete, unavailable, total) {
     if (unavailable) return !this.priceValid || total === null ? this.dataset.priceUnavailable : this.dataset.bundleUnavailable;
