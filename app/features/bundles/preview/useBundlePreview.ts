@@ -51,6 +51,7 @@ function usePreviewProduct(
 
 function syncPreviewImage(node: HTMLImageElement | null, image: ShopifyProductImage | null): void {
   if (!node) return;
+  node.closest(".sbp")?.classList.toggle("sbp--without-image", !image);
   node.hidden = !image;
   if (!image) return node.removeAttribute("src");
   node.src = image.url;
