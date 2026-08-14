@@ -8,10 +8,9 @@ export function BundlePreviewPanel(props: BundlePreviewInput) {
   const viewport = useRef<HTMLDivElement>(null);
   const { load, source } = useBundlePreview(frame, props);
   useBundlePreviewScale(viewport, frame);
-  return <s-section slot="aside">
+  return <s-section id="sb-preview-panel" slot="aside" padding="none">
     <s-stack direction="block" gap="base">
-      <s-heading>Preview bundle</s-heading>
-      <s-paragraph>How this bundle appears on the product page.</s-paragraph>
+      <s-heading>Preview</s-heading>
       <div className="sb-preview-viewport" ref={viewport}>
         <iframe className="sb-preview-frame" title="Bundle storefront preview"
           ref={frame} srcDoc={source} onLoad={load} />
