@@ -169,7 +169,6 @@ function createInput(input: ParentProductContentInput) {
     handle: parentHandle(input.publicId),
     descriptionHtml: input.descriptionHtml,
     status: "DRAFT",
-    claimOwnership: { bundles: true },
     metafields: [{ namespace: "$app", key: "bundle_id", type: "single_line_text_field", value: input.publicId }],
   };
 }
