@@ -44,6 +44,64 @@ export const UPDATE_PRODUCT = `#graphql
   }
 `;
 
+export const READ_PRODUCT_MEDIA = `#graphql
+  query SmartBundleReadProductMedia($id: ID!) {
+    product(id: $id) {
+      media(first: 50, query: "media_type:IMAGE", sortKey: POSITION) {
+        nodes {
+          id status
+          ... on MediaImage { image { url altText width height } }
+        }
+      }
+    }
+  }
+`;
+
+export const READ_PRIMARY_PRODUCT_IMAGE = `#graphql
+  query SmartBundleReadPrimaryProductImage($id: ID!) {
+    product(id: $id) {
+      title
+      media(first: 1, query: "media_type:IMAGE", sortKey: POSITION) {
+        nodes { ... on MediaImage { image { url altText width height } } }
+      }
+    }
+  }
+`;
+
+export const STAGE_PRODUCT_IMAGE = `#graphql
+  mutation SmartBundleStageProductImage($input: [StagedUploadInput!]!) {
+    stagedUploadsCreate(input: $input) {
+      stagedTargets { url resourceUrl parameters { name value } }
+      userErrors { message }
+    }
+  }
+`;
+
+export const ADD_PRODUCT_IMAGE = `#graphql
+  mutation SmartBundleAddProductImage($product: ProductUpdateInput!, $media: [CreateMediaInput!]) {
+    productUpdate(product: $product, media: $media) {
+      userErrors { message }
+    }
+  }
+`;
+
+export const DELETE_PRODUCT_MEDIA = `#graphql
+  mutation SmartBundleDeleteProductMedia($productId: ID!, $mediaIds: [ID!]!) {
+    productDeleteMedia(productId: $productId, mediaIds: $mediaIds) {
+      mediaUserErrors { message }
+    }
+  }
+`;
+
+export const REORDER_PRODUCT_MEDIA = `#graphql
+  mutation SmartBundleReorderProductMedia($id: ID!, $moves: [MoveInput!]!) {
+    productReorderMedia(id: $id, moves: $moves) {
+      job { id }
+      mediaUserErrors { message }
+    }
+  }
+`;
+
 export const PUBLISH_PRODUCT = `#graphql
   mutation SmartBundlePublish($id: ID!, $input: [PublicationInput!]!) {
     publishablePublish(id: $id, input: $input) {

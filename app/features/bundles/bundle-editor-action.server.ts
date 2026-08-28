@@ -22,6 +22,8 @@ import { BundleContentError } from "./content/BundleContentError.server";
 import { createSubmittedParent } from "./content/content-creation.server";
 import { validateContentPatch } from "./content/content-validation.server";
 import { updateProductContent } from "./content/shopify-product-content.server";
+import { saveBundleProductMedia } from "./content/shopify-product-media.server";
+import type { ShopifyProductImage } from "./content/content.types";
 
 interface ActionContext {
   admin: AdminClient;
@@ -54,12 +56,13 @@ async function saveExisting(
 ) {
   await assertActivationRequest(context.shopId, bundle.status, submission.desiredStatus);
   await saveContent(context.admin, bundle, submission);
+  const image = await saveBundleProductMedia(context.admin, bundle.parentProductGid, submission.media);
   await saveBundleState(context, bundle.status, submission);
   if (submission.storedConfigurationDirty) {
     await saveBundleConfiguration(context.shopId, bundle.id, submission.draft);
   }
   const message = submission.desiredStatus === "ACTIVE" ? "Bundle saved and active." : "Bundle saved as draft.";
-  return accepted(bundle.id, submission.desiredStatus, message);
+  return accepted(bundle.id, submission.desiredStatus, message, image);
 }
 
 async function saveContent(
@@ -114,6 +117,7 @@ async function saveNew(context: ActionContext, submission: BundleEditorSubmissio
   const created = await createSubmittedParent(
     context.admin, context.shopDomain, submission.creationToken, creationContent(submission),
   );
+  const image = await saveBundleProductMedia(context.admin, created.parent.productId, submission.media);
   const bundle = await createBundle(context.shopId, created.publicId, created.parent, submission.draft);
   if (submission.desiredStatus === "ACTIVE") {
     await activateBundle(context.admin, context.shopId, bundle.id, submission.draft);
@@ -122,7 +126,7 @@ async function saveNew(context: ActionContext, submission: BundleEditorSubmissio
   } else {
     await saveDraftPrice(context.admin, context.shopId, bundle.id, submission.draft);
   }
-  return accepted(bundle.id, submission.desiredStatus, "Bundle created.");
+  return accepted(bundle.id, submission.desiredStatus, "Bundle created.", image);
 }
 
 function creationContent(submission: BundleEditorSubmission): BundleContentSubmission {
@@ -162,10 +166,17 @@ function knownError(error: unknown) {
   throw error;
 }
 
-function accepted(bundleId: string, status: "DRAFT" | "ACTIVE", message: string) {
-  return data<BundleEditorActionData>({
+function accepted(
+  bundleId: string,
+  status: "DRAFT" | "ACTIVE",
+  message: string,
+  image?: ShopifyProductImage | null,
+) {
+  const result: BundleEditorActionData = {
     source: "bundle-editor", outcome: "accepted", bundleId, status, message,
-  });
+    ...(image !== undefined ? { image } : {}),
+  };
+  return data<BundleEditorActionData>(result);
 }
 
 function rejected(

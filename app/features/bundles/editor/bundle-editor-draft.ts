@@ -1,10 +1,12 @@
 import { initialEditorSelectors, serializedSelectors } from "./editor-state";
+import { appendBundleMedia, mediaDraftFingerprint } from "./bundle-media-draft";
 import type { BundleEditorDraft, BundleEditorInitial } from "./editor.types";
 
 export function initialBundleEditorDraft(initial: BundleEditorInitial): BundleEditorDraft {
   return {
     title: initial.title,
     descriptionHtml: initial.descriptionHtml,
+    media: { kind: "keep", image: initial.image },
     desiredStatus: initial.status,
     pricingMode: initial.pricingMode,
     fixedPrice: initial.fixedPrice,
@@ -28,6 +30,7 @@ export function bundleEditorFormData(
   const form = new FormData();
   appendIdentity(form, initial);
   appendContent(form, initial.id, baseline, draft);
+  appendBundleMedia(form, baseline.media, draft.media);
   appendBundle(form, draft);
   form.set("configurationDirty", configurationChanged(initial.id, baseline, draft) ? "yes" : "no");
   form.set("storedConfigurationDirty", storedConfigurationChanged(initial.id, baseline, draft) ? "yes" : "no");
@@ -94,6 +97,7 @@ function storedConfigurationValue(draft: BundleEditorDraft) {
 function draftFingerprint(draft: BundleEditorDraft): string {
   return JSON.stringify({
     ...draft,
+    media: mediaDraftFingerprint(draft.media),
     selectors: serializedSelectors(draft.selectors),
   });
 }

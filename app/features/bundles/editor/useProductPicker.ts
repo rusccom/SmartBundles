@@ -36,6 +36,7 @@ function selectedProduct(product: PickedProduct, key: number): EditorSelector {
     label: product.title,
     productId: product.id,
     productTitle: product.title,
+    productImageUrl: product.images[0]?.originalSrc,
     options: product.variants.flatMap((variant) => pickedOption(product, variant)),
   };
 }

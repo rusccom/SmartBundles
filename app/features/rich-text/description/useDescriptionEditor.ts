@@ -5,8 +5,6 @@ import type { DescriptionEditorInstance } from "./description-editor.types";
 import { descriptionExtensions } from "./description-extensions";
 import { sanitizeDescriptionClient } from "./description-sanitize.client";
 
-const NORMALIZED = "Visual editing normalizes this HTML to the supported formatting.";
-
 interface DescriptionSync {
   ready: boolean;
   running: boolean;
@@ -15,22 +13,16 @@ interface DescriptionSync {
 }
 
 export function useDescriptionEditor(input: DescriptionEditorProps) {
-  const [ui, setUi] = useState(() => ({
-    htmlMode: false,
-    warning: normalizationWarning(input.value),
-  }));
+  const [htmlMode, setHtmlMode] = useState(false);
   const sync = useDescriptionSync(input.onChange);
   const editor = useDescriptionTiptap(input, sync);
-  useEffect(() => syncExternalValue(editor, input.value, ui.htmlMode, sync),
-    [editor, input.value, ui.htmlMode, sync]);
+  useEffect(() => syncExternalValue(editor, input.value, htmlMode, sync),
+    [editor, htmlMode, input.value, sync]);
   useEffect(() => editor?.setEditable(!input.disabled), [editor, input.disabled]);
   const toggleMode = useCallback(() =>
-    toggleDescriptionMode(editor, input, ui.htmlMode, setUi), [editor, input, ui.htmlMode]);
-  const setRawValue = useCallback((value: string) => {
-    input.onChange(value);
-    setUi((state) => ({ ...state, warning: "" }));
-  }, [input]);
-  return { editor, ...ui, toggleMode, setRawValue };
+    toggleDescriptionMode(editor, input, htmlMode, setHtmlMode), [editor, htmlMode, input]);
+  const setRawValue = useCallback((value: string) => input.onChange(value), [input]);
+  return { editor, htmlMode, toggleMode, setRawValue };
 }
 
 function useDescriptionSync(onChange: DescriptionEditorProps["onChange"]) {
@@ -86,13 +78,13 @@ function toggleDescriptionMode(
   editor: DescriptionEditorInstance | null,
   input: DescriptionEditorProps,
   htmlMode: boolean,
-  setUi: React.Dispatch<React.SetStateAction<{ htmlMode: boolean; warning: string }>>,
+  setHtmlMode: React.Dispatch<React.SetStateAction<boolean>>,
 ): void {
   if (!editor) return;
-  if (!htmlMode) return setUi((state) => ({ ...state, htmlMode: true }));
+  if (!htmlMode) return setHtmlMode(true);
   const visual = loadVisualContent(editor, input.value);
   if (visual !== input.value) input.onChange(visual);
-  setUi({ htmlMode: false, warning: visual === input.value ? "" : NORMALIZED });
+  setHtmlMode(false);
 }
 
 function loadVisualContent(editor: DescriptionEditorInstance, raw: string): string {
@@ -101,18 +93,14 @@ function loadVisualContent(editor: DescriptionEditorInstance, raw: string): stri
   return sanitizeDescriptionClient(editor.getHTML());
 }
 
-function normalizationWarning(value: string): string {
-  return value === sanitizeDescriptionClient(value) ? "" : NORMALIZED;
-}
-
 function editorAttributes(hasError: boolean): Record<string, string> {
-  return {
+  const attributes = {
     class: "sb-description-surface",
     id: "sb-description-input",
     role: "textbox",
     "aria-multiline": "true",
     "aria-labelledby": "sb-description-label",
-    "aria-describedby": "sb-description-help sb-description-warning sb-description-error",
     "aria-invalid": hasError ? "true" : "false",
   };
+  return hasError ? { ...attributes, "aria-describedby": "sb-description-error" } : attributes;
 }

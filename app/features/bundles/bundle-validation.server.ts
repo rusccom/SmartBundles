@@ -9,6 +9,7 @@ import type {
 } from "./bundle.types";
 import { buildRuntimeConfig } from "./bundle-config.server";
 import { bundlePrice } from "./bundle-pricing";
+import { parseBundleMedia } from "./bundle-media-validation.server";
 
 export const MIN_SELECTORS = 1;
 export const MAX_SELECTORS = 150;
@@ -21,13 +22,14 @@ export function parseBundleForm(form: FormData, isNew: boolean): BundleValidatio
   const desiredStatus = parsedDesiredStatus(rawValue(form, "desiredStatus"));
   const configurationDirty = rawValue(form, "configurationDirty") === "yes";
   const errors = isNew || configurationDirty ? validateBundle(draft) : {};
+  const media = parseBundleMedia(form, errors);
   if ((isNew || configurationDirty) && !validPricingMode(rawValue(form, "pricingMode"))) {
     errors.pricingMode = "Choose a pricing mode.";
   }
   if (!desiredStatus) errors.desiredStatus = "Choose a bundle status.";
   if (!desiredStatus) return { errors };
   const data = {
-    draft, content, desiredStatus,
+    draft, content, media, desiredStatus,
     configurationDirty,
     storedConfigurationDirty: rawValue(form, "storedConfigurationDirty") === "yes",
     creationToken: rawValue(form, "creationToken"),

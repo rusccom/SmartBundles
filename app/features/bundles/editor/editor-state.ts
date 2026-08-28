@@ -14,8 +14,12 @@ export function initialEditorSelectors(selectors: EditorSelector[]): EditorSelec
 
 export function serializedSelectors(selectors: EditorSelector[]): string {
   const clean = selectors.map((selector) => ({
-    ...selector,
+    key: selector.key,
     label: selector.productTitle,
+    productId: selector.productId,
+    productTitle: selector.productTitle,
+    quantity: selector.quantity,
+    discountPercent: selector.discountPercent,
     options: selector.options.filter((option) => isSimpleBundleComponent(selector) || option.allowed).map(serializedOption),
   }));
   return JSON.stringify(clean);

@@ -28,7 +28,7 @@ export function BundleEditorPage(props: BundleEditorPageProps) {
     <div slot="aside" className="sb-editor-aside">
       <BundleStatusPanel controller={controller} />
       <BundlePreviewPanel draft={controller.draft} currencyCode={initial.currencyCode}
-        image={initial.image} locale={initial.locale} texts={initial.texts} />
+        image={controller.draft.media.image} locale={initial.locale} texts={initial.texts} />
     </div>
   </s-page>;
 }

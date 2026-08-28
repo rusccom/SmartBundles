@@ -16,13 +16,8 @@ export function DescriptionEditor(props: DescriptionEditorProps) {
     <label id="sb-description-label" className="sb-description-label"
       htmlFor="sb-description-input">Description</label>
     {descriptionControl(props, state)}
-    <span id="sb-description-help" className="sb-description-help">
-      Shopify is the source of truth.
-    </span>
-    <span id="sb-description-warning" className="sb-description-warning"
-      role={state.warning ? "status" : undefined}>{state.warning}</span>
-    <span id="sb-description-error" className="sb-description-error"
-      role={props.error ? "alert" : undefined}>{props.error}</span>
+    {props.error ? <span id="sb-description-error" className="sb-description-error"
+      role="alert">{props.error}</span> : null}
   </div>;
 }
 
@@ -38,7 +33,7 @@ function descriptionControl(
       <EditorContent editor={state.editor} />
     </div>
     <textarea className="sb-description-html" aria-label="Description HTML source"
-      aria-describedby="sb-description-help sb-description-warning sb-description-error"
+      aria-describedby={props.error ? "sb-description-error" : undefined}
       aria-invalid={Boolean(props.error)} hidden={!state.htmlMode} disabled={props.disabled}
       spellCheck={false} value={props.value}
       onChange={(event) => state.setRawValue(event.target.value)} />

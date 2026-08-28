@@ -161,20 +161,12 @@
   display: none;
 }
 
-.sb-description-help,
-.sb-description-warning,
 .sb-description-error {
-  min-height: 18px;
-  color: #616161;
   font-size: 12px;
   line-height: 18px;
 }
 
-.sb-description-warning:not(:empty) {
-  color: #8a6116;
-}
-
-.sb-description-error:not(:empty) {
+.sb-description-error {
   color: #8e1f0b;
 }
 

@@ -63,10 +63,20 @@ function consumeResult(state: ConsumeInput): void {
     return;
   }
   if (!state.submitted) return;
-  state.input.acceptCanonical({ ...state.submitted, desiredStatus: result.status });
+  state.input.acceptCanonical(savedDraft(state.submitted, result));
   state.shopify.toast.show(result.message);
   if (!state.input.initial.id) {
     state.input.allowNavigation();
     void state.navigate(`/app/bundles/${result.bundleId}`);
   }
+}
+
+function savedDraft(
+  submitted: BundleEditorDraft,
+  result: Extract<BundleEditorActionData, { outcome: "accepted" }>,
+): BundleEditorDraft {
+  const draft = { ...submitted, desiredStatus: result.status };
+  return "image" in result
+    ? { ...draft, media: { kind: "keep", image: result.image ?? null } }
+    : draft;
 }

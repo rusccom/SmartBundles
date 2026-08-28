@@ -105,6 +105,7 @@ function hydrateSelector(selector: BundleSelectorInput, products: Map<string, Ed
   return {
     ...selector,
     productTitle: product.title,
+    productImageUrl: product.imageUrl,
     options: product.variants.map((variant) => editorOption(variant, allowedIds.has(variant.id), product.imageUrl)),
   };
 }

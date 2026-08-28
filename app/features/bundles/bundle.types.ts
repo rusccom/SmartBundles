@@ -38,9 +38,16 @@ export interface BundleContentPatch {
   descriptionHtml?: string;
 }
 
+export type BundleMediaSubmission =
+  | { action: "keep" }
+  | { action: "remove" }
+  | { action: "component"; productId: string }
+  | { action: "upload"; file: File };
+
 export interface BundleEditorSubmission {
   draft: BundleDraftInput;
   content: BundleContentPatch;
+  media: BundleMediaSubmission;
   desiredStatus: BundleDesiredStatus;
   configurationDirty: boolean;
   storedConfigurationDirty: boolean;

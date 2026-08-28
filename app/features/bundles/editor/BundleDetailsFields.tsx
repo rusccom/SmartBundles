@@ -1,4 +1,5 @@
 import { DescriptionEditor } from "../../rich-text/description/DescriptionEditor";
+import { BundleMediaField } from "./BundleMediaField";
 import type { BundleEditorController } from "./useBundleEditorController";
 
 export interface BundleDetailsFieldsProps {
@@ -14,7 +15,7 @@ export function BundleDetailsFields({ controller }: BundleDetailsFieldsProps) {
         required error={errors.title}
         onInput={(event) => controller.patch({ title: event.currentTarget.value })} />
       {descriptionField(controller)}
-      <s-paragraph>Title and description are loaded from and saved directly to Shopify.</s-paragraph>
+      <BundleMediaField controller={controller} />
     </s-stack>
   </s-section>;
 }

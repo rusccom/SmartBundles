@@ -1,3 +1,5 @@
+import type { ShopifyProductImage } from "./content/content.types";
+
 export type BundleEditorIssue = "quota" | "component";
 
 export type BundleEditorActionData =
@@ -7,6 +9,7 @@ export type BundleEditorActionData =
       bundleId: string;
       status: "DRAFT" | "ACTIVE";
       message: string;
+      image?: ShopifyProductImage | null;
     }
   | {
       source: "bundle-editor";
