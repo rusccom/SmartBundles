@@ -146,9 +146,12 @@
   font-weight: 650;
 }
 .sb__chevron {
+  background: rgba(18, 18, 18, 0.05);
+  border-radius: 50%;
+  color: #121212;
   display: block;
   flex-shrink: 0;
-  height: 20px;
+  height: 64px;
   margin-top: auto;
   transform: rotate(0deg);
   transition: transform 160ms ease;
