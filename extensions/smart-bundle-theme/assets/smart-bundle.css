@@ -1,7 +1,7 @@
 .sb {
   --sb-border: rgba(18, 18, 18, 0.16);
   --sb-border-strong: rgba(18, 18, 18, 0.48);
-  --sb-chevron-size: 24px;
+  --sb-chevron-size: 28.8px;
   --sb-error: #b42318;
   --sb-focus: #1f5eff;
   --sb-muted: rgba(18, 18, 18, 0.66);
@@ -132,8 +132,8 @@
   color: var(--sb-muted);
   font-size: 0.875rem;
 }
-.sb__quantity { color: inherit; font-size: 1.75rem; font-weight: 650; line-height: 1; }
-.sb__quantity-value { font-size: 3rem; }
+.sb__quantity { color: inherit; font-size: 1.4rem; font-weight: 650; line-height: 1; }
+.sb__quantity-value { font-size: 2.4rem; }
 .sb__component-discount { color: #8e1f0b; font-size: 0.75rem; font-weight: 650; }
 .sb__summary-meta {
   align-items: flex-end;
