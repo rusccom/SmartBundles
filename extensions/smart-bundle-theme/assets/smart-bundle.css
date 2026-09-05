@@ -129,8 +129,8 @@
   color: var(--sb-muted);
   font-size: 0.875rem;
 }
-.sb__quantity { color: inherit; font-size: 0.875rem; font-weight: 650; line-height: 1; }
-.sb__quantity-value { font-size: 1.5rem; }
+.sb__quantity { color: inherit; font-size: 1.75rem; font-weight: 650; line-height: 1; }
+.sb__quantity-value { font-size: 3rem; }
 .sb__component-discount { color: #8e1f0b; font-size: 0.75rem; font-weight: 650; }
 .sb__summary-meta {
   align-items: flex-end;
@@ -146,18 +146,16 @@
   font-weight: 650;
 }
 .sb__chevron {
-  border-bottom: 2px solid currentColor;
-  border-right: 2px solid currentColor;
+  display: block;
   flex-shrink: 0;
-  height: 8px;
-  margin-block: auto 0.25rem;
-  margin-inline: 0.25rem;
-  transform: rotate(45deg) translate(-2px, -2px);
+  height: 20px;
+  margin-top: auto;
+  transform: rotate(0deg);
   transition: transform 160ms ease;
-  width: 8px;
+  width: 64px;
 }
 .sb__summary--button[aria-expanded="true"] .sb__chevron {
-  transform: rotate(225deg) translate(-1px, -1px);
+  transform: rotate(180deg);
 }
 .sb__panel {
   border-top: 1px solid var(--sb-border);

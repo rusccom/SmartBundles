@@ -106,8 +106,14 @@ function disclosure(summary, selector, context) {
 }
 
 function chevron() {
-  const node = element("span", "sb__chevron");
-  node.setAttribute("aria-hidden", "true");
+  const namespace = "http://www.w3.org/2000/svg";
+  const node = attributes(document.createElementNS(namespace, "svg"), {
+    class: "sb__chevron", viewBox: "0 0 64 20", "aria-hidden": "true", focusable: "false",
+  });
+  node.append(attributes(document.createElementNS(namespace, "path"), {
+    d: "M2 2 L32 18 L62 2", fill: "none", stroke: "currentColor",
+    "stroke-width": 4, "stroke-linecap": "round", "stroke-linejoin": "round",
+  }));
   return node;
 }
 
