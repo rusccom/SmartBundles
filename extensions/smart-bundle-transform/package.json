@@ -6,20 +6,5 @@
   "license": "UNLICENSED",
   "scripts": {
     "test": "node --test"
-  },
-  "codegen": {
-    "schema": "schema.graphql",
-    "documents": "src/*.graphql",
-    "generates": {
-      "./generated/api.ts": {
-        "plugins": [
-          "typescript",
-          "typescript-operations"
-        ]
-      }
-    }
-  },
-  "devDependencies": {
-    "@shopify/shopify_function": "~2.0.0"
   }
 }

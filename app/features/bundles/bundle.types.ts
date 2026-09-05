@@ -60,26 +60,28 @@ export interface BundleValidationResult {
 }
 
 export interface RuntimeConfig {
-  sv: 3;
+  sv: 4;
   en: 0 | 1;
   b: string;
   p: string;
   m: 0 | 1;
   d: string;
-  c: Array<[string, number] | [string, number, string]>;
+  c: Array<[string, number]>;
   s: Array<{ k: number; o: number[]; d: string }>;
 }
 
 export interface PresentationConfig {
-  sv: 4;
+  sv: 5;
   en: 0 | 1;
   b: string;
   parentVariantId: string;
   pricing: PresentationPricing;
   selectors: BundleSelectorInput[];
   texts: StorefrontTexts;
+  moneySample: string;
+  catalog: Array<BundleVariantInput & { productId: string; productTitle: string }>;
 }
 
 export type PresentationPricing =
   | { mode: "fixed"; currencyCode: string; originalAmount: string; amount: string; discountPercent: string }
-  | { mode: "dynamic"; currencyCode: string; maximumOriginalAmount: string; maximumAmount: string; discountPercent: string };
+  | { mode: "dynamic"; currencyCode: string; discountPercent: string };

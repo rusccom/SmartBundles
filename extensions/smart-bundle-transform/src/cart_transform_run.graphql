@@ -1,10 +1,12 @@
 query CartTransformRunInput {
-  presentmentCurrencyRate
   cart {
     lines {
       id
+      quantity
+      sellingPlanAllocation { sellingPlan { id } }
       cost {
         amountPerQuantity {
+          amount
           currencyCode
         }
       }
@@ -15,6 +17,7 @@ query CartTransformRunInput {
         __typename
         ... on ProductVariant {
           id
+          bundleMemberships: metafield(namespace: "$app", key: "bundle_memberships") { jsonValue }
           product {
             bundleRuntime: metafield(namespace: "$app", key: "bundle_runtime") {
               jsonValue

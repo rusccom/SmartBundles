@@ -1,0 +1,11 @@
+{%- assign component_product = variant.product -%}
+{%- assign component_image = variant.featured_image | default: component_product.featured_image -%}
+{
+  "id": {{ variant.id | prepend: 'gid://shopify/ProductVariant/' | json }},
+  "productId": {{ component_product.id | prepend: 'gid://shopify/Product/' | json }},
+  "productTitle": {{ component_product.title | json }},
+  "title": {{ variant.title | json }},
+  "available": {{ variant.available | json }},
+  "unitPrice": {{ variant.price | divided_by: 100.0 | json }},
+  "imageUrl": {% if component_image %}{{ component_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+}

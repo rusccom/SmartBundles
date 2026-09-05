@@ -34,7 +34,7 @@ export function useBundlePreview(
 }
 
 function previewConfigKey(input: BundlePreviewInput): string {
-  const config = bundlePreviewConfig(input.draft, input.currencyCode, input.texts);
+  const config = bundlePreviewConfig(input.draft, input.currencyCode, input.texts, input.locale);
   return config ? JSON.stringify(config) : "";
 }
 

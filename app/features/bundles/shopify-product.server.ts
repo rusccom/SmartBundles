@@ -32,7 +32,8 @@ interface UpdateVariantResult {
 }
 
 export interface MetafieldWrite {
-  key: "bundle_runtime" | "bundle_presentation";
+  key: "bundle_runtime" | "bundle_presentation" | `bundle_variants_${number}`;
+  type?: "json" | "list.variant_reference";
   value: string;
 }
 

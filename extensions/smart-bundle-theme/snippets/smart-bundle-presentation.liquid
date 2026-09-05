@@ -1,0 +1,35 @@
+{%- assign parent_variant = product.selected_or_first_available_variant -%}
+{%- assign original_price = parent_variant.compare_at_price | default: parent_variant.price -%}
+{%- capture money_sample -%}
+  {%- if settings.currency_code_enabled or settings.currency_code_enable -%}
+    {{- 123456789 | money_with_currency | strip_html -}}
+  {%- else -%}
+    {{- 123456789 | money | strip_html -}}
+  {%- endif -%}
+{%- endcapture -%}
+{
+  "sv": {{ bundle.sv | json }}, "en": {{ bundle.en | json }},
+  "b": {{ bundle.b | json }},
+  "parentVariantId": {{ parent_variant.id | prepend: 'gid://shopify/ProductVariant/' | json }},
+  "moneySample": {{ money_sample | json }},
+  "pricing": {
+    "mode": {{ bundle.pricing.mode | json }},
+    "discountPercent": {{ bundle.pricing.discountPercent | json }},
+    "currencyCode": {{ cart.currency.iso_code | json }},
+    "amount": {{ parent_variant.price | divided_by: 100.0 | json }},
+    "originalAmount": {{ original_price | divided_by: 100.0 | json }}
+  },
+  "selectors": {{ bundle.selectors | json }},
+  "texts": {{ bundle.texts | json }},
+  "catalog": [
+    {%- assign variant_written = false -%}
+    {%- for batch in (1..4) -%}
+      {%- assign reference_key = 'bundle_variants_' | append: batch -%}
+      {%- for variant in product.metafields["$app"][reference_key].value -%}
+        {%- if variant_written -%},{%- endif -%}
+        {%- render 'smart-bundle-variant', variant: variant -%}
+        {%- assign variant_written = true -%}
+      {%- endfor -%}
+    {%- endfor -%}
+  ]
+}

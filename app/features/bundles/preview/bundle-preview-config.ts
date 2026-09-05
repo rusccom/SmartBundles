@@ -12,15 +12,28 @@ export function bundlePreviewConfig(
   draft: BundleEditorDraft,
   currencyCode: string,
   texts: StorefrontTexts,
+  locale: string,
 ): PresentationConfig | null {
   const selectors = previewSelectors(draft.selectors);
   const pricing = previewPricing(selectors, draft, currencyCode);
   if (!pricing || !selectors.length) return null;
   return {
-    sv: 4, en: 1, b: "preview",
+    sv: 5, en: 1, b: "preview",
     parentVariantId: PREVIEW_VARIANT_GID,
     pricing, selectors, texts,
+    moneySample: previewMoneySample(currencyCode, locale),
+    catalog: selectors.flatMap((selector) => selector.options.map((option) => ({
+      ...option, productId: selector.productId, productTitle: selector.productTitle,
+    }))),
   };
+}
+
+function previewMoneySample(currency: string, locale: string): string {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency", currency, currencyDisplay: "narrowSymbol", numberingSystem: "latn",
+    }).format(1234567.89);
+  } catch { return `1,234,567.89 ${currency}`; }
 }
 
 function previewSelectors(selectors: EditorSelector[]): BundleSelectorInput[] {

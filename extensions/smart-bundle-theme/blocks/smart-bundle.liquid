@@ -1,14 +1,19 @@
+<script src="{{ 'smart-bundle-money.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-core.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-price.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-markup.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-pricing.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-form-guard.js' | asset_url }}" type="module"></script>
+<script src="{{ 'smart-bundle-cart.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle.js' | asset_url }}" type="module"></script>
 <script src="{{ 'smart-bundle-cart-recovery.js' | asset_url }}" defer="defer"></script>
 
 {%- assign bundle = product.metafields["$app"].bundle_presentation.value -%}
 
 {%- if bundle != blank -%}
+  {%- capture presentation -%}
+    {%- render 'smart-bundle-presentation', bundle: bundle, product: product -%}
+  {%- endcapture -%}
   <smart-bundle
     class="sb"
     data-auto-mount="true"
@@ -21,7 +26,7 @@
     {{ block.shopify_attributes }}
   >
     <script type="application/json" data-presentation>
-      {{- bundle | json | replace: '</', '<\/' -}}
+      {{- presentation | replace: '</', '<\/' -}}
     </script>
   </smart-bundle>
   <noscript><p class="sb sb__editor-note">{{ bundle.texts.javascriptRequired | escape }}</p></noscript>

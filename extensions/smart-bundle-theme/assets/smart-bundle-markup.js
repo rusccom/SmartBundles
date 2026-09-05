@@ -1,5 +1,6 @@
 import { componentSection } from "./smart-bundle-component-markup.js";
 import { attributes, element } from "./smart-bundle-dom.js";
+import { resolveCatalog } from "./smart-bundle-catalog.js";
 
 const MIN_SELECTORS = 1;
 const MAX_SELECTORS = 150;
@@ -35,7 +36,8 @@ export function unavailableNote(config) {
 
 function hostPresentation(host) {
   try {
-    return JSON.parse(host.querySelector("script[data-presentation]")?.textContent || "null");
+    const config = JSON.parse(host.querySelector("script[data-presentation]")?.textContent || "null");
+    return resolveCatalog(config) || { texts: config?.texts };
   } catch {
     return null;
   }
@@ -46,7 +48,7 @@ function hostSettings(host) {
 }
 
 function ready(config) {
-  if (!config || config.sv !== 4 || config.en !== 1) return false;
+  if (!config || config.sv !== 5 || config.en !== 1) return false;
   if (!config.texts || !config.parentVariantId) return false;
   const count = config.selectors?.length ?? 0;
   if (count < MIN_SELECTORS || count > MAX_SELECTORS) return false;
@@ -58,8 +60,7 @@ function validPricing(pricing) {
   if (pricing.mode === "fixed") {
     return present(pricing.originalAmount) && present(pricing.amount);
   }
-  return pricing.mode === "dynamic"
-    && present(pricing.maximumOriginalAmount) && present(pricing.maximumAmount);
+  return pricing.mode === "dynamic";
 }
 
 function present(value) {
@@ -70,14 +71,14 @@ function bundleDataset(config) {
   const { pricing } = config;
   return {
     parentVariantGid: config.parentVariantId,
+    bundleId: config.b,
+    moneySample: config.moneySample,
     parentVariantId: String(config.parentVariantId).split("/").pop(),
     priceMode: pricing.mode,
     currencyCode: pricing.currencyCode,
     discountPercent: pricing.discountPercent,
     originalAmount: pricing.originalAmount ?? "",
     amount: pricing.amount ?? "",
-    maximumOriginalAmount: pricing.maximumOriginalAmount ?? "",
-    maximumAmount: pricing.maximumAmount ?? "",
     ...textDataset(config.texts),
   };
 }

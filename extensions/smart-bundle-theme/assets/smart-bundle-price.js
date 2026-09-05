@@ -70,24 +70,6 @@ function discountedBigInt(source, componentPercent, bundlePercent) {
   return roundedDivision(numerator, DISCOUNT_DENOMINATOR);
 }
 
-function convertedMinor(input) {
-  const component = percentValue(input.componentPercent);
-  const bundle = percentValue(input.bundlePercent);
-  if (!validConversion(input) || component === null || bundle === null) return null;
-  const sourceAmount = input.source / input.sourceScale;
-  const converted = sourceAmount * input.rate * input.activeScale;
-  const discounted = converted * (100 - component) / 100 * (100 - bundle) / 100;
-  const minor = Math.round(discounted);
-  return Number.isSafeInteger(minor) ? minor : null;
-}
-
-function validConversion(input) {
-  return Number.isSafeInteger(input.source) && input.source >= 0
-    && Number.isSafeInteger(input.sourceScale) && input.sourceScale > 0
-    && Number.isSafeInteger(input.activeScale) && input.activeScale > 0
-    && Number.isFinite(input.rate) && input.rate > 0;
-}
-
 function moneyMinor(value) {
   const match = /^(\d+)(?:\.(\d+))?$/.exec(String(value ?? "").trim());
   if (!match) return null;
@@ -147,7 +129,7 @@ function compareAt(prices) {
 }
 
 export const SmartBundlePrice = {
-  calculate, compareAt, convertedMinor, discountedMinor, percentValue,
+  calculate, compareAt, discountedMinor, percentValue,
 };
 
 export default SmartBundlePrice;

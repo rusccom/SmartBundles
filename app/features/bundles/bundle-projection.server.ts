@@ -16,6 +16,8 @@ import {
   writeProductMetafields,
 } from "./shopify-product.server";
 import { hydrateProjectionSelectors } from "./projection-selector-hydration.server";
+import { variantReferenceFields } from "./storefront/variant-references.server";
+import { syncBundleMemberships } from "./storefront/bundle-membership.server";
 
 export async function syncActiveBundle(
   admin: AdminClient,
@@ -36,7 +38,7 @@ export async function syncBundlePresentation(
   const draft = await projectionDraft(admin, bundle);
   const projection = buildProjection(bundle, draft);
   await writeProductMetafields(
-    admin, bundle.parentProductGid, [projection.presentation],
+    admin, bundle.parentProductGid, [projection.presentation, ...variantReferenceFields(draft.selectors)],
   );
 }
 
@@ -56,6 +58,15 @@ async function writeProjection(
     }),
     writeProductMetafields(admin, bundle.parentProductGid, projection.fields),
   ]);
+  await syncMemberships(admin, bundle, draft, draft.pricingMode === "DYNAMIC");
+}
+
+function syncMemberships(admin: AdminClient, bundle: ProjectionBundle, draft: BundleDraftInput, enabled: boolean) {
+  return syncBundleMemberships(admin, {
+    publicId: bundle.publicId, parentVariantId: bundle.parentVariantGid,
+    discountPercent: draft.discountPercent, selectors: draft.selectors,
+    previousSelectors: bundle.selectors, enabled,
+  });
 }
 
 export async function activateBundle(
@@ -82,16 +93,16 @@ export async function draftBundle(
 ): Promise<void> {
   const bundle = await getBundleForProjection(shopId, bundleId);
   const publicationId = requiredPublication(bundle.shop.onlineStorePublicationGid);
-  const runtime = JSON.stringify(disabledRuntime(bundle.publicId, bundle.parentVariantGid));
   const operations = [
     writeProductMetafields(admin, bundle.parentProductGid, [
-      { key: "bundle_runtime", value: runtime },
+      { key: "bundle_runtime", value: JSON.stringify(disabledRuntime(bundle.publicId, bundle.parentVariantGid)) },
     ]),
     setProductStatus(admin, { id: bundle.parentProductGid, status: "DRAFT" }),
     unpublishProduct(admin, bundle.parentProductGid, publicationId),
     ...draftPriceOperation(admin, bundle, submitted),
   ];
   await Promise.all(operations);
+  await syncMemberships(admin, bundle, submitted ?? storedDraft(bundle), false);
   await setBundleStatus(shopId, bundleId, "DRAFT");
 }
 
@@ -171,7 +182,7 @@ function undiscountedPrice(price: string, discountPercent: string): string {
 
 function buildProjection(bundle: ProjectionBundle, draft: BundleDraftInput) {
   const prices = bundlePrice.calculate(draft);
-  const identity = projectionIdentity(bundle, draft, prices);
+  const identity = projectionIdentity(bundle, draft);
   const presentation = {
     key: "bundle_presentation" as const,
     value: JSON.stringify(buildPresentationConfig(identity, draft.selectors, {
@@ -180,12 +191,12 @@ function buildProjection(bundle: ProjectionBundle, draft: BundleDraftInput) {
     })),
   };
   return {
-    price: prices.finalPrice,
-    compareAtPrice: bundlePrice.compareAt(prices),
+    price: prices.finalPrice, compareAtPrice: bundlePrice.compareAt(prices),
     presentation,
     fields: [
       { key: "bundle_runtime" as const, value: JSON.stringify(buildRuntimeConfig(identity, draft.selectors)) },
       presentation,
+      ...variantReferenceFields(draft.selectors),
     ],
   };
 }
@@ -193,24 +204,15 @@ function buildProjection(bundle: ProjectionBundle, draft: BundleDraftInput) {
 function projectionIdentity(
   bundle: ProjectionBundle,
   draft: BundleDraftInput,
-  prices: ReturnType<typeof bundlePrice.calculate>,
 ) {
   return {
     publicId: bundle.publicId, parentVariantId: bundle.parentVariantGid,
-    pricingMode: draft.pricingMode, currencyCode: requiredCurrency(bundle.shop.currencyCode),
-    discountPercent: draft.discountPercent, originalPrice: prices.originalPrice,
-    parentPrice: prices.finalPrice, maximumOriginalPrice: prices.maximumOriginalPrice,
-    maximumFinalPrice: prices.maximumFinalPrice,
+    pricingMode: draft.pricingMode, discountPercent: draft.discountPercent,
   };
 }
 
 function requiredPublication(value: string | null): string {
   if (!value) throw new Error("Online Store publication is unavailable.");
-  return value;
-}
-
-function requiredCurrency(value: string | null): string {
-  if (!value) throw new Error("Shop currency is unavailable.");
   return value;
 }
 

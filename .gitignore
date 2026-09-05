@@ -22,6 +22,7 @@ pnpm-lock.yaml
 
 /extensions/*/dist
 /extensions/*/generated
+/extensions/*/target
 
 # Ignore shopify files created during app dev
 .shopify/*

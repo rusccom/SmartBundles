@@ -11,7 +11,7 @@ export function previewPricing(
     const prices = bundlePrice.calculate({ ...draft, selectors });
     return draft.pricingMode === "FIXED"
       ? fixedPricing(prices, draft.discountPercent, currencyCode)
-      : dynamicPricing(prices, draft.discountPercent, currencyCode);
+      : { mode: "dynamic", currencyCode, discountPercent: draft.discountPercent };
   } catch {
     return null;
   }
@@ -23,15 +23,5 @@ function fixedPricing(
   return {
     mode: "fixed", currencyCode, discountPercent,
     originalAmount: prices.originalPrice, amount: prices.finalPrice,
-  };
-}
-
-function dynamicPricing(
-  prices: ReturnType<typeof bundlePrice.calculate>, discountPercent: string, currencyCode: string,
-): PresentationPricing {
-  return {
-    mode: "dynamic", currencyCode, discountPercent,
-    maximumOriginalAmount: prices.maximumOriginalPrice,
-    maximumAmount: prices.maximumFinalPrice,
   };
 }

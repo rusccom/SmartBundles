@@ -56,3 +56,28 @@ access.admin = "merchant_read"
 
 [pos]
 embedded = false
+
+[product.metafields.app.bundle_variants_1]
+name = "SmartBundle variant references 1"
+type = "list.variant_reference"
+access.admin = "merchant_read"
+
+[product.metafields.app.bundle_variants_2]
+name = "SmartBundle variant references 2"
+type = "list.variant_reference"
+access.admin = "merchant_read"
+
+[product.metafields.app.bundle_variants_3]
+name = "SmartBundle variant references 3"
+type = "list.variant_reference"
+access.admin = "merchant_read"
+
+[product.metafields.app.bundle_variants_4]
+name = "SmartBundle variant references 4"
+type = "list.variant_reference"
+access.admin = "merchant_read"
+
+[variant.metafields.app.bundle_memberships]
+name = "SmartBundle component rules"
+type = "json"
+access.admin = "merchant_read"

@@ -203,12 +203,6 @@ class SmartBundle extends HTMLElement {
   complete() {
     return this.selectionCount() === this.components.length;
   }
-  selectionPayload() {
-    const selections = this.components.map((component) => [
-      JSON.parse(component.dataset.selectorKey), selectedInput(component)?.value,
-    ]);
-    return { s: selections };
-  }
   parentId() {
     const gid = this.dataset.parentVariantGid || "";
     const id = this.dataset.parentVariantId || "";
@@ -221,7 +215,7 @@ class SmartBundle extends HTMLElement {
     this.clearMessages();
     this.renderFooter(true);
     try {
-      await this.sendCartRequest(parentId);
+      await this.sendCartRequest();
       this.handleSuccess();
     } catch (error) {
       this.state = "error";
@@ -229,12 +223,11 @@ class SmartBundle extends HTMLElement {
       this.renderFooter(true);
     }
   }
-  async sendCartRequest(parentId) {
-    const properties = { _sb: JSON.stringify(this.selectionPayload()) };
+  async sendCartRequest() {
     const response = await fetch(`${window.Shopify?.routes?.root || "/"}cart/add.js`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ items: [{ id: parentId, quantity: 1, properties }] }),
+      body: JSON.stringify({ items: window.SmartBundleCart.cartItems(this) }),
     });
     if (!response.ok) throw new Error(await this.responseError(response));
   }

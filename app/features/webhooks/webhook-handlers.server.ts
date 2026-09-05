@@ -1,5 +1,6 @@
 import prisma from "../../db.server";
 import { unauthenticated } from "../../shopify.server";
+import { draftDeletedParents } from "../bundles/storefront/deleted-bundle.server";
 import {
   draftBundle,
   syncActiveBundle,
@@ -34,15 +35,6 @@ export async function handleProductWebhook(
   const { admin } = await unauthenticated.admin(shop);
   const operation = deleted ? draftBundle : syncActiveBundle;
   await Promise.all(bundles.map(({ id, shopId }) => operation(admin, shopId, id)));
-}
-
-function draftDeletedParents(shop: string, productGid: string) {
-  return prisma.bundle.updateMany({
-    where: {
-      shop: { domain: shop }, status: "ACTIVE", parentProductGid: productGid,
-    },
-    data: { status: "DRAFT" },
-  });
 }
 
 function productId(payload: unknown): string | undefined {

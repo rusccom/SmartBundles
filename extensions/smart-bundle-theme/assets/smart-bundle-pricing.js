@@ -1,4 +1,4 @@
-const { activeMinor, formatMinor, selectedInput, sourceMinor } = window.SmartBundleCore;
+const { formatMinor, selectedInput, sourceMinor } = window.SmartBundleCore;
 const price = window.SmartBundlePrice;
 const PRICE_CONTAINER = '[id^="price-"], [data-product-price], .product__price';
 
@@ -11,15 +11,12 @@ function componentDiscount(component) {
 }
 
 function inputSourceMinor(input, context) {
-  return input && context ? sourceMinor(input.dataset.unitPrice, context.sourceScale) : null;
+  return input && context ? sourceMinor(input.dataset.unitPrice, context.scale) : null;
 }
 
 function discountedActiveMinor(source, context, componentPercent, bundlePercent) {
   if (source === null || !context || componentPercent === null || bundlePercent === null) return null;
-  return price.convertedMinor({
-    source, sourceScale: context.sourceScale, activeScale: context.activeScale,
-    rate: context.rate, componentPercent, bundlePercent,
-  });
+  return price.discountedMinor(source, String(componentPercent), String(bundlePercent));
 }
 
 function validContract(element, inputs, context) {
@@ -28,15 +25,12 @@ function validContract(element, inputs, context) {
   if (!context) return false;
   if (element.dataset.priceMode === "fixed") return validFixedContract(element, context);
   if (element.dataset.priceMode !== "dynamic") return false;
-  const original = sourceMinor(element.dataset.maximumOriginalAmount, context.sourceScale);
-  const final = sourceMinor(element.dataset.maximumAmount, context.sourceScale);
-  return original !== null && final !== null
-    && inputs.every((input) => inputSourceMinor(input, context) !== null);
+  return inputs.every((input) => inputSourceMinor(input, context) !== null);
 }
 
 function validFixedContract(element, context) {
-  const original = sourceMinor(element.dataset.originalAmount, context.sourceScale);
-  const final = sourceMinor(element.dataset.amount, context.sourceScale);
+  const original = sourceMinor(element.dataset.originalAmount, context.scale);
+  const final = sourceMinor(element.dataset.amount, context.scale);
   return original !== null && final !== null;
 }
 
@@ -77,8 +71,8 @@ function fixedTotals(element, context) {
 }
 
 function fixedAmount(value, context) {
-  const source = context ? sourceMinor(value, context.sourceScale) : null;
-  return formatMinor(activeMinor(source, context), context);
+  const source = context ? sourceMinor(value, context.scale) : null;
+  return formatMinor(source, context);
 }
 
 function dynamicTotals(element, components, context) {
@@ -88,22 +82,21 @@ function dynamicTotals(element, components, context) {
 function resolvedDynamicTotals(element, components, context, resolveInput) {
   const globalPercent = bundleDiscount(element);
   if (globalPercent === null || !context) return null;
-  const values = { source: 0, original: 0, current: 0 };
+  const values = { original: 0, current: 0 };
   let discounted = globalPercent > 0;
   for (const component of components) {
     const source = inputSourceMinor(resolveInput(component, context), context);
     if (source === null) return null;
     const itemPercent = componentDiscount(component);
     const current = discountedActiveMinor(source, context, itemPercent, globalPercent);
-    const original = activeMinor(source, context);
+    const original = source;
     if (current === null || original === null) return null;
     discounted ||= itemPercent > 0;
     const quantity = Number(component.dataset.quantity);
-    values.source += source * quantity;
     values.original += original * quantity;
     values.current += current * quantity;
   }
-  return dynamicTotalResult(element, context, discounted, globalPercent > 0, values);
+  return dynamicTotalResult(context, discounted, globalPercent > 0, values);
 }
 
 function previewInput(component, context) {
@@ -119,9 +112,7 @@ function lowerPriceInput(lowest, input, context) {
   return inputSourceMinor(input, context) < inputSourceMinor(lowest, context) ? input : lowest;
 }
 
-function dynamicTotalResult(element, context, discounted, globalDiscount, values) {
-  const maximum = sourceMinor(element.dataset.maximumOriginalAmount, context.sourceScale);
-  if (maximum === null || values.source > maximum) return null;
+function dynamicTotalResult(context, discounted, globalDiscount, values) {
   if (!Number.isSafeInteger(values.original) || !Number.isSafeInteger(values.current)) return null;
   return {
     current: formatMinor(values.current, context),
