@@ -10,10 +10,54 @@
 
 {%- assign bundle = product.metafields["$app"].bundle_presentation.value -%}
 
-{%- if bundle != blank -%}
   {%- capture presentation -%}
-    {%- render 'smart-bundle-presentation', bundle: bundle, product: product -%}
+    {%- assign parent_variant = product.selected_or_first_available_variant -%}
+    {%- assign original_price = parent_variant.compare_at_price | default: parent_variant.price -%}
+    {%- capture money_sample -%}
+      {%- if settings.currency_code_enabled or settings.currency_code_enable -%}
+        {{- 123456789 | money_with_currency | strip_html -}}
+      {%- else -%}
+        {{- 123456789 | money | strip_html -}}
+      {%- endif -%}
+    {%- endcapture -%}
+    {
+      "sv": {{ bundle.sv | json }}, "en": {{ bundle.en | json }},
+      "b": {{ bundle.b | json }},
+      "parentVariantId": {{ parent_variant.id | prepend: 'gid://shopify/ProductVariant/' | json }},
+      "moneySample": {{ money_sample | json }},
+      "pricing": {
+        "mode": {{ bundle.pricing.mode | json }},
+        "discountPercent": {{ bundle.pricing.discountPercent | json }},
+        "currencyCode": {{ cart.currency.iso_code | json }},
+        "amount": {{ parent_variant.price | divided_by: 100.0 | json }},
+        "originalAmount": {{ original_price | divided_by: 100.0 | json }}
+      },
+      "selectors": {{ bundle.selectors | json }},
+      "texts": {{ bundle.texts | json }},
+      "catalog": [
+        {%- assign variant_written = false -%}
+        {%- for batch in (1..4) -%}
+          {%- assign reference_key = 'bundle_variants_' | append: batch -%}
+          {%- for variant in product.metafields["$app"][reference_key].value -%}
+            {%- if variant_written -%},{%- endif -%}
+            {%- assign component_product = variant.product -%}
+            {%- assign component_image = variant.featured_image | default: component_product.featured_image -%}
+            {
+              "id": {{ variant.id | prepend: 'gid://shopify/ProductVariant/' | json }},
+              "productId": {{ component_product.id | prepend: 'gid://shopify/Product/' | json }},
+              "productTitle": {{ component_product.title | json }},
+              "title": {{ variant.title | json }},
+              "available": {{ variant.available | json }},
+              "unitPrice": {{ variant.price | divided_by: 100.0 | json }},
+              "imageUrl": {% if component_image %}{{ component_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+            }
+            {%- assign variant_written = true -%}
+          {%- endfor -%}
+        {%- endfor -%}
+      ]
+    }
   {%- endcapture -%}
+{%- if bundle != blank -%}
   <smart-bundle
     class="sb"
     data-auto-mount="true"
