@@ -1,4 +1,5 @@
 import { BundleStatusSelect } from "./BundleStatusSelect";
+import { BundleEditorSection } from "./BundleEditorSection";
 import type { BundleEditorController } from "./useBundleEditorController";
 
 export interface BundleStatusPanelProps {
@@ -7,12 +8,9 @@ export interface BundleStatusPanelProps {
 
 export function BundleStatusPanel({ controller }: BundleStatusPanelProps) {
   const { draft, errors } = controller;
-  return <s-section>
-    <s-stack direction="block" gap="base">
-      <s-heading>Status</s-heading>
-      <BundleStatusSelect value={draft.desiredStatus} disabled={controller.busy}
-        error={errors.desiredStatus}
-        onChange={(desiredStatus) => controller.patch({ desiredStatus })} />
-    </s-stack>
-  </s-section>;
+  return <BundleEditorSection heading="Status">
+    <BundleStatusSelect value={draft.desiredStatus} disabled={controller.busy}
+      error={errors.desiredStatus}
+      onChange={(desiredStatus) => controller.patch({ desiredStatus })} />
+  </BundleEditorSection>;
 }

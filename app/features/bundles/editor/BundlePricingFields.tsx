@@ -1,4 +1,5 @@
 import { BundleDiscountField } from "./BundleDiscountField";
+import { BundleEditorSection } from "./BundleEditorSection";
 import type { BundleEditorController } from "./useBundleEditorController";
 
 export interface BundlePricingFieldsProps {
@@ -8,15 +9,13 @@ export interface BundlePricingFieldsProps {
 
 export function BundlePricingFields(props: BundlePricingFieldsProps) {
   const { controller } = props, { draft, errors } = controller;
-  return <s-section heading="Price">
-    <s-stack direction="block" gap="base">
-      {pricingModeControl(controller)}
-      {draft.pricingMode === "FIXED" ? fixedPriceControl(props) : null}
-      <BundleDiscountField value={draft.discountPercent} error={errors.discountPercent}
-        onChange={(discountPercent) => controller.patch({ discountPercent })} />
-      <s-paragraph>{pricingDescription(draft.pricingMode)}</s-paragraph>
-    </s-stack>
-  </s-section>;
+  return <BundleEditorSection heading="Price">
+    {pricingModeControl(controller)}
+    {draft.pricingMode === "FIXED" ? fixedPriceControl(props) : null}
+    <BundleDiscountField value={draft.discountPercent} error={errors.discountPercent}
+      onChange={(discountPercent) => controller.patch({ discountPercent })} />
+    <s-paragraph>{pricingDescription(draft.pricingMode)}</s-paragraph>
+  </BundleEditorSection>;
 }
 
 function pricingModeControl(controller: BundleEditorController) {

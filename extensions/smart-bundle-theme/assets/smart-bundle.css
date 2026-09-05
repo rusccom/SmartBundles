@@ -71,7 +71,6 @@
   border: 0;
   cursor: pointer;
   font: inherit;
-  grid-template-columns: 48px minmax(0, 1fr) auto 20px;
 }
 .sb__summary--button:hover {
   background: rgba(18, 18, 18, 0.035);
@@ -130,13 +129,17 @@
   color: var(--sb-muted);
   font-size: 0.875rem;
 }
-.sb__quantity { color: inherit; font-size: 1.5rem; font-weight: 650; line-height: 1; }
+.sb__quantity { color: inherit; font-size: 0.875rem; font-weight: 650; line-height: 1; }
+.sb__quantity-value { font-size: 1.5rem; }
 .sb__component-discount { color: #8e1f0b; font-size: 0.75rem; font-weight: 650; }
 .sb__summary-meta {
   align-items: flex-end;
+  align-self: stretch;
   gap: 0.1rem;
+  min-height: 48px;
   white-space: nowrap;
 }
+.sb__line-price:empty { display: none; }
 .sb__line-price,
 .sb__option-price {
   font-size: inherit;
@@ -145,8 +148,10 @@
 .sb__chevron {
   border-bottom: 2px solid currentColor;
   border-right: 2px solid currentColor;
+  flex-shrink: 0;
   height: 8px;
-  justify-self: center;
+  margin-block: auto 0.25rem;
+  margin-inline: 0.25rem;
   transform: rotate(45deg) translate(-2px, -2px);
   transition: transform 160ms ease;
   width: 8px;
@@ -256,22 +261,7 @@
     padding-bottom: 7.5rem;
   }
   .sb__summary {
-    grid-template-columns: 48px minmax(0, 1fr) auto;
     padding-inline: 0.75rem;
-  }
-  .sb__summary--button {
-    grid-template-columns: 48px minmax(0, 1fr) 20px;
-  }
-  .sb__summary-meta {
-    align-items: flex-start;
-    grid-column: 2;
-  }
-  .sb__summary--button .sb__summary-meta {
-    grid-column: 2;
-  }
-  .sb__chevron {
-    grid-column: 3;
-    grid-row: 1 / span 2;
   }
   .sb__actions {
     border-top: 1px solid var(--sb-border);

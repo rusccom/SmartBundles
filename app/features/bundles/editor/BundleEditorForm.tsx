@@ -13,8 +13,10 @@ export function BundleEditorForm(props: BundleEditorFormProps) {
   return <form className="sb-editor-form" aria-busy={controller.busy}
     onSubmit={(event) => { event.preventDefault(); controller.submit(); }}>
     <fieldset className="sb-editor-fieldset" disabled={controller.busy}>
-      <BundleEditorSections initial={props.initial} controller={controller}
-        pricingEnabled={props.pricingEnabled} />
+      <s-stack direction="block" gap="base">
+        <BundleEditorSections initial={props.initial} controller={controller}
+          pricingEnabled={props.pricingEnabled} />
+      </s-stack>
     </fieldset>
   </form>;
 }

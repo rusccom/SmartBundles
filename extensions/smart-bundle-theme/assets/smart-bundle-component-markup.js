@@ -55,14 +55,24 @@ function summaryCopy(selector, label) {
 function summaryMeta(selector, context) {
   const { texts } = context;
   const meta = element("span", "sb__summary-meta");
-  meta.append(element("span", "sb__quantity",
-    fillTemplate(texts.quantityTemplate, { quantity: selector.quantity })));
+  meta.append(summaryQuantity(texts.quantityTemplate, selector.quantity));
   if (Number(selector.discountPercent) > 0) {
     meta.append(element("span", "sb__component-discount",
       fillTemplate(texts.discountBadgeTemplate, { discount: selector.discountPercent })));
   }
   meta.append(linePrice(context.priceMode));
+  if (selector.options.length > 1) meta.append(chevron());
   return meta;
+}
+
+function summaryQuantity(template, quantity) {
+  const node = element("span", "sb__quantity");
+  String(template ?? "").split(/(__quantity__)/).forEach((part) => {
+    node.append(part === "__quantity__"
+      ? element("span", "sb__quantity-value", quantity)
+      : part);
+  });
+  return node;
 }
 
 function linePrice(priceMode) {
@@ -91,7 +101,7 @@ function disclosure(summary, selector, context) {
     type: "button", "data-disclosure": true,
     "aria-expanded": "false", "aria-controls": panelId,
   });
-  button.append(...summary, chevron());
+  button.append(...summary);
   return [button, optionsPanel(selector, context, panelId)];
 }
 

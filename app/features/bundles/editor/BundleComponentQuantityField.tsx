@@ -5,7 +5,9 @@ export interface BundleComponentQuantityFieldProps {
 
 export function BundleComponentQuantityField({ quantity, onChange }: BundleComponentQuantityFieldProps) {
   return <span className="sb-quantity-field">
-    <s-number-field label="Quantity" value={String(quantity)} min={1} max={2000} step={1}
+    <span aria-hidden="true">Quantity</span>
+    <s-number-field label="Quantity" labelAccessibilityVisibility="exclusive"
+      value={String(quantity)} min={1} max={2000} step={1}
       onInput={(event) => onChange(normalizeQuantity(Number(event.currentTarget.value)))} />
   </span>;
 }

@@ -1,15 +1,73 @@
 .sb-component-controls {
+  grid-area: controls;
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
   align-items: flex-start;
-  justify-content: flex-end;
+  min-width: 0;
 }
 
-.sb-quantity-field {
-  width: 92px;
+.sb-component-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-height: 36px;
+  margin-inline-end: auto;
 }
 
+.sb-quantity-field,
 .sb-discount-field {
-  display: block;
-  width: 124px;
+  display: grid;
+  grid-template-columns: auto 88px;
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+}
+
+.sb-quantity-field > span,
+.sb-discount-field > span {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.sb-quantity-field s-number-field,
+.sb-discount-field s-number-field {
+  min-width: 0;
+}
+
+@container (max-width: 700px) {
+  .sb-component-controls {
+    gap: 12px 16px;
+  }
+
+  .sb-quantity-field,
+  .sb-discount-field {
+    grid-template-columns: 88px;
+    gap: 4px;
+  }
+
+  .sb-quantity-field > span,
+  .sb-discount-field > span {
+    min-height: auto;
+  }
+
+  .sb-component-meta {
+    align-self: end;
+  }
+}
+
+@container (max-width: 430px) {
+  .sb-component-meta {
+    flex-basis: 100%;
+  }
+}
+
+@container (max-width: 380px) {
+  .sb-quantity-field,
+  .sb-discount-field {
+    grid-template-columns: minmax(0, 1fr);
+    flex: 1 1 80px;
+  }
 }

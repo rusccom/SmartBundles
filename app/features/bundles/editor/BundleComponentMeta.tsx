@@ -1,22 +1,24 @@
-import { formatEditorPriceRange } from "./bundle-editor-price";
+import { isSimpleBundleComponent } from "./bundle-component-presentation";
 import type { EditorSelector } from "./editor.types";
 
 export interface BundleComponentMetaProps {
   selector: EditorSelector;
-  selectedCount: number;
-  currencyCode: string;
-  locale: string;
+  modalId: string;
 }
 
 export function BundleComponentMeta(props: BundleComponentMetaProps) {
-  const summaryTone = props.selectedCount ? "" : " sb-component-summary-critical";
-  const options = props.selector.options.filter(({ allowed }) => allowed);
+  const selectedCount = props.selector.options.filter(({ allowed }) => allowed).length;
+  if (isSimpleBundleComponent(props.selector)) return <span className="sb-component-meta">
+    {props.selector.options[0].available === false
+      ? <s-badge tone="warning">Sold out</s-badge> : <s-badge>Available</s-badge>}
+  </span>;
+  const summaryTone = selectedCount ? "" : " sb-component-summary-critical";
   return <span className="sb-component-meta">
-    <span className={`sb-component-summary${summaryTone}`} aria-live="polite">
-      {props.selectedCount} / {props.selector.options.length} selected
+    <span className={`sb-component-summary${summaryTone}`} aria-live="polite"
+      aria-label={`${selectedCount} of ${props.selector.options.length} variants selected`}>
+      {selectedCount} / {props.selector.options.length}
     </span>
-    <span className="sb-component-quantity">×{props.selector.quantity}</span>
-    <span className="sb-component-price">{formatEditorPriceRange(
-      options, props.selector.quantity, props.currencyCode, props.locale, props.selector.discountPercent)}</span>
+    <s-button command="--show" commandFor={props.modalId}
+      accessibilityLabel={`Choose variants for ${props.selector.productTitle}`}>Variants</s-button>
   </span>;
 }
