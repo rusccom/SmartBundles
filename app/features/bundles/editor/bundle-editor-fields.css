@@ -12,14 +12,14 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  min-height: 24px;
+  min-height: 32px;
   margin-inline-end: auto;
 }
 
 .sb-quantity-field,
 .sb-discount-field {
   display: grid;
-  grid-template-columns: auto 70px;
+  grid-template-columns: auto 88px;
   gap: 6px;
   align-items: start;
   min-width: 0;
@@ -44,7 +44,7 @@
 
   .sb-quantity-field,
   .sb-discount-field {
-    grid-template-columns: 70px;
+    grid-template-columns: 88px;
     gap: 2px;
   }
 
@@ -52,11 +52,16 @@
   .sb-discount-field > span {
     min-height: auto;
   }
+
+  .sb-component-meta {
+    padding-block-start: calc(1lh + 2px);
+  }
 }
 
 @container (max-width: 430px) {
   .sb-component-meta {
     flex-basis: 100%;
+    padding-block-start: 0;
   }
 }
 
@@ -64,6 +69,6 @@
   .sb-quantity-field,
   .sb-discount-field {
     grid-template-columns: minmax(0, 1fr);
-    flex: 1 1 70px;
+    flex: 1 1 88px;
   }
 }
