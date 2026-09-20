@@ -29,7 +29,7 @@ export function useBundleEditorTransport(input: TransportInput) {
   const submit = useCallback((form: FormData, draft: BundleEditorDraft) => {
     setSubmitted(draft);
     setFeedback(undefined);
-    fetcher.submit(form, { method: "post" });
+    fetcher.submit(form, { method: "post", encType: "multipart/form-data" });
   }, [fetcher]);
   return {
     feedback, saving: fetcher.state !== "idle", submit,
