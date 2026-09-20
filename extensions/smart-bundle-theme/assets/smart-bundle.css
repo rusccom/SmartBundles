@@ -8,7 +8,7 @@
   --sb-surface: rgb(var(--color-background, 255 255 255));
   color: rgb(var(--color-foreground, 18 18 18));
   display: block;
-  margin-block: 1.5rem;
+  margin-block: 0.5rem;
 }
 .sb[hidden],
 .sb__panel[hidden],
@@ -63,8 +63,7 @@
   display: grid;
   gap: 0.75rem;
   grid-template-columns: 48px minmax(0, 1fr) auto;
-  min-height: 72px;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   text-align: left;
   width: 100%;
 }
@@ -110,7 +109,6 @@
   width: 100%;
 }
 .sb__summary-copy,
-.sb__summary-meta,
 .sb__option-copy {
   display: flex;
   flex-direction: column;
@@ -132,21 +130,18 @@
   color: var(--sb-muted);
   font-size: 0.875rem;
 }
-.sb__quantity { color: inherit; font-size: 1.4rem; font-weight: 650; line-height: 1; }
+.sb__quantity { color: inherit; font-size: 1.4rem; font-weight: 650; grid-area: 1 / 2; line-height: 1; }
 .sb__quantity-value { font-size: 2.4rem; }
-.sb__component-discount { color: #8e1f0b; font-size: 0.75rem; font-weight: 650; }
+.sb__component-discount { color: #8e1f0b; font-size: 0.75rem; font-weight: 650; grid-area: 2 / 1; }
 .sb__summary-meta {
-  align-items: flex-end;
-  align-self: stretch;
-  gap: 0.1rem;
-  min-height: 48px;
+  align-items: center;
+  display: grid;
+  gap: 0.1rem 0.75rem;
+  grid-template-columns: auto auto;
+  justify-items: end;
   white-space: nowrap;
 }
-.sb__summary--static .sb__summary-meta::after {
-  content: "";
-  flex: 0 0 var(--sb-chevron-size);
-  margin-top: auto;
-}
+.sb__line-price { grid-area: 1 / 1; }
 .sb__line-price:empty { display: none; }
 .sb__line-price,
 .sb__option-price {
@@ -158,9 +153,8 @@
   border-radius: 50%;
   color: #121212;
   display: block;
-  flex-shrink: 0;
+  grid-area: 2 / 2;
   height: var(--sb-chevron-size);
-  margin-top: auto;
   transform: rotate(0deg);
   transition: transform 160ms ease;
   width: var(--sb-chevron-size);
@@ -223,7 +217,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 .sb__button {
   background: rgb(var(--color-button, 18 18 18));
@@ -265,9 +259,6 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 0.25rem;
-  }
-  .sb__components {
-    padding-bottom: 7.5rem;
   }
   .sb__summary {
     padding-inline: 0.75rem;

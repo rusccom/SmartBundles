@@ -55,12 +55,11 @@ function summaryCopy(selector, label) {
 function summaryMeta(selector, context) {
   const { texts } = context;
   const meta = element("span", "sb__summary-meta");
-  meta.append(summaryQuantity(texts.quantityTemplate, selector.quantity));
+  meta.append(linePrice(context.priceMode), summaryQuantity(texts.quantityTemplate, selector.quantity));
   if (Number(selector.discountPercent) > 0) {
     meta.append(element("span", "sb__component-discount",
       fillTemplate(texts.discountBadgeTemplate, { discount: selector.discountPercent })));
   }
-  meta.append(linePrice(context.priceMode));
   if (selector.options.length > 1) meta.append(chevron());
   return meta;
 }
