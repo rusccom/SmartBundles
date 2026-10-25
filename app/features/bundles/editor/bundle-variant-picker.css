@@ -1,11 +1,8 @@
 .sb-variant-picker {
   container-type: inline-size;
   min-width: 0;
-}
-
-.sb-variant-picker-summary {
-  margin: 0 0 16px;
-  color: #616161;
+  display: grid;
+  gap: 16px;
 }
 
 .sb-component-options {
@@ -17,18 +14,15 @@
 
 .sb-component-options legend {
   padding: 0 0 12px;
-  font-weight: 550;
+  font-weight: 600;
 }
 
 .sb-option {
   display: grid;
-  box-sizing: border-box;
   grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
-  min-height: 52px;
-  padding: 12px 0;
-  border-top: 1px solid #e1e3e5;
+  min-height: 32px;
 }
 
 .sb-option s-checkbox {
@@ -36,21 +30,10 @@
   overflow-wrap: anywhere;
 }
 
-.sb-option:has(s-checkbox[disabled]) {
-  color: #8c9196;
-}
-
 .sb-option-price {
   grid-column: 3;
   justify-self: end;
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.sb-component-inline-error {
-  margin: 12px 0 0;
-  color: #8e1f0b;
-  font-size: 13px;
 }
 
 @container (max-width: 380px) {
@@ -62,6 +45,5 @@
   .sb-option-price {
     grid-column: 1 / -1;
     justify-self: start;
-    color: #616161;
   }
 }

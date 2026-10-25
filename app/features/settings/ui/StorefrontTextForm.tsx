@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Form, useBeforeUnload, useBlocker, useNavigation } from "react-router";
 import type { StorefrontTextKey, StorefrontTexts } from "../storefront-text.types";
-import { StorefrontTextFormActions } from "./StorefrontTextFormActions";
+import { AppSaveBar } from "../../shell/AppSaveBar";
 import { StorefrontTextGroups } from "./StorefrontTextGroups";
 
 export interface StorefrontTextSettings {
@@ -17,7 +17,8 @@ export interface StorefrontTextFormProps {
 
 export function StorefrontTextForm(props: StorefrontTextFormProps) {
   const state = useTextFormState(props.settings);
-  return <Form method="post" className="sb-settings-form" aria-busy={state.busy}>
+  const form = useRef<HTMLFormElement>(null);
+  return <Form ref={form} method="post" className="sb-settings-form" aria-busy={state.busy}>
     <input type="hidden" name="expectedTextVersion" value={props.settings.textVersion} />
     {props.message ? <s-banner tone="critical">{props.message}</s-banner> : null}
     {props.errors.form ? <s-banner tone="critical">{props.errors.form}</s-banner> : null}
@@ -25,7 +26,8 @@ export function StorefrontTextForm(props: StorefrontTextFormProps) {
       <legend className="sb-settings-visually-hidden">Storefront texts</legend>
       <StorefrontTextGroups texts={state.texts} errors={props.errors} onChange={state.changeText} />
     </fieldset>
-    <StorefrontTextFormActions dirty={state.dirty} busy={state.busy} />
+    <AppSaveBar id="storefront-settings-save-bar" dirty={state.dirty} saving={state.busy}
+      blocked={state.busy} onSave={() => form.current?.requestSubmit()} onDiscard={state.discard} />
   </Form>;
 }
 
@@ -36,7 +38,8 @@ function useTextFormState(settings: StorefrontTextSettings) {
   useUnsavedTextWarning(dirty, busy);
   const changeText = (key: StorefrontTextKey, value: string) =>
     setTexts((current) => ({ ...current, [key]: value }));
-  return { texts, dirty, busy, changeText };
+  const discard = () => setTexts(settings.texts);
+  return { texts, dirty, busy, changeText, discard };
 }
 
 function useUnsavedTextWarning(dirty: boolean, busy: boolean) {

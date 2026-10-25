@@ -1,4 +1,5 @@
 import type { BundleMediaCandidate } from "./bundle-media.types";
+import { BundleMediaCandidateCard } from "./BundleMediaCandidateCard";
 
 export const BUNDLE_MEDIA_PICKER_ID = "bundle-media-picker";
 
@@ -14,16 +15,10 @@ export function BundleMediaPickerModal(props: BundleMediaPickerModalProps) {
     closePicker();
   };
   return <s-modal id={BUNDLE_MEDIA_PICKER_ID} heading="Choose a component image" size="large">
-    <div className="sb-media-picker-grid">
-      {props.candidates.map((candidate) => <button type="button"
-        className="sb-media-picker-item" key={candidate.productId}
-        aria-label={`Use image from ${candidate.title}`}
-        aria-pressed={candidate.url === props.selectedUrl}
-        onClick={() => select(candidate)}>
-        <img src={candidate.url} alt="" />
-        <span>{candidate.title}</span>
-      </button>)}
-    </div>
+    <s-grid gridTemplateColumns="repeat(auto-fill, minmax(140px, 1fr))" gap="base">
+      {props.candidates.map((candidate) => <BundleMediaCandidateCard key={candidate.productId}
+        candidate={candidate} selected={candidate.url === props.selectedUrl} onSelect={select} />)}
+    </s-grid>
     <s-button slot="secondary-actions" command="--hide"
       commandFor={BUNDLE_MEDIA_PICKER_ID}>Cancel</s-button>
   </s-modal>;

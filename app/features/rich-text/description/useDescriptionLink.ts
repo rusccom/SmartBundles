@@ -14,10 +14,10 @@ const INITIAL: LinkDraft = { open: false, href: "", title: "", error: "" };
 export function useDescriptionLink(editor: DescriptionEditorInstance | null) {
   const active = useEditorState({ editor, selector: ({ editor: current }) => current?.isActive("link") ?? false }) ?? false;
   const [draft, dispatch] = useReducer(linkReducer, INITIAL);
-  const toggle = useCallback(() => dispatch(draft.open ? { type: "close" } : { type: "open", value: currentLink(editor) }), [draft.open, editor]);
+  const open = useCallback(() => dispatch({ type: "open", value: currentLink(editor) }), [editor]);
   const apply = useCallback(() => applyLink(editor, draft, dispatch), [draft, editor]);
   const remove = useCallback(() => removeLink(editor, dispatch), [editor]);
-  return { active, draft, dispatch, toggle, apply, remove };
+  return { active, draft, dispatch, open, apply, remove };
 }
 
 function linkReducer(state: LinkDraft, action: LinkAction): LinkDraft {

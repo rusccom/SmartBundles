@@ -12,11 +12,12 @@ export function BundleComponentMeta(props: BundleComponentMetaProps) {
     {props.selector.options[0].available === false
       ? <s-badge tone="warning">Sold out</s-badge> : <s-badge>Available</s-badge>}
   </span>;
-  const summaryTone = selectedCount ? "" : " sb-component-summary-critical";
   return <span className="sb-component-meta">
-    <span className={`sb-component-summary${summaryTone}`} aria-live="polite"
+    <span aria-live="polite"
       aria-label={`${selectedCount} of ${props.selector.options.length} variants selected`}>
-      {selectedCount} / {props.selector.options.length}
+      <s-number tone={selectedCount ? "auto" : "critical"}>
+        {selectedCount} / {props.selector.options.length}
+      </s-number>
     </span>
     <s-button command="--show" commandFor={props.modalId}
       accessibilityLabel={`Choose variants for ${props.selector.productTitle}`}>Variants</s-button>

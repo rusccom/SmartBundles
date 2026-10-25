@@ -1,21 +1,23 @@
 import { ShopLoginForm } from "./ShopLoginForm";
-import styles from "./landing.module.css";
+import { POLARIS_URL } from "../shell/polaris";
 
 export interface LandingPageProps { pricingEnabled: boolean }
 
 export function LandingPage({ pricingEnabled }: LandingPageProps) {
-  return <main className={styles.index}>
-    <div className={styles.content}>
-      <h1 className={styles.heading}>SmartBundle for Shopify</h1>
-      <p className={styles.text}>Create fixed-price bundles where customers choose one allowed variant for every component.</p>
-      <ShopLoginForm />
-      <ul className={styles.list}>
-        <li><strong>Flexible choices.</strong> Offer up to 30 component selectors without variant-combination explosion.</li>
-        <li><strong>Native checkout.</strong> Shopify expands each bundle into the selected variants in cart and orders.</li>
-        <li><strong>Simple pricing.</strong> {pricingEnabled
+  return <>
+    <script src={POLARIS_URL} />
+    <s-page heading="SmartBundle for Shopify" inlineSize="small">
+      <s-section heading="SmartBundle for Shopify"><s-paragraph>Create fixed-price bundles where customers choose one allowed variant for every component.</s-paragraph></s-section>
+      <s-section heading="Log in">
+        <ShopLoginForm />
+      </s-section>
+      <s-section heading="Build your bundles"><s-stack gap="base">
+        <s-paragraph><s-text type="strong">Flexible choices.</s-text> Offer up to 30 component selectors without variant-combination explosion.</s-paragraph>
+        <s-paragraph><s-text type="strong">Native checkout.</s-text> Shopify expands each bundle into the selected variants in cart and orders.</s-paragraph>
+        <s-paragraph><s-text type="strong">Simple pricing.</s-text> {pricingEnabled
           ? "Free for 3 active bundles or Pro for $7 USD per month."
-          : "Free for up to 3 active bundles."}</li>
-      </ul>
-    </div>
-  </main>;
+          : "Free for up to 3 active bundles."}</s-paragraph>
+      </s-stack></s-section>
+    </s-page>
+  </>;
 }

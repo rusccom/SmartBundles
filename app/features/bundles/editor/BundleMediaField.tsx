@@ -10,34 +10,36 @@ export interface BundleMediaFieldProps {
 
 export function BundleMediaField({ controller }: BundleMediaFieldProps) {
   const field = useBundleMediaField(controller);
-  return <div className="sb-media-field">
+  return <s-stack gap="small">
     {mediaHeading(controller, field.candidates.length)}
     <s-drop-zone accept={BUNDLE_IMAGE_ACCEPT} disabled={controller.busy}
       accessibilityLabel="Upload bundle product image" error={field.error ?? controller.errors.media}
+      onDropRejected={() => field.setError("Choose a JPG, PNG, WebP, or GIF image up to 10 MB.")}
       onChange={(event) => void field.selectFile(event.currentTarget.files[0])}>
       {dropContent(field.media.image)}
     </s-drop-zone>
-    {field.media.image ? <div className="sb-media-actions">
-      <s-button variant="tertiary" tone="critical" disabled={controller.busy}
+    {field.media.image ? <s-stack direction="inline" justifyContent="end">
+      <s-button variant="tertiary" disabled={controller.busy}
         onClick={() => controller.patch({ media: { kind: "remove", image: null } })}>Remove</s-button>
-    </div> : null}
+    </s-stack> : null}
     <BundleMediaPickerModal candidates={field.candidates} selectedUrl={field.media.image?.url}
       onSelect={field.selectCandidate} />
-  </div>;
+  </s-stack>;
 }
 
 function mediaHeading(controller: BundleEditorController, candidateCount: number) {
-  return <div className="sb-media-heading">
-    <span className="sb-media-label">Media</span>
+  return <s-stack direction="inline" alignItems="center" justifyContent="space-between" gap="small">
+    <s-text type="strong">Media</s-text>
     <s-button variant="tertiary" command="--show" commandFor={BUNDLE_MEDIA_PICKER_ID}
       disabled={controller.busy || candidateCount === 0}>Choose from products</s-button>
-  </div>;
+  </s-stack>;
 }
 
 function dropContent(image: ShopifyProductImage | null) {
   return <div className={`sb-media-drop-content${image ? " sb-media-drop-content-filled" : ""}`}>
     {image
-      ? <img className="sb-media-preview" src={image.url} alt={image.altText ?? ""} />
-      : <span className="sb-media-empty"><s-icon type="image" /> Add image</span>}
+      ? <s-image src={image.url} alt={image.altText ?? "Bundle product image"} objectFit="contain" aspectRatio="1.6" />
+      : <s-stack gap="small" alignItems="center"><s-icon type="image" /><s-text>Add image</s-text>
+        <s-text color="subdued">JPG, PNG, WebP or GIF, up to 10 MB</s-text></s-stack>}
   </div>;
 }

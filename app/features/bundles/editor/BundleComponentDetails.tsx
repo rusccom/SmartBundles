@@ -15,8 +15,8 @@ export function BundleComponentDetails(props: BundleComponentDetailsProps) {
         currencyCode={props.currencyCode} locale={props.locale} discountPercent={props.selector.discountPercent}
         onToggle={(id) => props.onOption(props.index, id)} />)}
     </fieldset>
-    {selectedCount === 0 ? <p id={errorId} className="sb-component-inline-error" role="alert">
+    {selectedCount === 0 ? <s-banner id={errorId} tone="critical">
       Select at least one available variant.
-    </p> : null}
+    </s-banner> : null}
   </div>;
 }

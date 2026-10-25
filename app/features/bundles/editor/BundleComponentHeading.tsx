@@ -10,8 +10,8 @@ export interface BundleComponentHeadingProps {
 export function BundleComponentHeading(props: BundleComponentHeadingProps) {
   const options = props.selector.options.filter(({ allowed }) => allowed);
   return <div className="sb-component-heading">
-    <strong className="sb-component-title">{props.selector.productTitle}</strong>
-    <span className="sb-component-price">{formatEditorPriceRange(
-      options, props.selector.quantity, props.currencyCode, props.locale, props.selector.discountPercent)}</span>
+    <span className="sb-component-title"><s-text type="strong">{props.selector.productTitle}</s-text></span>
+    <s-number color="subdued">{formatEditorPriceRange(
+      options, props.selector.quantity, props.currencyCode, props.locale, props.selector.discountPercent)}</s-number>
   </div>;
 }

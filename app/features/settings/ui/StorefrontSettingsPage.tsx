@@ -13,6 +13,7 @@ export function StorefrontSettingsPage(props: StorefrontSettingsPageProps) {
     <s-section heading="Storefront texts">
       <s-stack direction="block" gap="base">
         <s-paragraph>Write one set of storefront texts used by every bundle and every visitor.</s-paragraph>
+        <s-paragraph color="subdued">Changes apply to every bundle. Active bundles update after saving.</s-paragraph>
         {props.savedMessage ? <s-banner tone="success">{props.savedMessage}</s-banner> : null}
       </s-stack>
     </s-section>

@@ -20,7 +20,8 @@ export function parseBundleForm(form: FormData, isNew: boolean): BundleValidatio
   const draft = bundleDraft(form);
   const content = contentSubmission(form, isNew);
   const desiredStatus = parsedDesiredStatus(rawValue(form, "desiredStatus"));
-  const configurationDirty = rawValue(form, "configurationDirty") === "yes";
+  const flags = configurationFlags(form);
+  const { configurationDirty } = flags;
   const errors = isNew || configurationDirty ? validateBundle(draft) : {};
   const media = parseBundleMedia(form, errors);
   if ((isNew || configurationDirty) && !validPricingMode(rawValue(form, "pricingMode"))) {
@@ -30,11 +31,18 @@ export function parseBundleForm(form: FormData, isNew: boolean): BundleValidatio
   if (!desiredStatus) return { errors };
   const data = {
     draft, content, media, desiredStatus,
-    configurationDirty,
-    storedConfigurationDirty: rawValue(form, "storedConfigurationDirty") === "yes",
+    ...flags,
     creationToken: rawValue(form, "creationToken"),
   };
   return { data, errors };
+}
+
+function configurationFlags(form: FormData) {
+  const storedConfigurationDirty = rawValue(form, "storedConfigurationDirty") === "yes";
+  return {
+    storedConfigurationDirty,
+    configurationDirty: storedConfigurationDirty || rawValue(form, "configurationDirty") === "yes",
+  };
 }
 
 function parsedDesiredStatus(value: string): BundleDesiredStatus | undefined {

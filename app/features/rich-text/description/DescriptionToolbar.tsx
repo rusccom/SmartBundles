@@ -11,17 +11,21 @@ export interface DescriptionToolbarProps {
   editor: DescriptionEditorInstance | null;
   htmlMode: boolean;
   onToggleMode: () => void;
+  disabled: boolean;
 }
 
-export function DescriptionToolbar({ editor, htmlMode, onToggleMode }: DescriptionToolbarProps) {
-  const control = { editor, disabled: htmlMode };
-  return <div className="sb-description-toolbar" role="toolbar" aria-label="Description formatting">
+export function DescriptionToolbar({ editor, htmlMode, onToggleMode, disabled }: DescriptionToolbarProps) {
+  const control = { editor, disabled: htmlMode || disabled };
+  return <s-box background="subdued" borderWidth="none none base" borderColor="base" padding="small">
+    <div className="sb-description-toolbar" role="toolbar" aria-label="Description formatting">
     <DescriptionBlockSelect {...control} />
     <DescriptionInlineControls {...control} />
     <DescriptionListControls {...control} />
     <DescriptionLinkControl {...control} />
     <DescriptionAlignControls {...control} />
     <DescriptionHistoryControls {...control} />
-    <DescriptionToolbarButton label={htmlMode ? "Show editor" : "Show HTML"} content="</>" pressed={htmlMode} onPress={onToggleMode} />
-  </div>;
+    <DescriptionToolbarButton label={htmlMode ? "Show editor" : "Show HTML"} content="</>"
+      pressed={htmlMode} disabled={disabled} onPress={onToggleMode} />
+    </div>
+  </s-box>;
 }

@@ -1,3 +1,5 @@
+import { GraphqlQueryError } from "@shopify/shopify-api";
+
 export type GraphqlVariables = Record<string, unknown>;
 
 export interface AdminClient {
@@ -57,9 +59,21 @@ async function graphqlEnvelope<T>(
   try {
     const response = await admin.graphql(query, { variables, signal: controller.signal, tries: 1 });
     return await response.json() as GraphqlEnvelope<T>;
+  } catch (error) {
+    return throttledEnvelope<T>(error);
   } finally {
     clearTimeout(timer);
   }
+}
+
+function throttledEnvelope<T>(error: unknown): GraphqlEnvelope<T> {
+  if (!(error instanceof GraphqlQueryError)) throw error;
+  const body: GraphqlEnvelope<T> = {
+    errors: error.body?.errors?.graphQLErrors,
+    extensions: error.body?.extensions,
+  };
+  if (!isThrottled(body)) throw error;
+  return body;
 }
 
 function isThrottled(body: GraphqlEnvelope<unknown>): boolean {

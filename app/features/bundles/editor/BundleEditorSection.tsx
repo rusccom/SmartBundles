@@ -7,12 +7,9 @@ export interface BundleEditorSectionProps {
 }
 
 export function BundleEditorSection(props: BundleEditorSectionProps) {
-  return <s-section>
+  return <s-section heading={props.heading}>
+    {props.actions}
     <s-stack direction="block" gap="base">
-      <s-stack direction="inline" justifyContent="space-between" alignItems="center" gap="base">
-        <s-heading>{props.heading}</s-heading>
-        {props.actions}
-      </s-stack>
       {props.children}
     </s-stack>
   </s-section>;

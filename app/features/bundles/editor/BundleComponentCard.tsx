@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { BundleComponentHeader } from "./BundleComponentHeader";
+import { BundleDragHandle } from "./BundleDragHandle";
 import { BundleVariantPickerModal } from "./BundleVariantPickerModal";
 import { isSimpleBundleComponent } from "./bundle-component-presentation";
 import type { EditorSelector } from "./editor.types";
@@ -23,11 +24,12 @@ export function BundleComponentCard(props: BundleComponentCardProps) {
   const modalId = `bundle-component-variants-${props.selector.key}`;
   const style = { transform: CSS.Transform.toString(transform), transition };
   const className = `sb-component${isDragging ? " sb-component-dragging" : ""}`;
-  const dragHandle = <button type="button" className="sb-drag-handle" ref={setActivatorNodeRef}
-    {...attributes} {...listeners} aria-label={`Move ${props.selector.productTitle}`}><s-icon type="drag-handle" /></button>;
+  const dragHandle = <BundleDragHandle {...{ attributes, listeners, setActivatorNodeRef }} title={props.selector.productTitle} />;
   return <>
     <article ref={setNodeRef} style={style} className={className}>
-      <BundleComponentHeader {...props} modalId={modalId} dragHandle={dragHandle} />
+      <s-box background="base" borderColor="base" borderWidth={props.index ? "base none none" : "none"}>
+        <BundleComponentHeader {...props} modalId={modalId} dragHandle={dragHandle} />
+      </s-box>
     </article>
     {!isSimpleBundleComponent(props.selector)
       ? <BundleVariantPickerModal {...props} modalId={modalId} /> : null}

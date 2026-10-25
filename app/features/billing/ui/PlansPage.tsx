@@ -11,11 +11,11 @@ export function PlansPage({ plan, pricingUrl, message, pendingEffectiveAt }: Pla
   return <s-page heading="Plans">
     {message ? <s-banner tone="info">{message}</s-banner> : null}
     {pendingEffectiveAt ? <s-banner tone="warning">Your plan changes at the end of the billing cycle on {new Date(pendingEffectiveAt).toLocaleDateString()}.</s-banner> : null}
-    <s-section>
-      <div className="sb-plan-grid">
+    <s-query-container>
+      <s-grid gridTemplateColumns='@container (inline-size >= 600px) "repeat(2, minmax(0, 1fr))", "minmax(0, 1fr)"' gap="base">
         <PlanCard name="Free" price="$0" description="Up to 3 active bundles. Unlimited drafts." current={plan === "FREE"} actionUrl={pricingUrl} />
         <PlanCard name="Pro" price="$7 USD/month" description="Unlimited active bundles. All bundle features included." current={plan === "PRO"} actionUrl={pricingUrl} />
-      </div>
-    </s-section>
+      </s-grid>
+    </s-query-container>
   </s-page>;
 }

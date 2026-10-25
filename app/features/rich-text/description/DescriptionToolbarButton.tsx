@@ -9,13 +9,11 @@ export interface DescriptionToolbarButtonProps {
 }
 
 export function DescriptionToolbarButton({ label, content, pressed, disabled, onPress }: DescriptionToolbarButtonProps) {
-  return <button
-    type="button"
-    className="sb-description-tool"
-    aria-label={label}
-    aria-pressed={pressed}
-    title={label}
-    disabled={disabled}
-    onClick={onPress}
-  >{content}</button>;
+  if (pressed !== undefined) return <s-press-button variant="tertiary"
+    accessibilityLabel={label} pressed={pressed} disabled={disabled} onClick={onPress}>
+    {content}
+  </s-press-button>;
+  return <s-button variant="tertiary" accessibilityLabel={label} disabled={disabled} onClick={onPress}>
+    {content}
+  </s-button>;
 }

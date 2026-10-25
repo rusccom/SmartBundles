@@ -2,6 +2,7 @@ import type { HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs 
 import { Outlet, useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
+import { POLARIS_URL } from "../features/shell/polaris";
 
 import { ensureShopContext } from "../features/installation/shop-context.server";
 import { StorefrontActivationBanner } from "../features/installation/StorefrontActivationBanner";
@@ -20,7 +21,7 @@ export default function App() {
   const setupError = shopSetupError(shop);
 
   return (
-    <AppProvider embedded apiKey={apiKey}>
+    <AppProvider apiKey={apiKey} polarisUrl={POLARIS_URL}>
       <s-app-nav>
         <s-link href="/app/bundles">Bundles</s-link>
         <s-link href="/app/settings">Settings</s-link>

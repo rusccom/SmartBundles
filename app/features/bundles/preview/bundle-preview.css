@@ -4,16 +4,12 @@
   width: 100%;
   height: min(91vh, 988px);
   overflow: hidden;
-  border: 1px solid #e3e3e3;
-  border-radius: 12px;
   background: #fff;
   color-scheme: light;
 }
 
 .sb-preview-viewport--desktop {
   height: min(76vh, 900px);
-  border: 0;
-  border-radius: 0;
 }
 
 .sb-preview-frame {

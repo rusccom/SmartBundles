@@ -16,10 +16,12 @@ export interface StorefrontTextGroupProps {
 export function StorefrontTextGroup(props: StorefrontTextGroupProps) {
   const fields = STOREFRONT_TEXT_FIELDS.filter(({ group }) => group === props.group);
   return <s-section heading={props.group}>
-    <div className="sb-settings-fields">
+    <s-query-container>
+    <s-grid gridTemplateColumns='@container (inline-size >= 600px) "repeat(2, minmax(0, 1fr))", "minmax(0, 1fr)"' gap="base">
       {fields.map((definition) => <StorefrontTextField key={definition.key}
         definition={definition} value={props.texts[definition.key]}
         error={props.errors[definition.key]} onChange={props.onChange} />)}
-    </div>
+    </s-grid>
+    </s-query-container>
   </s-section>;
 }

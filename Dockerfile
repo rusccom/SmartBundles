@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:22.23.4-alpine AS build
 
 WORKDIR /app
 RUN apk add --no-cache openssl
@@ -11,7 +11,7 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npx prisma generate && npm run build && npm prune --omit=dev
 
-FROM node:22-alpine AS runtime
+FROM node:22.23.4-alpine AS runtime
 
 WORKDIR /app
 RUN apk add --no-cache openssl

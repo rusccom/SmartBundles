@@ -2,7 +2,6 @@ import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getBillingState, getPricingUrl } from "../features/billing/index.server";
-import "../features/billing/ui/plans.css";
 import { PlansPage } from "../features/billing/ui/PlansPage";
 import { ensureShopContext } from "../features/installation/shop-context.server";
 import { authenticate } from "../shopify.server";

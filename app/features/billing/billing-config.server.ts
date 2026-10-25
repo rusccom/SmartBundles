@@ -4,7 +4,7 @@ export interface PartnerApiConfig {
   appId: string;
 }
 
-const PARTNER_API_VERSION = "2026-07";
+const PARTNER_API_VERSION = "2026-10";
 const DEFAULT_PRO_PLAN_HANDLE = "pro-monthly";
 
 export function getPartnerApiConfig(): PartnerApiConfig {

@@ -1,19 +1,12 @@
-# api_version: 2026-07
+# api_version: 2026-10
 
 schema {
   query: Input
   mutation: MutationRoot
 }
 
-"""
-Scale the Functions resource limits based on the field's length.
-"""
+"""Scale the Functions resource limits based on the field's length."""
 directive @scaleLimits(rate: Float!) on FIELD_DEFINITION
-
-"""
-Requires that exactly one field must be supplied and that field must not be `null`.
-"""
-directive @oneOf on INPUT_OBJECT
 
 """
 A custom property. Attributes are used to store additional information about a Shopify resource, such as
@@ -30,9 +23,7 @@ type Attribute {
   """
   key: String!
 
-  """
-  The value of the attribute. For example, `"true"`.
-  """
+  """The value of the attribute. For example, `"true"`."""
   value: String
 }
 
@@ -65,9 +56,7 @@ type BuyerIdentity {
   """
   customer: Customer
 
-  """
-  The email address of the customer that's interacting with the cart.
-  """
+  """The email address of the customer that's interacting with the cart."""
   email: String
 
   """
@@ -76,9 +65,7 @@ type BuyerIdentity {
   """
   isAuthenticated: Boolean!
 
-  """
-  The phone number of the customer that's interacting with the cart.
-  """
+  """The phone number of the customer that's interacting with the cart."""
   phone: String
 
   """
@@ -112,9 +99,7 @@ type Cart implements HasMetafields {
     key: String
   ): Attribute
 
-  """
-  The billing address associated with the cart.
-  """
+  """The billing address associated with the cart."""
   billingAddress: MailingAddress
 
   """
@@ -130,7 +115,7 @@ type Cart implements HasMetafields {
   customer's cart that represents a single unit of a product variant. For example, if a customer adds two
   different sizes of the same t-shirt to their cart, then each size is represented as a separate cart line.
   """
-  lines: [CartLine!]! @scaleLimits(rate: 0.005)
+  lines: [CartLine!]!
 
   """
   A [custom field](https://shopify.dev/docs/apps/build/custom-data) that stores additional information
@@ -141,23 +126,21 @@ type Cart implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
-  """
-  The physical location where a retail order is created or completed.
-  """
+  """The physical location where a retail order is created or completed."""
   retailLocation: Location
 }
 
@@ -171,7 +154,7 @@ type CartLine {
   The custom attributes associated with a cart to store additional information. Cart attributes
   allow you to collect specific information from customers on the **Cart** page, such as order notes,
   gift wrapping requests, or custom product details. Attributes are stored as key-value pairs.
-
+  
   Cart line attributes are equivalent to the
   [`line_item`](https://shopify.dev/docs/api/liquid/objects/line_item)
   object in Liquid.
@@ -190,19 +173,13 @@ type CartLine {
   """
   cost: CartLineCost!
 
-  """
-  The discounts that have been applied to the cart line.
-  """
+  """The discounts that have been applied to the cart line."""
   discountAllocations: [DiscountAllocation!]!
 
-  """
-  The ID of the cart line.
-  """
+  """The ID of the cart line."""
   id: ID!
 
-  """
-  The item that the customer intends to purchase.
-  """
+  """The item that the customer intends to purchase."""
   merchandise: Merchandise!
 
   """
@@ -211,9 +188,7 @@ type CartLine {
   """
   parentRelationship: CartLineParentRelationship
 
-  """
-  The quantity of the item that the customer intends to purchase.
-  """
+  """The quantity of the item that the customer intends to purchase."""
   quantity: Int!
 
   """
@@ -250,9 +225,7 @@ type CartLineCost {
   """
   subtotalAmount: MoneyV2!
 
-  """
-  The total cost of items in a cart.
-  """
+  """The total cost of items in a cart."""
   totalAmount: MoneyV2!
 }
 
@@ -264,19 +237,13 @@ input CartLineInput {
   """
   cartLineId: ID!
 
-  """
-  The quantity of the cart line to be merged.The max quantity is 2000.
-  """
+  """The quantity of the cart line to be merged.The max quantity is 2000."""
   quantity: Int!
 }
 
-"""
-Represents the relationship between a cart line and its parent line.
-"""
+"""Represents the relationship between a cart line and its parent line."""
 type CartLineParentRelationship {
-  """
-  The parent line in the relationship.
-  """
+  """The parent line in the relationship."""
   parent: CartLine!
 }
 
@@ -286,7 +253,7 @@ its [bundled items](https://shopify.dev/docs/apps/build/product-merchandising/bu
 multiple cart lines into a single line representing a bundle, and update the presentation of line items
 in the cart to override their price, title, or image.
 """
-input CartOperation @oneOf {
+input CartOperation {
   """
   An operation that expands a single cart line item to form a
   [bundle](https://shopify.dev/docs/apps/build/product-merchandising/bundles)
@@ -328,18 +295,18 @@ type CartTransform implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 }
 
@@ -372,9 +339,7 @@ type CollectionMembership {
   """
   collectionId: ID!
 
-  """
-  Whether the product is in the specified collection.
-  """
+  """Whether the product is in the specified collection."""
   isMember: Boolean!
 }
 
@@ -387,14 +352,10 @@ type Company implements HasMetafields {
   """
   createdAt: DateTime!
 
-  """
-  A unique externally-supplied ID for the company.
-  """
+  """A unique externally-supplied ID for the company."""
   externalId: String
 
-  """
-  The ID of the company.
-  """
+  """The ID of the company."""
   id: ID!
 
   """
@@ -406,23 +367,21 @@ type Company implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
-  """
-  The name of the company.
-  """
+  """The name of the company."""
   name: String!
 
   """
@@ -431,61 +390,42 @@ type Company implements HasMetafields {
   updatedAt: DateTime!
 }
 
-"""
-A company's main point of contact.
-"""
+"""A company's main point of contact."""
 type CompanyContact {
   """
-  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
-  at which the company contact was created in Shopify.
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601)) at which the company contact was created in Shopify.
   """
   createdAt: DateTime!
 
-  """
-  The ID of the company.
-  """
+  """The ID of the company."""
   id: ID!
 
-  """
-  The company contact's locale (language).
-  """
+  """The company contact's locale (language)."""
   locale: String
 
-  """
-  The company contact's job title.
-  """
+  """The company contact's job title."""
   title: String
 
   """
-  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
-  at which the company contact was last modified.
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601)) at which the company contact was last modified.
   """
   updatedAt: DateTime!
 }
 
-"""
-A company's location.
-"""
+"""A company's location."""
 type CompanyLocation implements HasMetafields {
   """
-  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
-  at which the company location was created in Shopify.
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601)) at which the company location was created in Shopify.
   """
   createdAt: DateTime!
 
-  """
-  A unique externally-supplied ID for the company.
-  """
+  """A unique externally-supplied ID for the company."""
   externalId: String
 
-  """
-  The ID of the company.
-  """
+  """The ID of the company."""
   id: ID!
 
-  """
-  The preferred locale of the company location.
-  """
+  """The preferred locale of the company location."""
   locale: String
 
   """
@@ -497,38 +437,31 @@ type CompanyLocation implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
-  """
-  The name of the company location.
-  """
+  """The name of the company location."""
   name: String!
 
-  """
-  The number of orders placed at this company location.
-  """
+  """The number of orders placed at this company location."""
   ordersCount: Int!
 
-  """
-  The total amount spent at this company location.
-  """
+  """The total amount spent at this company location."""
   totalSpent: MoneyV2!
 
   """
-  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601))
-  at which the company location was last modified.
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601)) at which the company location was last modified.
   """
   updatedAt: DateTime!
 }
@@ -539,9 +472,7 @@ Localization might influence the language, currency, and product offerings avail
 the shopping experience for customers in that region.
 """
 type Country {
-  """
-  The ISO code of the country.
-  """
+  """The ISO code of the country."""
   isoCode: CountryCode!
 }
 
@@ -552,1229 +483,739 @@ of another country. For example, the territories associated with Spain are repre
 and the territories associated with the United States of America are represented by the country code `US`.
 """
 enum CountryCode {
-  """
-  Ascension Island.
-  """
-  AC
-
-  """
-  Andorra.
-  """
-  AD
-
-  """
-  United Arab Emirates.
-  """
-  AE
-
-  """
-  Afghanistan.
-  """
+  """Afghanistan."""
   AF
 
-  """
-  Antigua & Barbuda.
-  """
-  AG
-
-  """
-  Anguilla.
-  """
-  AI
-
-  """
-  Albania.
-  """
-  AL
-
-  """
-  Armenia.
-  """
-  AM
-
-  """
-  Netherlands Antilles.
-  """
-  AN
-
-  """
-  Angola.
-  """
-  AO
-
-  """
-  Argentina.
-  """
-  AR
-
-  """
-  Austria.
-  """
-  AT
-
-  """
-  Australia.
-  """
-  AU
-
-  """
-  Aruba.
-  """
-  AW
-
-  """
-  Åland Islands.
-  """
+  """Åland Islands."""
   AX
 
-  """
-  Azerbaijan.
-  """
-  AZ
+  """Albania."""
+  AL
 
-  """
-  Bosnia & Herzegovina.
-  """
-  BA
-
-  """
-  Barbados.
-  """
-  BB
-
-  """
-  Bangladesh.
-  """
-  BD
-
-  """
-  Belgium.
-  """
-  BE
-
-  """
-  Burkina Faso.
-  """
-  BF
-
-  """
-  Bulgaria.
-  """
-  BG
-
-  """
-  Bahrain.
-  """
-  BH
-
-  """
-  Burundi.
-  """
-  BI
-
-  """
-  Benin.
-  """
-  BJ
-
-  """
-  St. Barthélemy.
-  """
-  BL
-
-  """
-  Bermuda.
-  """
-  BM
-
-  """
-  Brunei.
-  """
-  BN
-
-  """
-  Bolivia.
-  """
-  BO
-
-  """
-  Caribbean Netherlands.
-  """
-  BQ
-
-  """
-  Brazil.
-  """
-  BR
-
-  """
-  Bahamas.
-  """
-  BS
-
-  """
-  Bhutan.
-  """
-  BT
-
-  """
-  Bouvet Island.
-  """
-  BV
-
-  """
-  Botswana.
-  """
-  BW
-
-  """
-  Belarus.
-  """
-  BY
-
-  """
-  Belize.
-  """
-  BZ
-
-  """
-  Canada.
-  """
-  CA
-
-  """
-  Cocos (Keeling) Islands.
-  """
-  CC
-
-  """
-  Congo - Kinshasa.
-  """
-  CD
-
-  """
-  Central African Republic.
-  """
-  CF
-
-  """
-  Congo - Brazzaville.
-  """
-  CG
-
-  """
-  Switzerland.
-  """
-  CH
-
-  """
-  Côte d’Ivoire.
-  """
-  CI
-
-  """
-  Cook Islands.
-  """
-  CK
-
-  """
-  Chile.
-  """
-  CL
-
-  """
-  Cameroon.
-  """
-  CM
-
-  """
-  China.
-  """
-  CN
-
-  """
-  Colombia.
-  """
-  CO
-
-  """
-  Costa Rica.
-  """
-  CR
-
-  """
-  Cuba.
-  """
-  CU
-
-  """
-  Cape Verde.
-  """
-  CV
-
-  """
-  Curaçao.
-  """
-  CW
-
-  """
-  Christmas Island.
-  """
-  CX
-
-  """
-  Cyprus.
-  """
-  CY
-
-  """
-  Czechia.
-  """
-  CZ
-
-  """
-  Germany.
-  """
-  DE
-
-  """
-  Djibouti.
-  """
-  DJ
-
-  """
-  Denmark.
-  """
-  DK
-
-  """
-  Dominica.
-  """
-  DM
-
-  """
-  Dominican Republic.
-  """
-  DO
-
-  """
-  Algeria.
-  """
+  """Algeria."""
   DZ
 
-  """
-  Ecuador.
-  """
-  EC
+  """Andorra."""
+  AD
 
-  """
-  Estonia.
-  """
-  EE
+  """Angola."""
+  AO
 
-  """
-  Egypt.
-  """
-  EG
+  """Anguilla."""
+  AI
 
-  """
-  Western Sahara.
-  """
-  EH
+  """Antigua & Barbuda."""
+  AG
 
-  """
-  Eritrea.
-  """
-  ER
+  """Argentina."""
+  AR
 
-  """
-  Spain.
-  """
-  ES
+  """Armenia."""
+  AM
 
-  """
-  Ethiopia.
-  """
-  ET
+  """Aruba."""
+  AW
 
-  """
-  Finland.
-  """
-  FI
+  """Ascension Island."""
+  AC
 
-  """
-  Fiji.
-  """
-  FJ
+  """Australia."""
+  AU
 
-  """
-  Falkland Islands.
-  """
-  FK
+  """Austria."""
+  AT
 
-  """
-  Faroe Islands.
-  """
-  FO
+  """Azerbaijan."""
+  AZ
 
-  """
-  France.
-  """
-  FR
+  """Bahamas."""
+  BS
 
-  """
-  Gabon.
-  """
-  GA
+  """Bahrain."""
+  BH
 
-  """
-  United Kingdom.
-  """
-  GB
+  """Bangladesh."""
+  BD
 
-  """
-  Grenada.
-  """
-  GD
+  """Barbados."""
+  BB
 
-  """
-  Georgia.
-  """
-  GE
+  """Belarus."""
+  BY
 
-  """
-  French Guiana.
-  """
-  GF
+  """Belgium."""
+  BE
 
-  """
-  Guernsey.
-  """
-  GG
+  """Belize."""
+  BZ
 
-  """
-  Ghana.
-  """
-  GH
+  """Benin."""
+  BJ
 
-  """
-  Gibraltar.
-  """
-  GI
+  """Bermuda."""
+  BM
 
-  """
-  Greenland.
-  """
-  GL
+  """Bhutan."""
+  BT
 
-  """
-  Gambia.
-  """
-  GM
+  """Bolivia."""
+  BO
 
-  """
-  Guinea.
-  """
-  GN
+  """Bosnia & Herzegovina."""
+  BA
 
-  """
-  Guadeloupe.
-  """
-  GP
+  """Botswana."""
+  BW
 
-  """
-  Equatorial Guinea.
-  """
-  GQ
+  """Bouvet Island."""
+  BV
 
-  """
-  Greece.
-  """
-  GR
+  """Brazil."""
+  BR
 
-  """
-  South Georgia & South Sandwich Islands.
-  """
-  GS
-
-  """
-  Guatemala.
-  """
-  GT
-
-  """
-  Guinea-Bissau.
-  """
-  GW
-
-  """
-  Guyana.
-  """
-  GY
-
-  """
-  Hong Kong SAR.
-  """
-  HK
-
-  """
-  Heard & McDonald Islands.
-  """
-  HM
-
-  """
-  Honduras.
-  """
-  HN
-
-  """
-  Croatia.
-  """
-  HR
-
-  """
-  Haiti.
-  """
-  HT
-
-  """
-  Hungary.
-  """
-  HU
-
-  """
-  Indonesia.
-  """
-  ID
-
-  """
-  Ireland.
-  """
-  IE
-
-  """
-  Israel.
-  """
-  IL
-
-  """
-  Isle of Man.
-  """
-  IM
-
-  """
-  India.
-  """
-  IN
-
-  """
-  British Indian Ocean Territory.
-  """
+  """British Indian Ocean Territory."""
   IO
 
-  """
-  Iraq.
-  """
-  IQ
+  """Brunei."""
+  BN
 
-  """
-  Iran.
-  """
-  IR
+  """Bulgaria."""
+  BG
 
-  """
-  Iceland.
-  """
-  IS
+  """Burkina Faso."""
+  BF
 
-  """
-  Italy.
-  """
-  IT
+  """Burundi."""
+  BI
 
-  """
-  Jersey.
-  """
-  JE
-
-  """
-  Jamaica.
-  """
-  JM
-
-  """
-  Jordan.
-  """
-  JO
-
-  """
-  Japan.
-  """
-  JP
-
-  """
-  Kenya.
-  """
-  KE
-
-  """
-  Kyrgyzstan.
-  """
-  KG
-
-  """
-  Cambodia.
-  """
+  """Cambodia."""
   KH
 
-  """
-  Kiribati.
-  """
-  KI
+  """Canada."""
+  CA
 
-  """
-  Comoros.
-  """
-  KM
+  """Cape Verde."""
+  CV
 
-  """
-  St. Kitts & Nevis.
-  """
-  KN
+  """Caribbean Netherlands."""
+  BQ
 
-  """
-  North Korea.
-  """
-  KP
-
-  """
-  South Korea.
-  """
-  KR
-
-  """
-  Kuwait.
-  """
-  KW
-
-  """
-  Cayman Islands.
-  """
+  """Cayman Islands."""
   KY
 
-  """
-  Kazakhstan.
-  """
-  KZ
+  """Central African Republic."""
+  CF
 
-  """
-  Laos.
-  """
-  LA
-
-  """
-  Lebanon.
-  """
-  LB
-
-  """
-  St. Lucia.
-  """
-  LC
-
-  """
-  Liechtenstein.
-  """
-  LI
-
-  """
-  Sri Lanka.
-  """
-  LK
-
-  """
-  Liberia.
-  """
-  LR
-
-  """
-  Lesotho.
-  """
-  LS
-
-  """
-  Lithuania.
-  """
-  LT
-
-  """
-  Luxembourg.
-  """
-  LU
-
-  """
-  Latvia.
-  """
-  LV
-
-  """
-  Libya.
-  """
-  LY
-
-  """
-  Morocco.
-  """
-  MA
-
-  """
-  Monaco.
-  """
-  MC
-
-  """
-  Moldova.
-  """
-  MD
-
-  """
-  Montenegro.
-  """
-  ME
-
-  """
-  St. Martin.
-  """
-  MF
-
-  """
-  Madagascar.
-  """
-  MG
-
-  """
-  North Macedonia.
-  """
-  MK
-
-  """
-  Mali.
-  """
-  ML
-
-  """
-  Myanmar (Burma).
-  """
-  MM
-
-  """
-  Mongolia.
-  """
-  MN
-
-  """
-  Macao SAR.
-  """
-  MO
-
-  """
-  Martinique.
-  """
-  MQ
-
-  """
-  Mauritania.
-  """
-  MR
-
-  """
-  Montserrat.
-  """
-  MS
-
-  """
-  Malta.
-  """
-  MT
-
-  """
-  Mauritius.
-  """
-  MU
-
-  """
-  Maldives.
-  """
-  MV
-
-  """
-  Malawi.
-  """
-  MW
-
-  """
-  Mexico.
-  """
-  MX
-
-  """
-  Malaysia.
-  """
-  MY
-
-  """
-  Mozambique.
-  """
-  MZ
-
-  """
-  Namibia.
-  """
-  NA
-
-  """
-  New Caledonia.
-  """
-  NC
-
-  """
-  Niger.
-  """
-  NE
-
-  """
-  Norfolk Island.
-  """
-  NF
-
-  """
-  Nigeria.
-  """
-  NG
-
-  """
-  Nicaragua.
-  """
-  NI
-
-  """
-  Netherlands.
-  """
-  NL
-
-  """
-  Norway.
-  """
-  NO
-
-  """
-  Nepal.
-  """
-  NP
-
-  """
-  Nauru.
-  """
-  NR
-
-  """
-  Niue.
-  """
-  NU
-
-  """
-  New Zealand.
-  """
-  NZ
-
-  """
-  Oman.
-  """
-  OM
-
-  """
-  Panama.
-  """
-  PA
-
-  """
-  Peru.
-  """
-  PE
-
-  """
-  French Polynesia.
-  """
-  PF
-
-  """
-  Papua New Guinea.
-  """
-  PG
-
-  """
-  Philippines.
-  """
-  PH
-
-  """
-  Pakistan.
-  """
-  PK
-
-  """
-  Poland.
-  """
-  PL
-
-  """
-  St. Pierre & Miquelon.
-  """
-  PM
-
-  """
-  Pitcairn Islands.
-  """
-  PN
-
-  """
-  Palestinian Territories.
-  """
-  PS
-
-  """
-  Portugal.
-  """
-  PT
-
-  """
-  Paraguay.
-  """
-  PY
-
-  """
-  Qatar.
-  """
-  QA
-
-  """
-  Réunion.
-  """
-  RE
-
-  """
-  Romania.
-  """
-  RO
-
-  """
-  Serbia.
-  """
-  RS
-
-  """
-  Russia.
-  """
-  RU
-
-  """
-  Rwanda.
-  """
-  RW
-
-  """
-  Saudi Arabia.
-  """
-  SA
-
-  """
-  Solomon Islands.
-  """
-  SB
-
-  """
-  Seychelles.
-  """
-  SC
-
-  """
-  Sudan.
-  """
-  SD
-
-  """
-  Sweden.
-  """
-  SE
-
-  """
-  Singapore.
-  """
-  SG
-
-  """
-  St. Helena.
-  """
-  SH
-
-  """
-  Slovenia.
-  """
-  SI
-
-  """
-  Svalbard & Jan Mayen.
-  """
-  SJ
-
-  """
-  Slovakia.
-  """
-  SK
-
-  """
-  Sierra Leone.
-  """
-  SL
-
-  """
-  San Marino.
-  """
-  SM
-
-  """
-  Senegal.
-  """
-  SN
-
-  """
-  Somalia.
-  """
-  SO
-
-  """
-  Suriname.
-  """
-  SR
-
-  """
-  South Sudan.
-  """
-  SS
-
-  """
-  São Tomé & Príncipe.
-  """
-  ST
-
-  """
-  El Salvador.
-  """
-  SV
-
-  """
-  Sint Maarten.
-  """
-  SX
-
-  """
-  Syria.
-  """
-  SY
-
-  """
-  Eswatini.
-  """
-  SZ
-
-  """
-  Tristan da Cunha.
-  """
-  TA
-
-  """
-  Turks & Caicos Islands.
-  """
-  TC
-
-  """
-  Chad.
-  """
+  """Chad."""
   TD
 
-  """
-  French Southern Territories.
-  """
+  """Chile."""
+  CL
+
+  """China."""
+  CN
+
+  """Christmas Island."""
+  CX
+
+  """Cocos (Keeling) Islands."""
+  CC
+
+  """Colombia."""
+  CO
+
+  """Comoros."""
+  KM
+
+  """Congo - Brazzaville."""
+  CG
+
+  """Congo - Kinshasa."""
+  CD
+
+  """Cook Islands."""
+  CK
+
+  """Costa Rica."""
+  CR
+
+  """Croatia."""
+  HR
+
+  """Cuba."""
+  CU
+
+  """Curaçao."""
+  CW
+
+  """Cyprus."""
+  CY
+
+  """Czechia."""
+  CZ
+
+  """Côte d’Ivoire."""
+  CI
+
+  """Denmark."""
+  DK
+
+  """Djibouti."""
+  DJ
+
+  """Dominica."""
+  DM
+
+  """Dominican Republic."""
+  DO
+
+  """Ecuador."""
+  EC
+
+  """Egypt."""
+  EG
+
+  """El Salvador."""
+  SV
+
+  """Equatorial Guinea."""
+  GQ
+
+  """Eritrea."""
+  ER
+
+  """Estonia."""
+  EE
+
+  """Eswatini."""
+  SZ
+
+  """Ethiopia."""
+  ET
+
+  """Falkland Islands."""
+  FK
+
+  """Faroe Islands."""
+  FO
+
+  """Fiji."""
+  FJ
+
+  """Finland."""
+  FI
+
+  """France."""
+  FR
+
+  """French Guiana."""
+  GF
+
+  """French Polynesia."""
+  PF
+
+  """French Southern Territories."""
   TF
 
-  """
-  Togo.
-  """
-  TG
+  """Gabon."""
+  GA
 
-  """
-  Thailand.
-  """
-  TH
+  """Gambia."""
+  GM
 
-  """
-  Tajikistan.
-  """
-  TJ
+  """Georgia."""
+  GE
 
-  """
-  Tokelau.
-  """
-  TK
+  """Germany."""
+  DE
 
-  """
-  Timor-Leste.
-  """
-  TL
+  """Ghana."""
+  GH
 
-  """
-  Turkmenistan.
-  """
-  TM
+  """Gibraltar."""
+  GI
 
-  """
-  Tunisia.
-  """
-  TN
+  """Greece."""
+  GR
 
-  """
-  Tonga.
-  """
-  TO
+  """Greenland."""
+  GL
 
-  """
-  Türkiye.
-  """
-  TR
+  """Grenada."""
+  GD
 
-  """
-  Trinidad & Tobago.
-  """
-  TT
+  """Guadeloupe."""
+  GP
 
-  """
-  Tuvalu.
-  """
-  TV
+  """Guatemala."""
+  GT
 
-  """
-  Taiwan.
-  """
-  TW
+  """Guernsey."""
+  GG
 
-  """
-  Tanzania.
-  """
-  TZ
+  """Guinea."""
+  GN
 
-  """
-  Ukraine.
-  """
-  UA
+  """Guinea-Bissau."""
+  GW
 
-  """
-  Uganda.
-  """
-  UG
+  """Guyana."""
+  GY
 
-  """
-  U.S. Outlying Islands.
-  """
-  UM
+  """Haiti."""
+  HT
 
-  """
-  United States.
-  """
-  US
+  """Heard & McDonald Islands."""
+  HM
 
-  """
-  Uruguay.
-  """
-  UY
-
-  """
-  Uzbekistan.
-  """
-  UZ
-
-  """
-  Vatican City.
-  """
+  """Vatican City."""
   VA
 
-  """
-  St. Vincent & Grenadines.
-  """
-  VC
+  """Honduras."""
+  HN
 
-  """
-  Venezuela.
-  """
-  VE
+  """Hong Kong SAR."""
+  HK
 
-  """
-  British Virgin Islands.
-  """
-  VG
+  """Hungary."""
+  HU
 
-  """
-  Vietnam.
-  """
-  VN
+  """Iceland."""
+  IS
 
-  """
-  Vanuatu.
-  """
-  VU
+  """India."""
+  IN
 
-  """
-  Wallis & Futuna.
-  """
-  WF
+  """Indonesia."""
+  ID
 
-  """
-  Samoa.
-  """
-  WS
+  """Iran."""
+  IR
 
-  """
-  Kosovo.
-  """
+  """Iraq."""
+  IQ
+
+  """Ireland."""
+  IE
+
+  """Isle of Man."""
+  IM
+
+  """Israel."""
+  IL
+
+  """Italy."""
+  IT
+
+  """Jamaica."""
+  JM
+
+  """Japan."""
+  JP
+
+  """Jersey."""
+  JE
+
+  """Jordan."""
+  JO
+
+  """Kazakhstan."""
+  KZ
+
+  """Kenya."""
+  KE
+
+  """Kiribati."""
+  KI
+
+  """North Korea."""
+  KP
+
+  """Kosovo."""
   XK
 
-  """
-  Yemen.
-  """
-  YE
+  """Kuwait."""
+  KW
 
-  """
-  Mayotte.
-  """
+  """Kyrgyzstan."""
+  KG
+
+  """Laos."""
+  LA
+
+  """Latvia."""
+  LV
+
+  """Lebanon."""
+  LB
+
+  """Lesotho."""
+  LS
+
+  """Liberia."""
+  LR
+
+  """Libya."""
+  LY
+
+  """Liechtenstein."""
+  LI
+
+  """Lithuania."""
+  LT
+
+  """Luxembourg."""
+  LU
+
+  """Macao SAR."""
+  MO
+
+  """Madagascar."""
+  MG
+
+  """Malawi."""
+  MW
+
+  """Malaysia."""
+  MY
+
+  """Maldives."""
+  MV
+
+  """Mali."""
+  ML
+
+  """Malta."""
+  MT
+
+  """Martinique."""
+  MQ
+
+  """Mauritania."""
+  MR
+
+  """Mauritius."""
+  MU
+
+  """Mayotte."""
   YT
 
-  """
-  South Africa.
-  """
+  """Mexico."""
+  MX
+
+  """Moldova."""
+  MD
+
+  """Monaco."""
+  MC
+
+  """Mongolia."""
+  MN
+
+  """Montenegro."""
+  ME
+
+  """Montserrat."""
+  MS
+
+  """Morocco."""
+  MA
+
+  """Mozambique."""
+  MZ
+
+  """Myanmar (Burma)."""
+  MM
+
+  """Namibia."""
+  NA
+
+  """Nauru."""
+  NR
+
+  """Nepal."""
+  NP
+
+  """Netherlands."""
+  NL
+
+  """Netherlands Antilles."""
+  AN
+
+  """New Caledonia."""
+  NC
+
+  """New Zealand."""
+  NZ
+
+  """Nicaragua."""
+  NI
+
+  """Niger."""
+  NE
+
+  """Nigeria."""
+  NG
+
+  """Niue."""
+  NU
+
+  """Norfolk Island."""
+  NF
+
+  """North Macedonia."""
+  MK
+
+  """Norway."""
+  NO
+
+  """Oman."""
+  OM
+
+  """Pakistan."""
+  PK
+
+  """Palestinian Territories."""
+  PS
+
+  """Panama."""
+  PA
+
+  """Papua New Guinea."""
+  PG
+
+  """Paraguay."""
+  PY
+
+  """Peru."""
+  PE
+
+  """Philippines."""
+  PH
+
+  """Pitcairn Islands."""
+  PN
+
+  """Poland."""
+  PL
+
+  """Portugal."""
+  PT
+
+  """Qatar."""
+  QA
+
+  """Cameroon."""
+  CM
+
+  """Réunion."""
+  RE
+
+  """Romania."""
+  RO
+
+  """Russia."""
+  RU
+
+  """Rwanda."""
+  RW
+
+  """St. Barthélemy."""
+  BL
+
+  """St. Helena."""
+  SH
+
+  """St. Kitts & Nevis."""
+  KN
+
+  """St. Lucia."""
+  LC
+
+  """St. Martin."""
+  MF
+
+  """St. Pierre & Miquelon."""
+  PM
+
+  """Samoa."""
+  WS
+
+  """San Marino."""
+  SM
+
+  """São Tomé & Príncipe."""
+  ST
+
+  """Saudi Arabia."""
+  SA
+
+  """Senegal."""
+  SN
+
+  """Serbia."""
+  RS
+
+  """Seychelles."""
+  SC
+
+  """Sierra Leone."""
+  SL
+
+  """Singapore."""
+  SG
+
+  """Sint Maarten."""
+  SX
+
+  """Slovakia."""
+  SK
+
+  """Slovenia."""
+  SI
+
+  """Solomon Islands."""
+  SB
+
+  """Somalia."""
+  SO
+
+  """South Africa."""
   ZA
 
-  """
-  Zambia.
-  """
+  """South Georgia & South Sandwich Islands."""
+  GS
+
+  """South Korea."""
+  KR
+
+  """South Sudan."""
+  SS
+
+  """Spain."""
+  ES
+
+  """Sri Lanka."""
+  LK
+
+  """St. Vincent & Grenadines."""
+  VC
+
+  """Sudan."""
+  SD
+
+  """Suriname."""
+  SR
+
+  """Svalbard & Jan Mayen."""
+  SJ
+
+  """Sweden."""
+  SE
+
+  """Switzerland."""
+  CH
+
+  """Syria."""
+  SY
+
+  """Taiwan."""
+  TW
+
+  """Tajikistan."""
+  TJ
+
+  """Tanzania."""
+  TZ
+
+  """Thailand."""
+  TH
+
+  """Timor-Leste."""
+  TL
+
+  """Togo."""
+  TG
+
+  """Tokelau."""
+  TK
+
+  """Tonga."""
+  TO
+
+  """Trinidad & Tobago."""
+  TT
+
+  """Tristan da Cunha."""
+  TA
+
+  """Tunisia."""
+  TN
+
+  """Türkiye."""
+  TR
+
+  """Turkmenistan."""
+  TM
+
+  """Turks & Caicos Islands."""
+  TC
+
+  """Tuvalu."""
+  TV
+
+  """Uganda."""
+  UG
+
+  """Ukraine."""
+  UA
+
+  """United Arab Emirates."""
+  AE
+
+  """United Kingdom."""
+  GB
+
+  """United States."""
+  US
+
+  """U.S. Outlying Islands."""
+  UM
+
+  """Uruguay."""
+  UY
+
+  """Uzbekistan."""
+  UZ
+
+  """Vanuatu."""
+  VU
+
+  """Venezuela."""
+  VE
+
+  """Vietnam."""
+  VN
+
+  """British Virgin Islands."""
+  VG
+
+  """Wallis & Futuna."""
+  WF
+
+  """Western Sahara."""
+  EH
+
+  """Yemen."""
+  YE
+
+  """Zambia."""
   ZM
 
-  """
-  Zimbabwe.
-  """
+  """Zimbabwe."""
   ZW
 
-  """
-  Unknown Region.
-  """
+  """Unknown Region."""
   ZZ
 }
 
@@ -1784,815 +1225,491 @@ The currency codes that represent the world currencies throughout the Admin API.
 digital currency codes.
 """
 enum CurrencyCode {
-  """
-  United Arab Emirates Dirham (AED).
-  """
-  AED
-
-  """
-  Afghan Afghani (AFN).
-  """
-  AFN
-
-  """
-  Albanian Lek (ALL).
-  """
-  ALL
-
-  """
-  Armenian Dram (AMD).
-  """
-  AMD
-
-  """
-  Netherlands Antillean Guilder.
-  """
-  ANG
-
-  """
-  Angolan Kwanza (AOA).
-  """
-  AOA
-
-  """
-  Argentine Pesos (ARS).
-  """
-  ARS
-
-  """
-  Australian Dollars (AUD).
-  """
-  AUD
-
-  """
-  Aruban Florin (AWG).
-  """
-  AWG
-
-  """
-  Azerbaijani Manat (AZN).
-  """
-  AZN
-
-  """
-  Bosnia and Herzegovina Convertible Mark (BAM).
-  """
-  BAM
-
-  """
-  Barbadian Dollar (BBD).
-  """
-  BBD
-
-  """
-  Bangladesh Taka (BDT).
-  """
-  BDT
-
-  """
-  Bulgarian Lev (BGN).
-  """
-  BGN
-
-  """
-  Bahraini Dinar (BHD).
-  """
-  BHD
-
-  """
-  Burundian Franc (BIF).
-  """
-  BIF
-
-  """
-  Bermudian Dollar (BMD).
-  """
-  BMD
-
-  """
-  Brunei Dollar (BND).
-  """
-  BND
-
-  """
-  Bolivian Boliviano (BOB).
-  """
-  BOB
-
-  """
-  Brazilian Real (BRL).
-  """
-  BRL
-
-  """
-  Bahamian Dollar (BSD).
-  """
-  BSD
-
-  """
-  Bhutanese Ngultrum (BTN).
-  """
-  BTN
-
-  """
-  Botswana Pula (BWP).
-  """
-  BWP
-
-  """
-  Belarusian Ruble (BYN).
-  """
-  BYN
-
-  """
-  Belarusian Ruble (BYR).
-  """
-  BYR @deprecated(reason: "Use `BYN` instead.")
-
-  """
-  Belize Dollar (BZD).
-  """
-  BZD
-
-  """
-  Canadian Dollars (CAD).
-  """
-  CAD
-
-  """
-  Congolese franc (CDF).
-  """
-  CDF
-
-  """
-  Swiss Francs (CHF).
-  """
-  CHF
-
-  """
-  Chilean Peso (CLP).
-  """
-  CLP
-
-  """
-  Chinese Yuan Renminbi (CNY).
-  """
-  CNY
-
-  """
-  Colombian Peso (COP).
-  """
-  COP
-
-  """
-  Costa Rican Colones (CRC).
-  """
-  CRC
-
-  """
-  Cape Verdean escudo (CVE).
-  """
-  CVE
-
-  """
-  Czech Koruny (CZK).
-  """
-  CZK
-
-  """
-  Djiboutian Franc (DJF).
-  """
-  DJF
-
-  """
-  Danish Kroner (DKK).
-  """
-  DKK
-
-  """
-  Dominican Peso (DOP).
-  """
-  DOP
-
-  """
-  Algerian Dinar (DZD).
-  """
-  DZD
-
-  """
-  Egyptian Pound (EGP).
-  """
-  EGP
-
-  """
-  Eritrean Nakfa (ERN).
-  """
-  ERN
-
-  """
-  Ethiopian Birr (ETB).
-  """
-  ETB
-
-  """
-  Euro (EUR).
-  """
-  EUR
-
-  """
-  Fijian Dollars (FJD).
-  """
-  FJD
-
-  """
-  Falkland Islands Pounds (FKP).
-  """
-  FKP
-
-  """
-  United Kingdom Pounds (GBP).
-  """
-  GBP
-
-  """
-  Georgian Lari (GEL).
-  """
-  GEL
-
-  """
-  Ghanaian Cedi (GHS).
-  """
-  GHS
-
-  """
-  Gibraltar Pounds (GIP).
-  """
-  GIP
-
-  """
-  Gambian Dalasi (GMD).
-  """
-  GMD
-
-  """
-  Guinean Franc (GNF).
-  """
-  GNF
-
-  """
-  Guatemalan Quetzal (GTQ).
-  """
-  GTQ
-
-  """
-  Guyanese Dollar (GYD).
-  """
-  GYD
-
-  """
-  Hong Kong Dollars (HKD).
-  """
-  HKD
-
-  """
-  Honduran Lempira (HNL).
-  """
-  HNL
-
-  """
-  Croatian Kuna (HRK).
-  """
-  HRK
-
-  """
-  Haitian Gourde (HTG).
-  """
-  HTG
-
-  """
-  Hungarian Forint (HUF).
-  """
-  HUF
-
-  """
-  Indonesian Rupiah (IDR).
-  """
-  IDR
-
-  """
-  Israeli New Shekel (NIS).
-  """
-  ILS
-
-  """
-  Indian Rupees (INR).
-  """
-  INR
-
-  """
-  Iraqi Dinar (IQD).
-  """
-  IQD
-
-  """
-  Iranian Rial (IRR).
-  """
-  IRR
-
-  """
-  Icelandic Kronur (ISK).
-  """
-  ISK
-
-  """
-  Jersey Pound.
-  """
-  JEP
-
-  """
-  Jamaican Dollars (JMD).
-  """
-  JMD
-
-  """
-  Jordanian Dinar (JOD).
-  """
-  JOD
-
-  """
-  Japanese Yen (JPY).
-  """
-  JPY
-
-  """
-  Kenyan Shilling (KES).
-  """
-  KES
-
-  """
-  Kyrgyzstani Som (KGS).
-  """
-  KGS
-
-  """
-  Cambodian Riel.
-  """
-  KHR
-
-  """
-  Kiribati Dollar (KID).
-  """
-  KID
-
-  """
-  Comorian Franc (KMF).
-  """
-  KMF
-
-  """
-  South Korean Won (KRW).
-  """
-  KRW
-
-  """
-  Kuwaiti Dinar (KWD).
-  """
-  KWD
-
-  """
-  Cayman Dollars (KYD).
-  """
-  KYD
-
-  """
-  Kazakhstani Tenge (KZT).
-  """
-  KZT
-
-  """
-  Laotian Kip (LAK).
-  """
-  LAK
-
-  """
-  Lebanese Pounds (LBP).
-  """
-  LBP
-
-  """
-  Sri Lankan Rupees (LKR).
-  """
-  LKR
-
-  """
-  Liberian Dollar (LRD).
-  """
-  LRD
-
-  """
-  Lesotho Loti (LSL).
-  """
-  LSL
-
-  """
-  Lithuanian Litai (LTL).
-  """
-  LTL
-
-  """
-  Latvian Lati (LVL).
-  """
-  LVL
-
-  """
-  Libyan Dinar (LYD).
-  """
-  LYD
-
-  """
-  Moroccan Dirham.
-  """
-  MAD
-
-  """
-  Moldovan Leu (MDL).
-  """
-  MDL
-
-  """
-  Malagasy Ariary (MGA).
-  """
-  MGA
-
-  """
-  Macedonia Denar (MKD).
-  """
-  MKD
-
-  """
-  Burmese Kyat (MMK).
-  """
-  MMK
-
-  """
-  Mongolian Tugrik.
-  """
-  MNT
-
-  """
-  Macanese Pataca (MOP).
-  """
-  MOP
-
-  """
-  Mauritanian Ouguiya (MRU).
-  """
-  MRU
-
-  """
-  Mauritian Rupee (MUR).
-  """
-  MUR
-
-  """
-  Maldivian Rufiyaa (MVR).
-  """
-  MVR
-
-  """
-  Malawian Kwacha (MWK).
-  """
-  MWK
-
-  """
-  Mexican Pesos (MXN).
-  """
-  MXN
-
-  """
-  Malaysian Ringgits (MYR).
-  """
-  MYR
-
-  """
-  Mozambican Metical.
-  """
-  MZN
-
-  """
-  Namibian Dollar.
-  """
-  NAD
-
-  """
-  Nigerian Naira (NGN).
-  """
-  NGN
-
-  """
-  Nicaraguan Córdoba (NIO).
-  """
-  NIO
-
-  """
-  Norwegian Kroner (NOK).
-  """
-  NOK
-
-  """
-  Nepalese Rupee (NPR).
-  """
-  NPR
-
-  """
-  New Zealand Dollars (NZD).
-  """
-  NZD
-
-  """
-  Omani Rial (OMR).
-  """
-  OMR
-
-  """
-  Panamian Balboa (PAB).
-  """
-  PAB
-
-  """
-  Peruvian Nuevo Sol (PEN).
-  """
-  PEN
-
-  """
-  Papua New Guinean Kina (PGK).
-  """
-  PGK
-
-  """
-  Philippine Peso (PHP).
-  """
-  PHP
-
-  """
-  Pakistani Rupee (PKR).
-  """
-  PKR
-
-  """
-  Polish Zlotych (PLN).
-  """
-  PLN
-
-  """
-  Paraguayan Guarani (PYG).
-  """
-  PYG
-
-  """
-  Qatari Rial (QAR).
-  """
-  QAR
-
-  """
-  Romanian Lei (RON).
-  """
-  RON
-
-  """
-  Serbian dinar (RSD).
-  """
-  RSD
-
-  """
-  Russian Rubles (RUB).
-  """
-  RUB
-
-  """
-  Rwandan Franc (RWF).
-  """
-  RWF
-
-  """
-  Saudi Riyal (SAR).
-  """
-  SAR
-
-  """
-  Solomon Islands Dollar (SBD).
-  """
-  SBD
-
-  """
-  Seychellois Rupee (SCR).
-  """
-  SCR
-
-  """
-  Sudanese Pound (SDG).
-  """
-  SDG
-
-  """
-  Swedish Kronor (SEK).
-  """
-  SEK
-
-  """
-  Singapore Dollars (SGD).
-  """
-  SGD
-
-  """
-  Saint Helena Pounds (SHP).
-  """
-  SHP
-
-  """
-  Sierra Leonean Leone (SLL).
-  """
-  SLL
-
-  """
-  Somali Shilling (SOS).
-  """
-  SOS
-
-  """
-  Surinamese Dollar (SRD).
-  """
-  SRD
-
-  """
-  South Sudanese Pound (SSP).
-  """
-  SSP
-
-  """
-  Sao Tome And Principe Dobra (STD).
-  """
-  STD @deprecated(reason: "Use `STN` instead.")
-
-  """
-  Sao Tome And Principe Dobra (STN).
-  """
-  STN
-
-  """
-  Syrian Pound (SYP).
-  """
-  SYP
-
-  """
-  Swazi Lilangeni (SZL).
-  """
-  SZL
-
-  """
-  Thai baht (THB).
-  """
-  THB
-
-  """
-  Tajikistani Somoni (TJS).
-  """
-  TJS
-
-  """
-  Turkmenistani Manat (TMT).
-  """
-  TMT
-
-  """
-  Tunisian Dinar (TND).
-  """
-  TND
-
-  """
-  Tongan Pa'anga (TOP).
-  """
-  TOP
-
-  """
-  Turkish Lira (TRY).
-  """
-  TRY
-
-  """
-  Trinidad and Tobago Dollars (TTD).
-  """
-  TTD
-
-  """
-  Taiwan Dollars (TWD).
-  """
-  TWD
-
-  """
-  Tanzanian Shilling (TZS).
-  """
-  TZS
-
-  """
-  Ukrainian Hryvnia (UAH).
-  """
-  UAH
-
-  """
-  Ugandan Shilling (UGX).
-  """
-  UGX
-
-  """
-  United States Dollars (USD).
-  """
+  """United States Dollars (USD)."""
   USD
 
-  """
-  United States Dollars Coin (USDC).
-  """
-  USDC
+  """Euro (EUR)."""
+  EUR
 
-  """
-  Uruguayan Pesos (UYU).
-  """
-  UYU
+  """United Kingdom Pounds (GBP)."""
+  GBP
 
-  """
-  Uzbekistan som (UZS).
-  """
-  UZS
+  """Canadian Dollars (CAD)."""
+  CAD
 
-  """
-  Venezuelan Bolivares (VED).
-  """
-  VED
+  """Afghan Afghani (AFN)."""
+  AFN
 
-  """
-  Venezuelan Bolivares (VEF).
-  """
-  VEF @deprecated(reason: "Use `VES` instead.")
+  """Albanian Lek (ALL)."""
+  ALL
 
-  """
-  Venezuelan Bolivares Soberanos (VES).
-  """
-  VES
+  """Algerian Dinar (DZD)."""
+  DZD
 
-  """
-  Vietnamese đồng (VND).
-  """
-  VND
+  """Angolan Kwanza (AOA)."""
+  AOA
 
-  """
-  Vanuatu Vatu (VUV).
-  """
-  VUV
+  """Argentine Pesos (ARS)."""
+  ARS
 
-  """
-  Samoan Tala (WST).
-  """
-  WST
+  """Armenian Dram (AMD)."""
+  AMD
 
-  """
-  Central African CFA Franc (XAF).
-  """
+  """Aruban Florin (AWG)."""
+  AWG
+
+  """Australian Dollars (AUD)."""
+  AUD
+
+  """Barbadian Dollar (BBD)."""
+  BBD
+
+  """Azerbaijani Manat (AZN)."""
+  AZN
+
+  """Bangladesh Taka (BDT)."""
+  BDT
+
+  """Bahamian Dollar (BSD)."""
+  BSD
+
+  """Bahraini Dinar (BHD)."""
+  BHD
+
+  """Burundian Franc (BIF)."""
+  BIF
+
+  """Belarusian Ruble (BYN)."""
+  BYN
+
+  """Belize Dollar (BZD)."""
+  BZD
+
+  """Bermudian Dollar (BMD)."""
+  BMD
+
+  """Bhutanese Ngultrum (BTN)."""
+  BTN
+
+  """Bosnia and Herzegovina Convertible Mark (BAM)."""
+  BAM
+
+  """Brazilian Real (BRL)."""
+  BRL
+
+  """Bolivian Boliviano (BOB)."""
+  BOB
+
+  """Botswana Pula (BWP)."""
+  BWP
+
+  """Brunei Dollar (BND)."""
+  BND
+
+  """Bulgarian Lev (BGN)."""
+  BGN
+
+  """Burmese Kyat (MMK)."""
+  MMK
+
+  """Cambodian Riel."""
+  KHR
+
+  """Cape Verdean escudo (CVE)."""
+  CVE
+
+  """Cayman Dollars (KYD)."""
+  KYD
+
+  """Central African CFA Franc (XAF)."""
   XAF
 
-  """
-  East Caribbean Dollar (XCD).
-  """
+  """Chilean Peso (CLP)."""
+  CLP
+
+  """Chinese Yuan Renminbi (CNY)."""
+  CNY
+
+  """Colombian Peso (COP)."""
+  COP
+
+  """Comorian Franc (KMF)."""
+  KMF
+
+  """Congolese franc (CDF)."""
+  CDF
+
+  """Costa Rican Colones (CRC)."""
+  CRC
+
+  """Croatian Kuna (HRK)."""
+  HRK
+
+  """Czech Koruny (CZK)."""
+  CZK
+
+  """Danish Kroner (DKK)."""
+  DKK
+
+  """Djiboutian Franc (DJF)."""
+  DJF
+
+  """Dominican Peso (DOP)."""
+  DOP
+
+  """East Caribbean Dollar (XCD)."""
   XCD
 
-  """
-  West African CFA franc (XOF).
-  """
-  XOF
+  """Egyptian Pound (EGP)."""
+  EGP
 
-  """
-  CFP Franc (XPF).
-  """
+  """Eritrean Nakfa (ERN)."""
+  ERN
+
+  """Ethiopian Birr (ETB)."""
+  ETB
+
+  """Falkland Islands Pounds (FKP)."""
+  FKP
+
+  """CFP Franc (XPF)."""
   XPF
 
-  """
-  Unrecognized currency.
-  """
-  XXX
+  """Fijian Dollars (FJD)."""
+  FJD
 
-  """
-  Yemeni Rial (YER).
-  """
-  YER
+  """Gibraltar Pounds (GIP)."""
+  GIP
 
-  """
-  South African Rand (ZAR).
-  """
+  """Gambian Dalasi (GMD)."""
+  GMD
+
+  """Ghanaian Cedi (GHS)."""
+  GHS
+
+  """Guatemalan Quetzal (GTQ)."""
+  GTQ
+
+  """Guyanese Dollar (GYD)."""
+  GYD
+
+  """Georgian Lari (GEL)."""
+  GEL
+
+  """Guinean Franc (GNF)."""
+  GNF
+
+  """Haitian Gourde (HTG)."""
+  HTG
+
+  """Honduran Lempira (HNL)."""
+  HNL
+
+  """Hong Kong Dollars (HKD)."""
+  HKD
+
+  """Hungarian Forint (HUF)."""
+  HUF
+
+  """Icelandic Kronur (ISK)."""
+  ISK
+
+  """Indian Rupees (INR)."""
+  INR
+
+  """Indonesian Rupiah (IDR)."""
+  IDR
+
+  """Israeli New Shekel (NIS)."""
+  ILS
+
+  """Iranian Rial (IRR)."""
+  IRR
+
+  """Iraqi Dinar (IQD)."""
+  IQD
+
+  """Jamaican Dollars (JMD)."""
+  JMD
+
+  """Japanese Yen (JPY)."""
+  JPY
+
+  """Jersey Pound."""
+  JEP
+
+  """Jordanian Dinar (JOD)."""
+  JOD
+
+  """Kazakhstani Tenge (KZT)."""
+  KZT
+
+  """Kenyan Shilling (KES)."""
+  KES
+
+  """Kiribati Dollar (KID)."""
+  KID
+
+  """Kuwaiti Dinar (KWD)."""
+  KWD
+
+  """Kyrgyzstani Som (KGS)."""
+  KGS
+
+  """Laotian Kip (LAK)."""
+  LAK
+
+  """Latvian Lati (LVL)."""
+  LVL
+
+  """Lebanese Pounds (LBP)."""
+  LBP
+
+  """Lesotho Loti (LSL)."""
+  LSL
+
+  """Liberian Dollar (LRD)."""
+  LRD
+
+  """Libyan Dinar (LYD)."""
+  LYD
+
+  """Lithuanian Litai (LTL)."""
+  LTL
+
+  """Malagasy Ariary (MGA)."""
+  MGA
+
+  """Macedonia Denar (MKD)."""
+  MKD
+
+  """Macanese Pataca (MOP)."""
+  MOP
+
+  """Malawian Kwacha (MWK)."""
+  MWK
+
+  """Maldivian Rufiyaa (MVR)."""
+  MVR
+
+  """Mauritanian Ouguiya (MRU)."""
+  MRU
+
+  """Mexican Pesos (MXN)."""
+  MXN
+
+  """Malaysian Ringgits (MYR)."""
+  MYR
+
+  """Mauritian Rupee (MUR)."""
+  MUR
+
+  """Moldovan Leu (MDL)."""
+  MDL
+
+  """Moroccan Dirham."""
+  MAD
+
+  """Mongolian Tugrik."""
+  MNT
+
+  """Mozambican Metical."""
+  MZN
+
+  """Namibian Dollar."""
+  NAD
+
+  """Nepalese Rupee (NPR)."""
+  NPR
+
+  """Netherlands Antillean Guilder."""
+  ANG
+
+  """New Zealand Dollars (NZD)."""
+  NZD
+
+  """Nicaraguan Córdoba (NIO)."""
+  NIO
+
+  """Nigerian Naira (NGN)."""
+  NGN
+
+  """Norwegian Kroner (NOK)."""
+  NOK
+
+  """Omani Rial (OMR)."""
+  OMR
+
+  """Panamian Balboa (PAB)."""
+  PAB
+
+  """Pakistani Rupee (PKR)."""
+  PKR
+
+  """Papua New Guinean Kina (PGK)."""
+  PGK
+
+  """Paraguayan Guarani (PYG)."""
+  PYG
+
+  """Peruvian Nuevo Sol (PEN)."""
+  PEN
+
+  """Philippine Peso (PHP)."""
+  PHP
+
+  """Polish Zlotych (PLN)."""
+  PLN
+
+  """Qatari Rial (QAR)."""
+  QAR
+
+  """Romanian Lei (RON)."""
+  RON
+
+  """Russian Rubles (RUB)."""
+  RUB
+
+  """Rwandan Franc (RWF)."""
+  RWF
+
+  """Samoan Tala (WST)."""
+  WST
+
+  """Saint Helena Pounds (SHP)."""
+  SHP
+
+  """Saudi Riyal (SAR)."""
+  SAR
+
+  """Serbian dinar (RSD)."""
+  RSD
+
+  """Seychellois Rupee (SCR)."""
+  SCR
+
+  """Sierra Leonean Leone (SLL)."""
+  SLL
+
+  """Singapore Dollars (SGD)."""
+  SGD
+
+  """Sudanese Pound (SDG)."""
+  SDG
+
+  """Somali Shilling (SOS)."""
+  SOS
+
+  """Syrian Pound (SYP)."""
+  SYP
+
+  """South African Rand (ZAR)."""
   ZAR
 
-  """
-  Zambian Kwacha (ZMW).
-  """
+  """South Korean Won (KRW)."""
+  KRW
+
+  """South Sudanese Pound (SSP)."""
+  SSP
+
+  """Solomon Islands Dollar (SBD)."""
+  SBD
+
+  """Sri Lankan Rupees (LKR)."""
+  LKR
+
+  """Surinamese Dollar (SRD)."""
+  SRD
+
+  """Swazi Lilangeni (SZL)."""
+  SZL
+
+  """Swedish Kronor (SEK)."""
+  SEK
+
+  """Swiss Francs (CHF)."""
+  CHF
+
+  """Taiwan Dollars (TWD)."""
+  TWD
+
+  """Thai baht (THB)."""
+  THB
+
+  """Tajikistani Somoni (TJS)."""
+  TJS
+
+  """Tanzanian Shilling (TZS)."""
+  TZS
+
+  """Tongan Pa'anga (TOP)."""
+  TOP
+
+  """Trinidad and Tobago Dollars (TTD)."""
+  TTD
+
+  """Tunisian Dinar (TND)."""
+  TND
+
+  """Turkish Lira (TRY)."""
+  TRY
+
+  """Turkmenistani Manat (TMT)."""
+  TMT
+
+  """Ugandan Shilling (UGX)."""
+  UGX
+
+  """Ukrainian Hryvnia (UAH)."""
+  UAH
+
+  """United Arab Emirates Dirham (AED)."""
+  AED
+
+  """Uruguayan Pesos (UYU)."""
+  UYU
+
+  """Uzbekistan som (UZS)."""
+  UZS
+
+  """Vanuatu Vatu (VUV)."""
+  VUV
+
+  """Venezuelan Bolivares Soberanos (VES)."""
+  VES
+
+  """Vietnamese đồng (VND)."""
+  VND
+
+  """West African CFA franc (XOF)."""
+  XOF
+
+  """Yemeni Rial (YER)."""
+  YER
+
+  """Zambian Kwacha (ZMW)."""
   ZMW
+
+  """United States Dollars Coin (USDC)."""
+  USDC
+
+  """Belarusian Ruble (BYR)."""
+  BYR @deprecated(reason: "Use `BYN` instead.")
+
+  """Sao Tome And Principe Dobra (STD)."""
+  STD @deprecated(reason: "Use `STN` instead.")
+
+  """Sao Tome And Principe Dobra (STN)."""
+  STN
+
+  """Venezuelan Bolivares (VED)."""
+  VED
+
+  """Venezuelan Bolivares (VEF)."""
+  VEF @deprecated(reason: "Use `VES` instead.")
+
+  """Unrecognized currency."""
+  XXX
 }
 
 """
@@ -2602,9 +1719,7 @@ For example, you can use a custom product to manage gift cards, shipping require
 information, or weight measurements and conversions.
 """
 type CustomProduct {
-  """
-  Whether the merchandise is a gift card.
-  """
+  """Whether the merchandise is a gift card."""
   isGiftCard: Boolean!
 
   """
@@ -2626,9 +1741,7 @@ type CustomProduct {
   """
   weight: Float
 
-  """
-  The unit of measurement for weight.
-  """
+  """The unit of measurement for weight."""
   weightUnit: WeightUnit!
 }
 
@@ -2644,20 +1757,21 @@ type Customer implements HasMetafields {
   amountSpent: MoneyV2!
 
   """
+  The date and time ([ISO 8601 format](http://en.wikipedia.org/wiki/ISO_8601)) at which the customer was created in Shopify.
+  """
+  createdAt: DateTime!
+
+  """
   The full name of the customer, based on the values for `firstName` and `lastName`.
   If `firstName` and `lastName` aren't specified, then the value is the customer's email address.
   If the email address isn't specified, then the value is the customer's phone number.
   """
   displayName: String!
 
-  """
-  The customer's email address.
-  """
+  """The customer's email address."""
   email: String
 
-  """
-  The customer's first name.
-  """
+  """The customer's first name."""
   firstName: String
 
   """
@@ -2672,9 +1786,7 @@ type Customer implements HasMetafields {
     tags: [String!]! = []
   ): Boolean!
 
-  """
-  Whether the customer is associated with the specified tags.
-  """
+  """Whether the customer is associated with the specified tags."""
   hasTags(
     """
     A comma-separated list of searchable keywords that are associated with the customer. For example,
@@ -2689,9 +1801,7 @@ type Customer implements HasMetafields {
   """
   id: ID!
 
-  """
-  The customer's last name.
-  """
+  """The customer's last name."""
   lastName: String
 
   """
@@ -2703,72 +1813,46 @@ type Customer implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
-  """
-  The total number of orders that the customer has made at the store.
-  """
+  """The total number of orders that the customer has made at the store."""
   numberOfOrders: Int!
 }
 
-"""
-Represents an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)-encoded date string.
-For example, September 7, 2019 is represented as `"2019-07-16"`.
-"""
+"Represents an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)-encoded date string.\nFor example, September 7, 2019 is represented as `\"2019-07-16\"`.\n"
 scalar Date
 
-"""
-Represents an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)-encoded date and time string.
-For example, 3:50 pm on September 7, 2019 in the time zone of UTC (Coordinated Universal Time) is
-represented as `"2019-09-07T15:50:00Z`".
-"""
+"Represents an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)-encoded date and time string.\nFor example, 3:50 pm on September 7, 2019 in the time zone of UTC (Coordinated Universal Time) is\nrepresented as `\"2019-09-07T15:50:00Z`\".\n"
 scalar DateTime
 
-"""
-A subset of the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format that
-includes the date and time but not the timezone which is determined from context.
-
-For example, "2018-01-01T00:00:00".
-"""
+"A subset of the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format that includes the date and time but not the timezone which is determined from context.\n\nFor example, \"2018-01-01T00:00:00\".\n"
 scalar DateTimeWithoutTimezone
 
-"""
-A signed decimal number, which supports arbitrary precision and is serialized as a string.
-
-Example values: `"29.99"`, `"29.999"`.
-"""
+"A signed decimal number, which supports arbitrary precision and is serialized as a string.\n\nExample values: `\"29.99\"`, `\"29.999\"`.\n"
 scalar Decimal
 
-"""
-The discount application and the amount applied.
-"""
+"""The discount application and the amount applied."""
 type DiscountAllocation {
-  """
-  The discount that was applied.
-  """
+  """The discount that was applied."""
   discountApplication: DiscountApplication!
 
-  """
-  The amount that was discounted.
-  """
+  """The amount that was discounted."""
   discountedAmount: MoneyV2!
 }
 
-"""
-Discount that has been applied to the cart.
-"""
+"""Discount that has been applied to the cart."""
 type DiscountApplication implements HasMetafields {
   """
   The method by which the discount's value is allocated to its entitled items.
@@ -2784,23 +1868,21 @@ type DiscountApplication implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
-  """
-  The lines on the cart targeted by the discount.
-  """
+  """The lines on the cart targeted by the discount."""
   targetSelection: DiscountApplicationTargetSelection!
 
   """
@@ -2808,14 +1890,10 @@ type DiscountApplication implements HasMetafields {
   """
   targetType: DiscountApplicationTarget!
 
-  """
-  The total allocated amount of the discount across all items.
-  """
+  """The total allocated amount of the discount across all items."""
   totalAllocatedAmount: MoneyV2!
 
-  """
-  The value of the discount.
-  """
+  """The value of the discount."""
   value: PricingValue!
 }
 
@@ -2823,29 +1901,19 @@ type DiscountApplication implements HasMetafields {
 The method by which the discount's value is allocated onto its entitled lines.
 """
 enum DiscountApplicationAllocationMethod {
-  """
-  The value is spread across all entitled lines.
-  """
+  """The value is spread across all entitled lines."""
   ACROSS
 
-  """
-  The value is applied onto every entitled line.
-  """
+  """The value is applied onto every entitled line."""
   EACH
 }
 
-"""
-The type of line on an order that the discount is applicable towards.
-"""
+"""The type of line on an order that the discount is applicable towards."""
 enum DiscountApplicationTarget {
-  """
-  The discount applies onto line items.
-  """
+  """The discount applies onto line items."""
   LINE_ITEM
 
-  """
-  The discount applies onto shipping lines.
-  """
+  """The discount applies onto shipping lines."""
   SHIPPING_LINE
 }
 
@@ -2856,19 +1924,13 @@ the discount application's `targetType`. For example, the value `ENTITLED`, comb
 The value `ALL`, combined with a `targetType` of `SHIPPING_LINE`, applies the discount on all shipping lines.
 """
 enum DiscountApplicationTargetSelection {
-  """
-  The discount is allocated onto all the lines.
-  """
+  """The discount is allocated onto all the lines."""
   ALL
 
-  """
-  The discount is allocated onto only the lines that it's entitled for.
-  """
+  """The discount is allocated onto only the lines that it's entitled for."""
   ENTITLED
 
-  """
-  The discount is allocated onto explicitly chosen lines.
-  """
+  """The discount is allocated onto explicitly chosen lines."""
   EXPLICIT
 }
 
@@ -2893,12 +1955,6 @@ input ExpandOperation {
   expandedCartItems: [ExpandedItem!]!
 
   """
-  The image that replaces the existing image for the group of cart line items.
-  The image must have a publicly accessible URL.
-  """
-  image: ImageInput
-
-  """
   A change to the original price of a group of items. Price adjustments include discounts or additional charges that
   affect the final price the customer pays. Price adjustments are often used for promotions, special offers,
   or any price changes that the customer qualifies for.
@@ -2910,6 +1966,12 @@ input ExpandOperation {
   If you don't provide a title, then the title of the product variant is used.
   """
   title: String
+
+  """
+  The image that replaces the existing image for the group of cart line items.
+  The image must have a publicly accessible URL.
+  """
+  image: ImageInput
 }
 
 """
@@ -2919,17 +1981,16 @@ bundle is a group of products that are sold together as a single unit.
 """
 input ExpandedItem {
   """
-  The custom attributes associated with a cart line to store additional information. Cart attributes
-  allow you to collect specific information from customers on the **Cart** page, such as order notes,
-  gift wrapping requests, or custom product details. Attributes are stored as key-value pairs.
-  """
-  attributes: [AttributeOutput!] = []
-
-  """
   A [globally-unique ID](https://shopify.dev/docs/api/usage/gids)
   for the product variant that represents the expanded item.
   """
   merchandiseId: ID!
+
+  """
+  The quantity of the expanded item. The maximum quantity is
+  2000.
+  """
+  quantity: Int!
 
   """
   A change to the original price of the expanded item. Price adjustments include discounts or additional charges that
@@ -2939,15 +2000,14 @@ input ExpandedItem {
   price: ExpandedItemPriceAdjustment
 
   """
-  The quantity of the expanded item. The maximum quantity is
-  2000.
+  The custom attributes associated with a cart line to store additional information. Cart attributes
+  allow you to collect specific information from customers on the **Cart** page, such as order notes,
+  gift wrapping requests, or custom product details. Attributes are stored as key-value pairs.
   """
-  quantity: Int!
+  attributes: [AttributeOutput!] = []
 }
 
-"""
-A fixed price per unit adjustment to apply to the expanded item.
-"""
+"""A fixed price per unit adjustment to apply to the expanded item."""
 input ExpandedItemFixedPricePerUnitAdjustment {
   """
   The fixed price amount per quantity of the expanded item in presentment currency.
@@ -2961,19 +2021,13 @@ affect the final price the customer pays. Price adjustments are often used for p
 or any price changes that the customer qualifies for.
 """
 input ExpandedItemPriceAdjustment {
-  """
-  The value of the price adjustment to apply to the expanded item.
-  """
+  """The value of the price adjustment to apply to the expanded item."""
   adjustment: ExpandedItemPriceAdjustmentValue!
 }
 
-"""
-A price adjustment to apply to a cart line.
-"""
-input ExpandedItemPriceAdjustmentValue @oneOf {
-  """
-  A fixed price per unit adjustment to apply to the expanded item.
-  """
+"""A price adjustment to apply to a cart line."""
+input ExpandedItemPriceAdjustmentValue {
+  """A fixed price per unit adjustment to apply to the expanded item."""
   fixedPricePerUnit: ExpandedItemFixedPricePerUnitAdjustment
 }
 
@@ -3007,11 +2061,7 @@ input FunctionRunResult {
   operations: [CartOperation!]!
 }
 
-"""
-A function-scoped handle to a refer a resource.
-The Handle type appears in a JSON response as a String, but it is not intended to be human-readable.
-Example value: `"10079785100"`
-"""
+"A function-scoped handle to a refer a resource.\nThe Handle type appears in a JSON response as a String, but it is not intended to be human-readable.\nExample value: `\"10079785100\"`\n"
 scalar Handle
 
 """
@@ -3027,18 +2077,18 @@ interface HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 }
 
@@ -3046,9 +2096,7 @@ interface HasMetafields {
 Whether a Shopify resource, such as a product or customer, has a specified tag.
 """
 type HasTagResponse {
-  """
-  Whether the Shopify resource has the tag.
-  """
+  """Whether the Shopify resource has the tag."""
   hasTag: Boolean!
 
   """
@@ -3060,21 +2108,11 @@ type HasTagResponse {
 }
 
 """
-Represents a unique identifier, often used to refetch an object.
-The ID type appears in a JSON response as a String, but it is not intended to be human-readable.
-
-Example value: `"gid://shopify/Product/10079785100"`
-"""
-scalar ID
-
-"""
 An image that replaces the existing image for a single cart line item or group of cart line items.
 The image must have a publicly accessible URL.
 """
 input ImageInput {
-  """
-  The URL of the image.
-  """
+  """The URL of the image."""
   url: URL!
 }
 
@@ -3117,21 +2155,7 @@ type Input {
   shop: Shop!
 }
 
-"""
-A [JSON](https://www.json.org/json-en.html) object.
-
-Example value:
-`{
-  "product": {
-    "id": "gid://shopify/Product/1346443542550",
-    "title": "White T-shirt",
-    "options": [{
-      "name": "Size",
-      "values": ["M", "L"]
-    }]
-  }
-}`
-"""
+"A [JSON](https://www.json.org/json-en.html) object.\n\nExample value:\n`{\n  \"product\": {\n    \"id\": \"gid://shopify/Product/1346443542550\",\n    \"title\": \"White T-shirt\",\n    \"options\": [{\n      \"name\": \"Size\",\n      \"values\": [\"M\", \"L\"]\n    }]\n  }\n}`\n"
 scalar JSON
 
 """
@@ -3139,720 +2163,434 @@ The language for which the store is customized, ensuring content is tailored to 
 This includes product descriptions and customer communications that resonate with the target audience.
 """
 type Language {
-  """
-  The ISO code.
-  """
+  """The ISO code."""
   isoCode: LanguageCode!
 }
 
-"""
-Language codes supported by Shopify.
-"""
+"""Language codes supported by Shopify."""
 enum LanguageCode {
-  """
-  Afrikaans.
-  """
+  """Afrikaans."""
   AF
 
-  """
-  Akan.
-  """
+  """Akan."""
   AK
 
-  """
-  Amharic.
-  """
+  """Amharic."""
   AM
 
-  """
-  Arabic.
-  """
+  """Arabic."""
   AR
 
-  """
-  Assamese.
-  """
+  """Assamese."""
   AS
 
-  """
-  Azerbaijani.
-  """
+  """Azerbaijani."""
   AZ
 
-  """
-  Belarusian.
-  """
+  """Belarusian."""
   BE
 
-  """
-  Bulgarian.
-  """
+  """Bulgarian."""
   BG
 
-  """
-  Bambara.
-  """
+  """Bambara."""
   BM
 
-  """
-  Bangla.
-  """
+  """Bangla."""
   BN
 
-  """
-  Tibetan.
-  """
+  """Tibetan."""
   BO
 
-  """
-  Breton.
-  """
+  """Breton."""
   BR
 
-  """
-  Bosnian.
-  """
+  """Bosnian."""
   BS
 
-  """
-  Catalan.
-  """
+  """Catalan."""
   CA
 
-  """
-  Chechen.
-  """
+  """Chechen."""
   CE
 
-  """
-  Central Kurdish.
-  """
+  """Central Kurdish."""
   CKB
 
-  """
-  Czech.
-  """
+  """Czech."""
   CS
 
-  """
-  Church Slavic.
-  """
-  CU
-
-  """
-  Welsh.
-  """
+  """Welsh."""
   CY
 
-  """
-  Danish.
-  """
+  """Danish."""
   DA
 
-  """
-  German.
-  """
+  """German."""
   DE
 
-  """
-  Dzongkha.
-  """
+  """Dzongkha."""
   DZ
 
-  """
-  Ewe.
-  """
+  """Ewe."""
   EE
 
-  """
-  Greek.
-  """
+  """Greek."""
   EL
 
-  """
-  English.
-  """
+  """English."""
   EN
 
-  """
-  Esperanto.
-  """
+  """Esperanto."""
   EO
 
-  """
-  Spanish.
-  """
+  """Spanish."""
   ES
 
-  """
-  Estonian.
-  """
+  """Estonian."""
   ET
 
-  """
-  Basque.
-  """
+  """Basque."""
   EU
 
-  """
-  Persian.
-  """
+  """Persian."""
   FA
 
-  """
-  Fulah.
-  """
+  """Fulah."""
   FF
 
-  """
-  Finnish.
-  """
+  """Finnish."""
   FI
 
-  """
-  Filipino.
-  """
+  """Filipino."""
   FIL
 
-  """
-  Faroese.
-  """
+  """Faroese."""
   FO
 
-  """
-  French.
-  """
+  """French."""
   FR
 
-  """
-  Western Frisian.
-  """
+  """Western Frisian."""
   FY
 
-  """
-  Irish.
-  """
+  """Irish."""
   GA
 
-  """
-  Scottish Gaelic.
-  """
+  """Scottish Gaelic."""
   GD
 
-  """
-  Galician.
-  """
+  """Galician."""
   GL
 
-  """
-  Gujarati.
-  """
+  """Gujarati."""
   GU
 
-  """
-  Manx.
-  """
+  """Manx."""
   GV
 
-  """
-  Hausa.
-  """
+  """Hausa."""
   HA
 
-  """
-  Hebrew.
-  """
+  """Hebrew."""
   HE
 
-  """
-  Hindi.
-  """
+  """Hindi."""
   HI
 
-  """
-  Croatian.
-  """
+  """Croatian."""
   HR
 
-  """
-  Hungarian.
-  """
+  """Hungarian."""
   HU
 
-  """
-  Armenian.
-  """
+  """Armenian."""
   HY
 
-  """
-  Interlingua.
-  """
+  """Interlingua."""
   IA
 
-  """
-  Indonesian.
-  """
+  """Indonesian."""
   ID
 
-  """
-  Igbo.
-  """
+  """Igbo."""
   IG
 
-  """
-  Sichuan Yi.
-  """
+  """Sichuan Yi."""
   II
 
-  """
-  Icelandic.
-  """
+  """Icelandic."""
   IS
 
-  """
-  Italian.
-  """
+  """Italian."""
   IT
 
-  """
-  Japanese.
-  """
+  """Japanese."""
   JA
 
-  """
-  Javanese.
-  """
+  """Javanese."""
   JV
 
-  """
-  Georgian.
-  """
+  """Georgian."""
   KA
 
-  """
-  Kikuyu.
-  """
+  """Kikuyu."""
   KI
 
-  """
-  Kazakh.
-  """
+  """Kazakh."""
   KK
 
-  """
-  Kalaallisut.
-  """
+  """Kalaallisut."""
   KL
 
-  """
-  Khmer.
-  """
+  """Khmer."""
   KM
 
-  """
-  Kannada.
-  """
+  """Kannada."""
   KN
 
-  """
-  Korean.
-  """
+  """Korean."""
   KO
 
-  """
-  Kashmiri.
-  """
+  """Kashmiri."""
   KS
 
-  """
-  Kurdish.
-  """
+  """Kurdish."""
   KU
 
-  """
-  Cornish.
-  """
+  """Cornish."""
   KW
 
-  """
-  Kyrgyz.
-  """
+  """Kyrgyz."""
   KY
 
-  """
-  Luxembourgish.
-  """
+  """Luxembourgish."""
   LB
 
-  """
-  Ganda.
-  """
+  """Ganda."""
   LG
 
-  """
-  Lingala.
-  """
+  """Lingala."""
   LN
 
-  """
-  Lao.
-  """
+  """Lao."""
   LO
 
-  """
-  Lithuanian.
-  """
+  """Lithuanian."""
   LT
 
-  """
-  Luba-Katanga.
-  """
+  """Luba-Katanga."""
   LU
 
-  """
-  Latvian.
-  """
+  """Latvian."""
   LV
 
-  """
-  Malagasy.
-  """
+  """Malagasy."""
   MG
 
-  """
-  Māori.
-  """
+  """Māori."""
   MI
 
-  """
-  Macedonian.
-  """
+  """Macedonian."""
   MK
 
-  """
-  Malayalam.
-  """
+  """Malayalam."""
   ML
 
-  """
-  Mongolian.
-  """
+  """Mongolian."""
   MN
 
-  """
-  Marathi.
-  """
+  """Marathi."""
   MR
 
-  """
-  Malay.
-  """
+  """Malay."""
   MS
 
-  """
-  Maltese.
-  """
+  """Maltese."""
   MT
 
-  """
-  Burmese.
-  """
+  """Burmese."""
   MY
 
-  """
-  Norwegian (Bokmål).
-  """
+  """Norwegian (Bokmål)."""
   NB
 
-  """
-  North Ndebele.
-  """
+  """North Ndebele."""
   ND
 
-  """
-  Nepali.
-  """
+  """Nepali."""
   NE
 
-  """
-  Dutch.
-  """
+  """Dutch."""
   NL
 
-  """
-  Norwegian Nynorsk.
-  """
+  """Norwegian Nynorsk."""
   NN
 
-  """
-  Norwegian.
-  """
+  """Norwegian."""
   NO
 
-  """
-  Oromo.
-  """
+  """Oromo."""
   OM
 
-  """
-  Odia.
-  """
+  """Odia."""
   OR
 
-  """
-  Ossetic.
-  """
+  """Ossetic."""
   OS
 
-  """
-  Punjabi.
-  """
+  """Punjabi."""
   PA
 
-  """
-  Polish.
-  """
+  """Polish."""
   PL
 
-  """
-  Pashto.
-  """
+  """Pashto."""
   PS
 
-  """
-  Portuguese.
-  """
-  PT
-
-  """
-  Portuguese (Brazil).
-  """
+  """Portuguese (Brazil)."""
   PT_BR
 
-  """
-  Portuguese (Portugal).
-  """
+  """Portuguese (Portugal)."""
   PT_PT
 
-  """
-  Quechua.
-  """
+  """Quechua."""
   QU
 
-  """
-  Romansh.
-  """
+  """Romansh."""
   RM
 
-  """
-  Rundi.
-  """
+  """Rundi."""
   RN
 
-  """
-  Romanian.
-  """
+  """Romanian."""
   RO
 
-  """
-  Russian.
-  """
+  """Russian."""
   RU
 
-  """
-  Kinyarwanda.
-  """
+  """Kinyarwanda."""
   RW
 
-  """
-  Sanskrit.
-  """
+  """Sanskrit."""
   SA
 
-  """
-  Sardinian.
-  """
+  """Sardinian."""
   SC
 
-  """
-  Sindhi.
-  """
+  """Sindhi."""
   SD
 
-  """
-  Northern Sami.
-  """
+  """Northern Sami."""
   SE
 
-  """
-  Sango.
-  """
+  """Sango."""
   SG
 
-  """
-  Sinhala.
-  """
+  """Sinhala."""
   SI
 
-  """
-  Slovak.
-  """
+  """Slovak."""
   SK
 
-  """
-  Slovenian.
-  """
+  """Slovenian."""
   SL
 
-  """
-  Shona.
-  """
+  """Shona."""
   SN
 
-  """
-  Somali.
-  """
+  """Somali."""
   SO
 
-  """
-  Albanian.
-  """
+  """Albanian."""
   SQ
 
-  """
-  Serbian.
-  """
+  """Serbian."""
   SR
 
-  """
-  Sundanese.
-  """
+  """Sundanese."""
   SU
 
-  """
-  Swedish.
-  """
+  """Swedish."""
   SV
 
-  """
-  Swahili.
-  """
+  """Swahili."""
   SW
 
-  """
-  Tamil.
-  """
+  """Tamil."""
   TA
 
-  """
-  Telugu.
-  """
+  """Telugu."""
   TE
 
-  """
-  Tajik.
-  """
+  """Tajik."""
   TG
 
-  """
-  Thai.
-  """
+  """Thai."""
   TH
 
-  """
-  Tigrinya.
-  """
+  """Tigrinya."""
   TI
 
-  """
-  Turkmen.
-  """
+  """Turkmen."""
   TK
 
-  """
-  Tongan.
-  """
+  """Tongan."""
   TO
 
-  """
-  Turkish.
-  """
+  """Turkish."""
   TR
 
-  """
-  Tatar.
-  """
+  """Tatar."""
   TT
 
-  """
-  Uyghur.
-  """
+  """Uyghur."""
   UG
 
-  """
-  Ukrainian.
-  """
+  """Ukrainian."""
   UK
 
-  """
-  Urdu.
-  """
+  """Urdu."""
   UR
 
-  """
-  Uzbek.
-  """
+  """Uzbek."""
   UZ
 
-  """
-  Vietnamese.
-  """
+  """Vietnamese."""
   VI
 
-  """
-  Volapük.
-  """
-  VO
-
-  """
-  Wolof.
-  """
+  """Wolof."""
   WO
 
-  """
-  Xhosa.
-  """
+  """Xhosa."""
   XH
 
-  """
-  Yiddish.
-  """
+  """Yiddish."""
   YI
 
-  """
-  Yoruba.
-  """
+  """Yoruba."""
   YO
 
-  """
-  Chinese.
-  """
-  ZH
-
-  """
-  Chinese (Simplified).
-  """
+  """Chinese (Simplified)."""
   ZH_CN
 
-  """
-  Chinese (Traditional).
-  """
+  """Chinese (Traditional)."""
   ZH_TW
 
-  """
-  Zulu.
-  """
+  """Zulu."""
   ZU
+
+  """Chinese."""
+  ZH
+
+  """Portuguese."""
+  PT
+
+  """Church Slavic."""
+  CU
+
+  """Volapük."""
+  VO
 }
 
 """
@@ -3876,12 +2614,6 @@ input LineExpandOperation {
   expandedCartItems: [ExpandedItem!]!
 
   """
-  The image that replaces the existing image for the group of cart line items.
-  The image must have a publicly accessible URL.
-  """
-  image: ImageInput
-
-  """
   A change to the original price of a group of items. Price adjustments include discounts or additional charges that
   affect the final price the customer pays. Price adjustments are often used for promotions, special offers,
   or any price changes that the customer qualifies for.
@@ -3893,6 +2625,12 @@ input LineExpandOperation {
   If you don't provide a title, then the title of the product variant is used.
   """
   title: String
+
+  """
+  The image that replaces the existing image for the group of cart line items.
+  The image must have a publicly accessible URL.
+  """
+  image: ImageInput
 }
 
 """
@@ -3910,6 +2648,12 @@ input LineUpdateOperation {
   cartLineId: ID!
 
   """
+  The title that replaces the existing title for the cart line item.
+  If you don't provide a title, then the title of the product variant is used.
+  """
+  title: String
+
+  """
   The image that replaces the existing image for the cart line item.
   The image must have a publicly accessible URL.
   This image is visible in checkout only and is not persisted to orders.
@@ -3922,17 +2666,9 @@ input LineUpdateOperation {
   for which the customer qualifies.
   """
   price: LineUpdateOperationPriceAdjustment
-
-  """
-  The title that replaces the existing title for the cart line item.
-  If you don't provide a title, then the title of the product variant is used.
-  """
-  title: String
 }
 
-"""
-A fixed price per unit adjustment to apply to a cart line.
-"""
+"""A fixed price per unit adjustment to apply to a cart line."""
 input LineUpdateOperationFixedPricePerUnitAdjustment {
   """
   The fixed price amount per quantity of the cart line item in presentment currency.
@@ -3946,19 +2682,13 @@ price the customer pays. Price adjustments are often used for promotions, specia
 for which the customer qualifies.
 """
 input LineUpdateOperationPriceAdjustment {
-  """
-  The price adjustment per unit to apply to the cart line item.
-  """
+  """The price adjustment per unit to apply to the cart line item."""
   adjustment: LineUpdateOperationPriceAdjustmentValue!
 }
 
-"""
-The value of the price adjustment to apply to the updated item.
-"""
-input LineUpdateOperationPriceAdjustmentValue @oneOf {
-  """
-  A fixed price per unit adjustment to apply to a cart line.
-  """
+"""The value of the price adjustment to apply to the updated item."""
+input LineUpdateOperationPriceAdjustmentValue {
+  """A fixed price per unit adjustment to apply to a cart line."""
   fixedPricePerUnit: LineUpdateOperationFixedPricePerUnitAdjustment
 }
 
@@ -3969,6 +2699,18 @@ single line, representing a
 of components.
 """
 input LinesMergeOperation {
+  """
+  The [globally-unique ID](https://shopify.dev/docs/api/usage/gids)
+  of the product variant that represents the collection of cart line items.
+  """
+  parentVariantId: ID!
+
+  """
+  The title that replaces the existing title for a group of cart line items.
+  If you don't provide a title, then the title of the parent variant is used.
+  """
+  title: String
+
   """
   The custom attributes associated with a cart line to store additional information. Cart attributes
   allow you to collect specific information from customers on the **Cart** page, such as order notes,
@@ -3983,18 +2725,6 @@ input LinesMergeOperation {
   cartLines: [CartLineInput!]!
 
   """
-  The image that replaces the existing image for the group of cart line items.
-  The image must have a publicly accessible URL.
-  """
-  image: ImageInput
-
-  """
-  The [globally-unique ID](https://shopify.dev/docs/api/usage/gids)
-  of the product variant that represents the collection of cart line items.
-  """
-  parentVariantId: ID!
-
-  """
   A change to the original price of a group of items. Price adjustments include discounts or additional charges that
   affect the final price the customer pays. Price adjustments are often used for promotions, special offers,
   or any price changes that the customer qualifies for.
@@ -4002,10 +2732,10 @@ input LinesMergeOperation {
   price: PriceAdjustment
 
   """
-  The title that replaces the existing title for a group of cart line items.
-  If you don't provide a title, then the title of the parent variant is used.
+  The image that replaces the existing image for the group of cart line items.
+  The image must have a publicly accessible URL.
   """
-  title: String
+  image: ImageInput
 }
 
 """
@@ -4013,9 +2743,7 @@ The current time based on the
 [store's timezone setting](https://help.shopify.com/manual/intro-to-shopify/initial-setup/setup-business-settings).
 """
 type LocalTime {
-  """
-  The current date relative to the parent object.
-  """
+  """The current date relative to the parent object."""
   date: Date!
 
   """
@@ -4043,14 +2771,14 @@ type LocalTime {
   """
   dateTimeBetween(
     """
-    The upper bound time to compare against, assumed to be in the timezone of the parent timezone.
-    """
-    endDateTime: DateTimeWithoutTimezone!
-
-    """
     The lower bound time to compare against, assumed to be in the timezone of the parent timezone.
     """
     startDateTime: DateTimeWithoutTimezone!
+
+    """
+    The upper bound time to compare against, assumed to be in the timezone of the parent timezone.
+    """
+    endDateTime: DateTimeWithoutTimezone!
   ): Boolean!
 
   """
@@ -4078,14 +2806,14 @@ type LocalTime {
   """
   timeBetween(
     """
-    The upper bound time to compare against, assumed to be in the timezone of the parent timezone.
-    """
-    endTime: TimeWithoutTimezone!
-
-    """
     The lower bound time to compare against, assumed to be in the timezone of the parent timezone.
     """
     startTime: TimeWithoutTimezone!
+
+    """
+    The upper bound time to compare against, assumed to be in the timezone of the parent timezone.
+    """
+    endTime: TimeWithoutTimezone!
   ): Boolean!
 }
 
@@ -4109,29 +2837,19 @@ type Localization {
   """
   language: Language!
 
-  """
-  The market of the active localized experience.
-  """
+  """The market of the active localized experience."""
   market: Market! @deprecated(reason: "This `market` field will be removed in a future version of the API.")
 }
 
-"""
-Represents the location where the inventory resides.
-"""
+"""Represents the location where the inventory resides."""
 type Location implements HasMetafields {
-  """
-  The address of this location.
-  """
+  """The address of this location."""
   address: LocationAddress!
 
-  """
-  The location handle.
-  """
+  """The location handle."""
   handle: Handle!
 
-  """
-  The location id.
-  """
+  """The location id."""
   id: ID!
 
   """
@@ -4143,78 +2861,54 @@ type Location implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
-  """
-  The name of the location.
-  """
+  """The name of the location."""
   name: String!
 }
 
-"""
-Represents the address of a location.
-"""
+"""Represents the address of a location."""
 type LocationAddress {
-  """
-  The first line of the address for the location.
-  """
+  """The first line of the address for the location."""
   address1: String
 
-  """
-  The second line of the address for the location.
-  """
+  """The second line of the address for the location."""
   address2: String
 
-  """
-  The city of the location.
-  """
+  """The city of the location."""
   city: String
 
-  """
-  The country of the location.
-  """
+  """The country of the location."""
   country: String
 
-  """
-  The country code of the location.
-  """
+  """The country code of the location."""
   countryCode: String
 
-  """
-  A formatted version of the address for the location.
-  """
+  """A formatted version of the address for the location."""
   formatted: [String!]!
 
-  """
-  The approximate latitude coordinates of the location.
-  """
+  """The approximate latitude coordinates of the location."""
   latitude: Float
 
-  """
-  The approximate longitude coordinates of the location.
-  """
+  """The approximate longitude coordinates of the location."""
   longitude: Float
 
-  """
-  The phone number of the location.
-  """
+  """The phone number of the location."""
   phone: String
 
-  """
-  The province of the location.
-  """
+  """The province of the location."""
   province: String
 
   """
@@ -4222,15 +2916,11 @@ type LocationAddress {
   """
   provinceCode: String
 
-  """
-  The ZIP code of the location.
-  """
+  """The ZIP code of the location."""
   zip: String
 }
 
-"""
-Represents a mailing address.
-"""
+"""Represents a mailing address."""
 type MailingAddress {
   """
   The first line of the address. Typically the street address or PO Box number.
@@ -4242,49 +2932,31 @@ type MailingAddress {
   """
   address2: String
 
-  """
-  The name of the city, district, village, or town.
-  """
+  """The name of the city, district, village, or town."""
   city: String
 
-  """
-  The name of the customer's company or organization.
-  """
+  """The name of the customer's company or organization."""
   company: String
 
-  """
-  The two-letter code for the country of the address. For example, US.
-  """
+  """The two-letter code for the country of the address. For example, US."""
   countryCode: CountryCode
 
-  """
-  The first name of the customer.
-  """
+  """The first name of the customer."""
   firstName: String
 
-  """
-  The last name of the customer.
-  """
+  """The last name of the customer."""
   lastName: String
 
-  """
-  The approximate latitude of the address.
-  """
+  """The approximate latitude of the address."""
   latitude: Float
 
-  """
-  The approximate longitude of the address.
-  """
+  """The approximate longitude of the address."""
   longitude: Float
 
-  """
-  The market of the address.
-  """
+  """The market of the address."""
   market: Market @deprecated(reason: "This `market` field will be removed in a future version of the API.")
 
-  """
-  The full name of the customer, based on firstName and lastName.
-  """
+  """The full name of the customer, based on firstName and lastName."""
   name: String
 
   """
@@ -4292,14 +2964,10 @@ type MailingAddress {
   """
   phone: String
 
-  """
-  The alphanumeric code for the region. For example, ON.
-  """
+  """The alphanumeric code for the region. For example, ON."""
   provinceCode: String
 
-  """
-  The zip or postal code of the address.
-  """
+  """The zip or postal code of the address."""
   zip: String
 }
 
@@ -4317,9 +2985,7 @@ type Market implements HasMetafields {
   """
   handle: Handle!
 
-  """
-  A globally-unique identifier.
-  """
+  """A globally-unique identifier."""
   id: ID!
 
   """
@@ -4331,48 +2997,36 @@ type Market implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
-  """
-  A geographic region which comprises a market.
-  """
+  """A geographic region which comprises a market."""
   regions: [MarketRegion!]!
 }
 
-"""
-Represents a region.
-"""
+"""Represents a region."""
 interface MarketRegion {
-  """
-  The name of the region in the language of the current localization.
-  """
+  """The name of the region in the language of the current localization."""
   name: String
 }
 
-"""
-A country which comprises a market.
-"""
+"""A country which comprises a market."""
 type MarketRegionCountry implements MarketRegion {
-  """
-  The two-letter code for the country.
-  """
+  """The two-letter code for the country."""
   code: CountryCode!
 
-  """
-  The country name in the language of the current localization.
-  """
+  """The country name in the language of the current localization."""
   name: String!
 }
 
@@ -4399,6 +3053,18 @@ of components.
 """
 input MergeOperation {
   """
+  The [globally-unique ID](https://shopify.dev/docs/api/usage/gids)
+  of the product variant that represents the collection of cart line items.
+  """
+  parentVariantId: ID!
+
+  """
+  The title that replaces the existing title for a group of cart line items.
+  If you don't provide a title, then the title of the parent variant is used.
+  """
+  title: String
+
+  """
   The custom attributes associated with a cart line to store additional information. Cart attributes
   allow you to collect specific information from customers on the **Cart** page, such as order notes,
   gift wrapping requests, or custom product details. Attributes are stored as key-value pairs.
@@ -4412,18 +3078,6 @@ input MergeOperation {
   cartLines: [CartLineInput!]!
 
   """
-  The image that replaces the existing image for the group of cart line items.
-  The image must have a publicly accessible URL.
-  """
-  image: ImageInput
-
-  """
-  The [globally-unique ID](https://shopify.dev/docs/api/usage/gids)
-  of the product variant that represents the collection of cart line items.
-  """
-  parentVariantId: ID!
-
-  """
   A change to the original price of a group of items. Price adjustments include discounts or additional charges that
   affect the final price the customer pays. Price adjustments are often used for promotions, special offers,
   or any price changes that the customer qualifies for.
@@ -4431,10 +3085,10 @@ input MergeOperation {
   price: PriceAdjustment
 
   """
-  The title that replaces the existing title for a group of cart line items.
-  If you don't provide a title, then the title of the parent variant is used.
+  The image that replaces the existing image for the group of cart line items.
+  The image must have a publicly accessible URL.
   """
-  title: String
+  image: ImageInput
 }
 
 """
@@ -4445,9 +3099,7 @@ Using [metafields with Shopify Functions](https://shopify.dev/docs/apps/build/fu
 enables you to customize the checkout experience.
 """
 type Metafield {
-  """
-  The data that's stored in the metafield, using JSON format.
-  """
+  """The data that's stored in the metafield, using JSON format."""
   jsonValue: JSON!
 
   """
@@ -4471,40 +3123,26 @@ type Metaobject {
   The field for an object key, or null if the key has no field definition.
   """
   field(
-    """
-    The metaobject key to access.
-    """
+    """The metaobject key to access."""
     key: String!
   ): MetaobjectField
 
-  """
-  The unique handle of the metaobject, useful as a custom ID.
-  """
+  """The unique handle of the metaobject, useful as a custom ID."""
   handle: String!
 
-  """
-  The type of the metaobject.
-  """
+  """The type of the metaobject."""
   type: String!
 }
 
-"""
-Provides a field definition and the data value assigned to it.
-"""
+"""Provides a field definition and the data value assigned to it."""
 type MetaobjectField {
-  """
-  The assigned field value in JSON format.
-  """
+  """The assigned field value in JSON format."""
   jsonValue: JSON
 
-  """
-  The object key of this field.
-  """
+  """The object key of this field."""
   key: String!
 
-  """
-  The type of the field.
-  """
+  """The type of the field."""
   type: String!
 
   """
@@ -4513,25 +3151,19 @@ type MetaobjectField {
   value: String
 }
 
-"""
-The input fields for retrieving a metaobject by handle.
-"""
+"""The input fields for retrieving a metaobject by handle."""
 input MetaobjectHandleInput {
-  """
-  The handle of the metaobject to retrieve.
-  """
-  handle: String!
-
   """
   The type of the metaobject. Must match an existing metaobject definition type.
   """
   type: String!
+
+  """The handle of the metaobject to retrieve."""
+  handle: String!
 }
 
 """
-A precise monetary value and its associated currency. Combines a decimal amount
-with a three-letter currency code to express prices, costs, and other financial
-values throughout the API. For example, 12.99 USD.
+A precise monetary value and its associated currency. Combines a decimal amount with a three-letter currency code to express prices, costs, and other financial values throughout the API. For example, 12.99 USD.
 """
 type MoneyV2 {
   """
@@ -4548,27 +3180,17 @@ type MoneyV2 {
   currencyCode: CurrencyCode!
 }
 
-"""
-The root mutation for the API.
-"""
+"""The root mutation for the API."""
 type MutationRoot {
-  """
-  Handles the Function result for the cart.transform.run target.
-  """
+  """Handles the Function result for the cart.transform.run target."""
   cartTransformRun(
-    """
-    The result of the Function.
-    """
+    """The result of the Function."""
     result: CartTransformRunResult!
   ): Void!
 
-  """
-  Handles the Function result.
-  """
+  """Handles the Function result."""
   handleResult(
-    """
-    The result of the Function.
-    """
+    """The result of the Function."""
     result: FunctionResult!
   ): Void! @deprecated(reason: "Use the target-specific field instead.")
 
@@ -4576,9 +3198,7 @@ type MutationRoot {
   Handles the Function result for the purchase.cart-transform.run target.
   """
   run(
-    """
-    The result of the Function.
-    """
+    """The result of the Function."""
     result: FunctionRunResult!
   ): Void!
 }
@@ -4589,7 +3209,7 @@ its [bundled items](https://shopify.dev/docs/apps/build/product-merchandising/bu
 multiple cart lines into a single line representing a bundle, and update the presentation of line items
 in the cart to override their price, title, or image.
 """
-input Operation @oneOf {
+input Operation {
   """
   An operation that expands a single cart line item to form a
   [bundle](https://shopify.dev/docs/apps/build/product-merchandising/bundles)
@@ -4598,20 +3218,20 @@ input Operation @oneOf {
   lineExpand: LineExpandOperation
 
   """
-  An operation that allows you to override the price, title,
-  and image of a cart line item. Only stores on a
-  [Shopify Plus plan](https://help.shopify.com/manual/intro-to-shopify/pricing-plans/plans-features/shopify-plus-plan)
-  can use apps with `update` operations.
-  """
-  lineUpdate: LineUpdateOperation
-
-  """
   An operation that merges multiple cart line items into a
   single line, representing a
   [bundle](https://shopify.dev/docs/apps/build/product-merchandising/bundles)
   of components.
   """
   linesMerge: LinesMergeOperation
+
+  """
+  An operation that allows you to override the price, title,
+  and image of a cart line item. Only stores on a
+  [Shopify Plus plan](https://help.shopify.com/manual/intro-to-shopify/pricing-plans/plans-features/shopify-plus-plan)
+  can use apps with `update` operations.
+  """
+  lineUpdate: LineUpdateOperation
 }
 
 """
@@ -4620,32 +3240,22 @@ affect the final price the customer pays. Price adjustments are often used for p
 or any price changes that the customer qualifies for.
 """
 input PriceAdjustment {
-  """
-  The percentage price decrease of the price adjustment.
-  """
+  """The percentage price decrease of the price adjustment."""
   percentageDecrease: PriceAdjustmentValue
 }
 
 input PriceAdjustmentValue {
-  """
-  The value of the price adjustment.
-  """
+  """The value of the price adjustment."""
   value: Decimal!
 }
 
-"""
-The percentage value of a discount.
-"""
+"""The percentage value of a discount."""
 type PricingPercentageValue {
-  """
-  The percentage value of the discount.
-  """
+  """The percentage value of the discount."""
   value: Decimal!
 }
 
-"""
-The price value for a discount application.
-"""
+"""The price value for a discount application."""
 union PricingValue = MoneyV2 | PricingPercentageValue
 
 """
@@ -4675,9 +3285,7 @@ type Product implements HasMetafields {
     tags: [String!]! = []
   ): Boolean!
 
-  """
-  Whether the product is associated with the specified tags.
-  """
+  """Whether the product is associated with the specified tags."""
   hasTags(
     """
     A comma-separated list of searchable keywords that are associated with the product. For example,
@@ -4695,7 +3303,7 @@ type Product implements HasMetafields {
   """
   Whether the product is in any of the specified collections. The product must be in at least one collection
   from the list to return `true`.
-
+  
   A collection is a group of products that can be displayed in online stores and other sales channels in
   categories, which makes it easy for customers to find them. For example, an athletics store might create
   different collections for running attire and accessories.
@@ -4711,7 +3319,7 @@ type Product implements HasMetafields {
   """
   Whether the product is in the specified collections. The product must be in all of the collections in the
   list to return `true`.
-
+  
   A collection is a group of products that can be displayed in online stores and other sales channels in
   categories, which makes it easy for customers to find them. For example, an athletics store might create
   different collections for running attire and accessories.
@@ -4724,9 +3332,7 @@ type Product implements HasMetafields {
     ids: [ID!]! = []
   ): [CollectionMembership!]!
 
-  """
-  Whether the product is a gift card.
-  """
+  """Whether the product is a gift card."""
   isGiftCard: Boolean!
 
   """
@@ -4738,18 +3344,18 @@ type Product implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
   """
@@ -4766,9 +3372,7 @@ type Product implements HasMetafields {
   """
   title: String!
 
-  """
-  The name of the product's vendor.
-  """
+  """The name of the product's vendor."""
   vendor: String
 }
 
@@ -4788,7 +3392,7 @@ type ProductVariant implements HasMetafields {
   Whether the product variant is in any of the specified collections. The variant must be in at least one
   collection from the list to return `true`. A variant is considered to be in a collection when the variant
   itself is a member of the collection, or when its product is a member of the collection.
-
+  
   A collection is a group of products that can be displayed in online stores and other sales channels in
   categories, which makes it easy for customers to find them. For example, an athletics store might create
   different collections for running attire and accessories.
@@ -4805,7 +3409,7 @@ type ProductVariant implements HasMetafields {
   Whether the product variant is in each of the specified collections. A variant is considered to be in a
   collection when the variant itself is a member of the collection, or when its product is a member of the
   collection.
-
+  
   A collection is a group of products that can be displayed in online stores and other sales channels in
   categories, which makes it easy for customers to find them. For example, an athletics store might create
   different collections for running attire and accessories.
@@ -4827,18 +3431,18 @@ type ProductVariant implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
   """
@@ -4863,9 +3467,7 @@ type ProductVariant implements HasMetafields {
   """
   sku: String
 
-  """
-  The localized name for the product variant that displays to customers.
-  """
+  """The localized name for the product variant that displays to customers."""
   title: String
 
   """
@@ -4873,9 +3475,7 @@ type ProductVariant implements HasMetafields {
   """
   weight: Float
 
-  """
-  The unit of measurement for weight.
-  """
+  """The unit of measurement for weight."""
   weightUnit: WeightUnit!
 }
 
@@ -4884,34 +3484,22 @@ The company of a B2B customer that's interacting with the cart.
 Used to manage and track purchases made by businesses rather than individual customers.
 """
 type PurchasingCompany {
-  """
-  The company associated to the order or draft order.
-  """
+  """The company associated to the order or draft order."""
   company: Company!
 
-  """
-  The company contact associated to the order or draft order.
-  """
+  """The company contact associated to the order or draft order."""
   contact: CompanyContact
 
-  """
-  The company location associated to the order or draft order.
-  """
+  """The company location associated to the order or draft order."""
   location: CompanyLocation!
 }
 
-"""
-Represents how products and variants can be sold and purchased.
-"""
+"""Represents how products and variants can be sold and purchased."""
 type SellingPlan implements HasMetafields {
-  """
-  The description of the selling plan.
-  """
+  """The description of the selling plan."""
   description: String
 
-  """
-  A globally-unique identifier.
-  """
+  """A globally-unique identifier."""
   id: ID!
 
   """
@@ -4923,18 +3511,18 @@ type SellingPlan implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
   """
@@ -4949,25 +3537,16 @@ type SellingPlan implements HasMetafields {
 }
 
 """
-Represents an association between a variant and a selling plan. Selling plan
-allocations describe the options offered for each variant, and the price of the
-variant when purchased with a selling plan.
+Represents an association between a variant and a selling plan. Selling plan allocations describe the options offered for each variant, and the price of the variant when purchased with a selling plan.
 """
 type SellingPlanAllocation {
   """
-  A list of price adjustments, with a maximum of two. When there are two, the
-  first price adjustment goes into effect at the time of purchase, while the
-  second one starts after a certain number of orders. A price adjustment
-  represents how a selling plan affects pricing when a variant is purchased with
-  a selling plan. Prices display in the customer's currency if the shop is
-  configured for it.
+  A list of price adjustments, with a maximum of two. When there are two, the first price adjustment goes into effect at the time of purchase, while the second one starts after a certain number of orders. A price adjustment represents how a selling plan affects pricing when a variant is purchased with a selling plan. Prices display in the customer's currency if the shop is configured for it.
   """
   priceAdjustments: [SellingPlanAllocationPriceAdjustment!]!
 
   """
-  A representation of how products and variants can be sold and purchased. For
-  example, an individual selling plan could be '6 weeks of prepaid granola,
-  delivered weekly'.
+  A representation of how products and variants can be sold and purchased. For example, an individual selling plan could be '6 weeks of prepaid granola, delivered weekly'.
   """
   sellingPlan: SellingPlan!
 }
@@ -4977,16 +3556,12 @@ The resulting prices for variants when they're purchased with a specific selling
 """
 type SellingPlanAllocationPriceAdjustment {
   """
-  The effective price for a single delivery. For example, for a prepaid
-  subscription plan that includes 6 deliveries at the price of $48.00, the per
-  delivery price is $8.00.
+  The effective price for a single delivery. For example, for a prepaid subscription plan that includes 6 deliveries at the price of $48.00, the per delivery price is $8.00.
   """
   perDeliveryPrice: MoneyV2!
 
   """
-  The price of the variant when it's purchased with a selling plan For example,
-  for a prepaid subscription plan that includes 6 deliveries of $10.00 granola,
-  where the customer gets 20% off, the price is 6 x $10.00 x 0.80 = $48.00.
+  The price of the variant when it's purchased with a selling plan For example, for a prepaid subscription plan that includes 6 deliveries of $10.00 granola, where the customer gets 20% off, the price is 6 x $10.00 x 0.80 = $48.00.
   """
   price: MoneyV2!
 }
@@ -5011,33 +3586,28 @@ type Shop implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 
   """
-  Fetch a specific Metaobject by one of its unique identifiers. Only app-owned
-  metaobjects with the $app reserved prefix are accessible to functions.
+  Fetch a specific Metaobject by one of its unique identifiers. Only app-owned metaobjects with the $app reserved prefix are accessible to functions.
   """
   metaobject(
-    """
-    The handle and type of the metaobject.
-    """
+    """The handle and type of the metaobject."""
     handle: MetaobjectHandleInput
 
-    """
-    The ID of the metaobject.
-    """
+    """The ID of the metaobject."""
     id: ID
   ): Metaobject
 }
@@ -5055,35 +3625,25 @@ type ShopUser implements HasMetafields {
   """
   metafield(
     """
-    The unique identifier for the metafield within its namespace. A metafield is composed of a
-    namespace and a key, in the format `namespace.key`.
-    """
-    key: String!
-
-    """
     A category that organizes a group of metafields. Namespaces are used to prevent naming conflicts
     between different apps or different parts of the same app. If omitted, then the
     [app-reserved namespace](https://shopify.dev/docs/apps/build/custom-data/ownership)
     is used.
     """
     namespace: String
+
+    """
+    The unique identifier for the metafield within its namespace. A metafield is composed of a
+    namespace and a key, in the format `namespace.key`.
+    """
+    key: String!
   ): Metafield
 }
 
-"""
-A subset of the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format that
-includes the time but not the date or timezone which is determined from context.
-For example, "05:43:21".
-"""
+"A subset of the [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format that includes the time but not the date or timezone which is determined from context.\nFor example, \"05:43:21\".\n"
 scalar TimeWithoutTimezone
 
-"""
-Represents an [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and
-[RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987)-compliant URI string.
-
-For example, `"https://example.myshopify.com"` is a valid URL. It includes a scheme (`https`) and a host
-(`example.myshopify.com`).
-"""
+"Represents an [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and\n[RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987)-compliant URI string.\n\nFor example, `\"https://example.myshopify.com\"` is a valid URL. It includes a scheme (`https`) and a host\n(`example.myshopify.com`).\n"
 scalar URL
 
 """
@@ -5101,6 +3661,12 @@ input UpdateOperation {
   cartLineId: ID!
 
   """
+  The title that replaces the existing title for the cart line item.
+  If you don't provide a title, then the title of the product variant is used.
+  """
+  title: String
+
+  """
   The image that replaces the existing image for the cart line item.
   The image must have a publicly accessible URL.
   """
@@ -5112,17 +3678,9 @@ input UpdateOperation {
   for which the customer qualifies.
   """
   price: UpdateOperationPriceAdjustment
-
-  """
-  The title that replaces the existing title for the cart line item.
-  If you don't provide a title, then the title of the product variant is used.
-  """
-  title: String
 }
 
-"""
-A fixed price per unit adjustment to apply to a cart line.
-"""
+"""A fixed price per unit adjustment to apply to a cart line."""
 input UpdateOperationFixedPricePerUnitAdjustment {
   """
   The fixed price amount per quantity of the cart line item in presentment currency.
@@ -5136,48 +3694,30 @@ price the customer pays. Price adjustments are often used for promotions, specia
 for which the customer qualifies.
 """
 input UpdateOperationPriceAdjustment {
-  """
-  The price adjustment per unit to apply to the cart line item.
-  """
+  """The price adjustment per unit to apply to the cart line item."""
   adjustment: UpdateOperationPriceAdjustmentValue!
 }
 
-"""
-The value of the price adjustment to apply to the updated item.
-"""
-input UpdateOperationPriceAdjustmentValue @oneOf {
-  """
-  A fixed price per unit adjustment to apply to a cart line.
-  """
+"""The value of the price adjustment to apply to the updated item."""
+input UpdateOperationPriceAdjustmentValue {
+  """A fixed price per unit adjustment to apply to a cart line."""
   fixedPricePerUnit: UpdateOperationFixedPricePerUnitAdjustment
 }
 
-"""
-A void type that can be used to return a null value from a mutation.
-"""
+"""A void type that can be used to return a null value from a mutation."""
 scalar Void
 
-"""
-Units of measurement for weight.
-"""
+"""Units of measurement for weight."""
 enum WeightUnit {
-  """
-  Metric system unit of mass.
-  """
-  GRAMS
-
-  """
-  1 kilogram equals 1000 grams.
-  """
+  """1 kilogram equals 1000 grams."""
   KILOGRAMS
 
-  """
-  Imperial system unit of mass.
-  """
-  OUNCES
+  """Metric system unit of mass."""
+  GRAMS
 
-  """
-  1 pound equals 16 ounces.
-  """
+  """1 pound equals 16 ounces."""
   POUNDS
+
+  """Imperial system unit of mass."""
+  OUNCES
 }

@@ -19,27 +19,11 @@
   width: 100%;
 }
 
-.sb-component-list {
-  overflow: hidden;
-  border: 1px solid #d5d7da;
-  border-radius: 12px;
-  background: #fff;
-}
-
-.sb-component-list:empty {
-  display: none;
-}
-
-.sb-component ~ .sb-component {
-  border-top: 1px solid #e1e3e5;
-}
-
 .sb-component-header {
-  --sb-component-image-size: 64px;
   position: relative;
   display: grid;
   box-sizing: border-box;
-  grid-template-columns: 28px var(--sb-component-image-size) minmax(0, 1fr) 32px;
+  grid-template-columns: 28px auto minmax(0, 1fr) 40px;
   grid-template-areas:
     "drag image heading remove"
     "drag image controls controls";
@@ -51,8 +35,6 @@
 .sb-component-image {
   grid-area: image;
   align-self: start;
-  display: grid;
-  place-items: center;
   min-width: 0;
 }
 
@@ -71,12 +53,6 @@
   overflow-wrap: anywhere;
 }
 
-.sb-component-price {
-  color: #616161;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-
 .sb-drag-handle {
   grid-area: drag;
   display: grid;
@@ -86,7 +62,7 @@
   padding: 0;
   border: 0;
   place-items: center;
-  color: #616161;
+  color: inherit;
   background: transparent;
   cursor: grab;
   touch-action: none;
@@ -97,7 +73,7 @@
 }
 
 .sb-drag-handle:focus-visible {
-  outline: 2px solid #005bd3;
+  outline: 2px solid currentColor;
   outline-offset: 2px;
 }
 
@@ -105,59 +81,13 @@
   position: relative;
   z-index: 3;
   opacity: 0.92;
-  background: #fff;
   box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
 }
 
-.sb-product-thumbnail,
-.sb-product-thumbnail-fallback {
-  box-sizing: border-box;
-  width: var(--sb-component-image-size);
-  height: var(--sb-component-image-size);
-  border: 1px solid #e1e3e5;
-  border-radius: 9px;
-  object-fit: contain;
-  background: #f6f6f7;
-}
-
-.sb-product-thumbnail-fallback {
-  display: grid;
-  place-items: center;
-  color: #6d7175;
-}
-
-.sb-component-summary {
-  color: #616161;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.sb-component-summary-critical {
-  color: #8e1f0b;
-}
-
 .sb-component-remove-action {
-  position: absolute;
-  inset-block-start: 2px;
-  inset-inline-end: 4px;
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-}
-
-.sb-replacement {
-  display: grid;
-  gap: 6px;
-  max-width: 420px;
-}
-
-.sb-replacement select {
-  min-height: 42px;
-  border: 1px solid #8c9196;
-  border-radius: 8px;
-  padding: 0 10px;
-  background: #fff;
+  grid-area: remove;
+  align-self: start;
+  justify-self: end;
 }
 
 @container (max-width: 520px) {
@@ -171,7 +101,7 @@
 
 @container (max-width: 380px) {
   .sb-component-header {
-    grid-template-columns: 24px var(--sb-component-image-size) minmax(0, 1fr) 32px;
+    grid-template-columns: 24px auto minmax(0, 1fr) 40px;
     gap: 6px 10px;
     padding: 8px 10px;
   }

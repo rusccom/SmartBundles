@@ -7,7 +7,7 @@ export interface BundleComponentRemoveActionProps {
 export function BundleComponentRemoveAction(props: BundleComponentRemoveActionProps) {
   const label = `Remove ${props.productTitle}`;
   return <div className="sb-component-remove-action">
-    <s-button variant="tertiary" tone="critical" icon="x"
+    <s-button variant="tertiary" icon="x"
       accessibilityLabel={label} onClick={() => props.onRemove(props.index)} />
   </div>;
 }

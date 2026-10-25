@@ -20,13 +20,13 @@ export function BundleSortableList({ controller, currencyCode, locale }: BundleS
   return <DndContext sensors={dnd.sensors} collisionDetection={closestCenter}
     accessibility={accessibility} onDragEnd={dnd.onDragEnd}>
     <SortableContext items={items} strategy={verticalListSortingStrategy}>
-      <div className="sb-component-list">{selectors.map((selector, index) =>
+      {selectors.length ? <s-box border="base" borderRadius="base" overflow="hidden">{selectors.map((selector, index) =>
         <BundleComponentCard key={selector.key} selector={selector} index={index}
           currencyCode={currencyCode} locale={locale}
           discountDisabled={controller.draft.pricingMode === "FIXED"}
           onOption={controller.option} onQuantity={controller.quantity}
           onDiscount={controller.discount} onRemove={controller.remove} />
-      )}</div>
+      )}</s-box> : null}
     </SortableContext>
   </DndContext>;
 }

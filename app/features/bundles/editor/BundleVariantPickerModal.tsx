@@ -10,9 +10,9 @@ export function BundleVariantPickerModal(props: BundleVariantPickerModalProps) {
   const heading = `Variants · ${props.selector.productTitle}`;
   return <s-modal id={props.modalId} heading={heading} accessibilityLabel={heading} size="base">
     <div className="sb-variant-picker">
-      <p className="sb-variant-picker-summary" aria-live="polite">
+      <s-paragraph color="subdued">
         {selectedCount} of {props.selector.options.length} variants selected. Select the variants customers can choose.
-      </p>
+      </s-paragraph>
       <BundleComponentDetails {...props} detailsId={`${props.modalId}-options`} />
     </div>
     <s-button slot="primary-action" variant="primary" command="--hide"
