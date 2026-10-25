@@ -17,7 +17,7 @@ type SetDraft = React.Dispatch<React.SetStateAction<BundleEditorDraft>>;
 
 export function useBundleDraftActions(setDraft: SetDraft, selectors: EditorSelector[]) {
   const setSelectors = useSelectorSetter(setDraft);
-  const addComponent = useProductPicker(selectors, setSelectors);
+  const picker = useProductPicker(selectors, setSelectors);
   const patch = useCallback((value: Partial<BundleEditorDraft>) =>
     setDraft((current) => ({ ...current, ...value })), [setDraft]);
   const remove = useCallback((index: number) => setSelectors((items) =>
@@ -30,7 +30,7 @@ export function useBundleDraftActions(setDraft: SetDraft, selectors: EditorSelec
     setSelectors((items) => setSelectorQuantity(items, index, value)), [setSelectors]);
   const discount = useCallback((index: number, value: string) =>
     setSelectors((items) => setSelectorDiscount(items, index, value)), [setSelectors]);
-  return { patch, addComponent, remove, reorder, options, quantity, discount,
+  return { patch, ...picker, remove, reorder, options, quantity, discount,
     changePricingMode: usePricingModeChange(setDraft) };
 }
 

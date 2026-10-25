@@ -28,7 +28,7 @@ function controllerValue(
   const submit = () => submitDraft(canonical, transport);
   const discard = () => discardDraft(canonical, transport);
   return {
-    draft: canonical.draft, dirty, busy: transport.saving, saving: transport.saving,
+    draft: canonical.draft, dirty, busy: transport.saving || actions.selectingProducts, saving: transport.saving,
     errors: transport.feedback?.errors ?? {},
     message: transport.feedback?.message, messageTone: "critical" as const,
     issue: transport.feedback?.issue, submit, discard, ...actions,

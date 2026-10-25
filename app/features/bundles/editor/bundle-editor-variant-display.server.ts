@@ -1,7 +1,7 @@
 import type { BundleSelectorInput } from "../bundle.types";
 import type { AdminClient } from "../../shopify/admin-api.server";
 import { adminRequest } from "../../shopify/admin-api.server";
-import type { EditorSelector } from "./editor.types";
+import type { EditorProductCatalog, EditorSelector } from "./editor.types";
 
 const PRODUCT_BATCH_SIZE = 10;
 
@@ -73,6 +73,15 @@ export async function hydrateEditorSelectors(admin: AdminClient, selectors: Bund
 export async function loadShopCurrencyCode(admin: AdminClient): Promise<string> {
   const result = await adminRequest<ShopCurrencyQuery>(admin, SHOP_CURRENCY_QUERY);
   return result.shop.currencyCode;
+}
+
+export async function loadEditorProductCatalog(admin: AdminClient, ids: string[]): Promise<EditorProductCatalog[]> {
+  const products = await loadProducts(admin, ids);
+  if (products.size !== ids.length) throw new Error("A selected component product no longer exists.");
+  return [...products.values()].map((product) => ({
+    id: product.id, title: product.title, imageUrl: product.imageUrl,
+    options: product.variants.map((variant) => editorOption(variant, false, product.imageUrl)),
+  }));
 }
 
 async function loadProducts(admin: AdminClient, ids: string[]): Promise<Map<string, EditorProduct>> {

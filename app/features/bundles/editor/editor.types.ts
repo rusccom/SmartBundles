@@ -7,6 +7,13 @@ export interface EditorOption extends BundleVariantInput {
   allowed: boolean;
 }
 
+export interface EditorProductCatalog {
+  id: string;
+  title: string;
+  imageUrl?: string;
+  options: EditorOption[];
+}
+
 export interface EditorSelector extends Omit<BundleSelectorInput, "options"> {
   productImageUrl?: string;
   productMissing?: boolean;
