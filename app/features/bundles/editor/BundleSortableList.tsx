@@ -24,7 +24,7 @@ export function BundleSortableList({ controller, currencyCode, locale }: BundleS
         <BundleComponentCard key={selector.key} selector={selector} index={index}
           currencyCode={currencyCode} locale={locale}
           discountDisabled={controller.draft.pricingMode === "FIXED"}
-          onOption={controller.option} onQuantity={controller.quantity}
+          onOptions={controller.options} onQuantity={controller.quantity}
           onDiscount={controller.discount} onRemove={controller.remove} />
       )}</s-box> : null}
     </SortableContext>

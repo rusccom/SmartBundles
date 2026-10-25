@@ -1,8 +1,9 @@
 import type { BundleComponentCardProps } from "./BundleComponentCard";
 import { BundleVariantOptionRow } from "./BundleVariantOptionRow";
 
-export interface BundleComponentDetailsProps extends BundleComponentCardProps {
+export interface BundleComponentDetailsProps extends Pick<BundleComponentCardProps, "selector" | "currencyCode" | "locale"> {
   detailsId: string;
+  onOption: (id: string) => void;
 }
 
 export function BundleComponentDetails(props: BundleComponentDetailsProps) {
@@ -13,7 +14,7 @@ export function BundleComponentDetails(props: BundleComponentDetailsProps) {
       <legend>Allowed variants</legend>
       {props.selector.options.map((option) => <BundleVariantOptionRow key={option.id} option={option}
         currencyCode={props.currencyCode} locale={props.locale} discountPercent={props.selector.discountPercent}
-        onToggle={(id) => props.onOption(props.index, id)} />)}
+        onToggle={props.onOption} />)}
     </fieldset>
     {selectedCount === 0 ? <s-banner id={errorId} tone="critical">
       Select at least one available variant.

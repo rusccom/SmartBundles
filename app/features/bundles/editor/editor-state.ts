@@ -45,11 +45,11 @@ export function reorderSelectors(items: EditorSelector[], activeKey: number, ove
   return next;
 }
 
-export function toggleSelectorOption(items: EditorSelector[], index: number, id: string) {
+export function setSelectorOptions(items: EditorSelector[], index: number, ids: string[]) {
+  const selected = new Set(ids);
   return items.map((selector, current) =>
-    current === index && !isSimpleBundleComponent(selector)
-      ? { ...selector, options: selector.options.map((option) =>
-        option.id === id ? { ...option, allowed: !option.allowed } : option) }
+    current === index
+      ? { ...selector, options: selector.options.map((option) => ({ ...option, allowed: selected.has(option.id) })) }
       : selector);
 }
 

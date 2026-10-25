@@ -4,7 +4,7 @@ import {
   reorderSelectors,
   setSelectorDiscount,
   setSelectorQuantity,
-  toggleSelectorOption,
+  setSelectorOptions,
 } from "./editor-state";
 import type {
   BundleEditorDraft,
@@ -23,13 +23,13 @@ export function useBundleDraftActions(
     items.filter((_, current) => current !== index)), [setSelectors]);
   const reorder = useCallback((active: number, over: number) =>
     setSelectors((items) => reorderSelectors(items, active, over)), [setSelectors]);
-  const option = useCallback((index: number, id: string) =>
-    setSelectors((items) => toggleSelectorOption(items, index, id)), [setSelectors]);
+  const options = useCallback((index: number, ids: string[]) =>
+    setSelectors((items) => setSelectorOptions(items, index, ids)), [setSelectors]);
   const quantity = useCallback((index: number, value: number) =>
     setSelectors((items) => setSelectorQuantity(items, index, value)), [setSelectors]);
   const discount = useCallback((index: number, value: string) =>
     setSelectors((items) => setSelectorDiscount(items, index, value)), [setSelectors]);
-  return { patch, addComponent, remove, reorder, option, quantity, discount,
+  return { patch, addComponent, remove, reorder, options, quantity, discount,
     changePricingMode: usePricingModeChange(setDraft) };
 }
 
