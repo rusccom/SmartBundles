@@ -39,7 +39,7 @@ async function storeIncident(error: unknown, input: ErrorReport): Promise<ErrorI
   };
   const fingerprint = incidentFingerprint(shopId, input, context);
   const incident = await prisma.errorIncident.upsert({
-    where: { fingerprint }, create: { fingerprint, ...values },
+    where: { fingerprint }, create: { fingerprint, ...values, firstSeenAt: values.lastSeenAt },
     update: { ...values, occurrences: { increment: 1 } },
   });
   return reopenIncident(incident);
