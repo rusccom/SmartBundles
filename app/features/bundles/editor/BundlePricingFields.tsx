@@ -7,17 +7,21 @@ export interface BundlePricingFieldsProps {
   controller: BundleEditorController;
 }
 
+const DYNAMIC_COLUMNS = '@container (inline-size >= 480px) "minmax(0, 1fr) minmax(112px, 1fr)", "minmax(0, 1fr)"';
+const FIXED_COLUMNS = '@container (inline-size >= 560px) "minmax(0, 2fr) repeat(2, minmax(112px, 1fr))", "minmax(0, 1fr)"';
+
 export function BundlePricingFields(props: BundlePricingFieldsProps) {
   const { controller } = props, { draft, errors } = controller;
   return <BundleEditorSection heading="Price">
-    {pricingModeControl(controller)}
-    {draft.pricingMode === "FIXED" ? fixedPriceControl(props) : null}
-    <BundleDiscountField value={draft.discountPercent} error={errors.discountPercent}
-      onChange={(discountPercent) => controller.patch({ discountPercent })} />
-    <s-paragraph>{pricingDescription(draft.pricingMode)}</s-paragraph>
+    <s-grid gap="base" alignItems="start"
+      gridTemplateColumns={draft.pricingMode === "FIXED" ? FIXED_COLUMNS : DYNAMIC_COLUMNS}>
+      {pricingModeControl(controller)}
+      {draft.pricingMode === "FIXED" ? fixedPriceControl(props) : null}
+      <BundleDiscountField value={draft.discountPercent} error={errors.discountPercent}
+        onChange={(discountPercent) => controller.patch({ discountPercent })} />
+    </s-grid>
   </BundleEditorSection>;
 }
-
 function pricingModeControl(controller: BundleEditorController) {
   const { draft, errors } = controller;
   return <s-select label="Pricing mode" value={draft.pricingMode} error={errors.pricingMode}
@@ -35,7 +39,3 @@ function fixedPriceControl(props: BundlePricingFieldsProps) {
     onInput={(event) => controller.patch({ fixedPrice: event.currentTarget.value })} />;
 }
 
-function pricingDescription(mode: "FIXED" | "DYNAMIC"): string {
-  if (mode === "FIXED") return "Selections do not change the customer total. Component discounts require dynamic pricing.";
-  return "Uses catalog prices in the store currency and Shopify's active currency rate; market price lists aren't applied.";
-}

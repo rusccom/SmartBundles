@@ -6,13 +6,15 @@ type HeadingLevel = typeof HEADING_LEVELS[number];
 
 export function DescriptionBlockSelect({ editor, disabled }: DescriptionControlProps) {
   const value = useEditorState({ editor, selector: ({ editor: current }) => activeBlock(current) }) ?? "p";
-  return <s-select label="Text style" labelAccessibilityVisibility="exclusive"
-    value={value} disabled={disabled || !editor}
-    onChange={(event) => editor && setBlock(editor, event.currentTarget.value)}>
-    <s-option value="p">Paragraph</s-option>
-    {HEADING_LEVELS.map((level) => <s-option key={level} value={`h${level}`}>Heading {level}</s-option>)}
-    <s-option value="blockquote">Blockquote</s-option>
-  </s-select>;
+  return <div className="sb-description-block-select">
+    <s-select label="Text style" labelAccessibilityVisibility="exclusive"
+      value={value} disabled={disabled || !editor}
+      onChange={(event) => editor && setBlock(editor, event.currentTarget.value)}>
+      <s-option value="p">Paragraph</s-option>
+      {HEADING_LEVELS.map((level) => <s-option key={level} value={`h${level}`}>Heading {level}</s-option>)}
+      <s-option value="blockquote">Blockquote</s-option>
+    </s-select>
+  </div>;
 }
 
 function activeBlock(editor: DescriptionEditorInstance | null): string {

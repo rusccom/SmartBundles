@@ -11,9 +11,11 @@
   align-items: center;
 }
 
-.sb-description-toolbar s-select {
-  max-width: 150px;
-  flex: 1 1 130px;
+.sb-description-block-select {
+  width: 140px;
+  max-width: 100%;
+  flex: 0 0 140px;
+  min-width: 0;
 }
 
 .sb-description-tool-group {
