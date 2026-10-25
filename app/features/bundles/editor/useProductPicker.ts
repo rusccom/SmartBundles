@@ -7,16 +7,24 @@ const MAX_SELECTORS = 150;
 export function useProductPicker(selectors: EditorSelector[], setSelectors: SetSelectors) {
   const shopify = useAppBridge();
   return useCallback(async () => {
-    const selectionIds = [...new Set(selectors.map(({ productId }) => productId))].map((id) => ({ id }));
+    const selectionIds = selectedResources(selectors);
     const selected = await shopify.resourcePicker({
       type: "product",
       action: "select",
       multiple: MAX_SELECTORS,
       selectionIds,
-      filter: { variants: false, query: selectableProductsQuery(selectionIds) },
+      filter: { variants: true, query: selectableProductsQuery(selectionIds) },
     });
     if (selected) setSelectors((current) => reconcileProducts(current, selected));
   }, [selectors, setSelectors, shopify]);
+}
+
+function selectedResources(selectors: EditorSelector[]) {
+  const products = selectors.map((selector) => ({
+    id: selector.productId,
+    variants: selector.options.filter(({ allowed }) => allowed).map(({ id }) => ({ id })),
+  }));
+  return [...new Map(products.map((product) => [product.id, product])).values()];
 }
 
 function selectableProductsQuery(selectionIds: Array<{ id: string }>): string {
@@ -26,12 +34,26 @@ function selectableProductsQuery(selectionIds: Array<{ id: string }>): string {
 
 function reconcileProducts(current: EditorSelector[], products: PickedProduct[]): EditorSelector[] {
   const remaining = new Map(products.map((product) => [product.id, product]));
-  const retained = current.filter(({ productId }) => remaining.delete(productId));
+  const retained = current.flatMap((selector) => {
+    const product = remaining.get(selector.productId);
+    if (!product) return [];
+    remaining.delete(selector.productId);
+    return [updateSelectedVariants(selector, product)];
+  });
   const availableSlots = Math.max(0, MAX_SELECTORS - retained.length);
   const firstKey = nextKey(current);
   const added = [...remaining.values()].slice(0, availableSlots)
     .map((product, index) => selectedProduct(product, firstKey + index));
   return [...retained, ...added];
+}
+
+function updateSelectedVariants(selector: EditorSelector, product: PickedProduct): EditorSelector {
+  const selectedIds = new Set(product.variants.map(({ id }) => id));
+  const existingIds = new Set(selector.options.map(({ id }) => id));
+  const retained = selector.options.map((option) => ({ ...option, allowed: selectedIds.has(option.id) }));
+  const added = product.variants.filter(({ id }) => id && !existingIds.has(id))
+    .flatMap((variant) => pickedOption(product, variant));
+  return { ...selector, options: [...retained, ...added] };
 }
 
 function nextKey(selectors: EditorSelector[]): number {
