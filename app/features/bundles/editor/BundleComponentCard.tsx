@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { BundleComponentHeader } from "./BundleComponentHeader";
 import { BundleDragHandle } from "./BundleDragHandle";
 import { BundleVariantPickerModal } from "./BundleVariantPickerModal";
+import { BundleComponentHealth } from "./BundleComponentHealth";
 import { isSimpleBundleComponent } from "./bundle-component-presentation";
 import type { EditorSelector } from "./editor.types";
 
@@ -29,6 +30,7 @@ export function BundleComponentCard(props: BundleComponentCardProps) {
     <article ref={setNodeRef} style={style} className={className}>
       <s-box background="base" borderColor="base" borderWidth={props.index ? "base none none" : "none"}>
         <BundleComponentHeader {...props} modalId={modalId} dragHandle={dragHandle} />
+        <BundleComponentHealth selector={props.selector} />
       </s-box>
     </article>
     {!isSimpleBundleComponent(props.selector)

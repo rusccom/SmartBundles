@@ -6,17 +6,28 @@ const DELETE_BATCH = 500;
 export interface RetentionSummary {
   webhooks: number;
   sessions: number;
+  errors: number;
 }
 
 export async function runRetentionMaintenance(): Promise<RetentionSummary> {
   const now = new Date();
   const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 60 * 60_000);
   const onlineCutoff = new Date(now.getTime() - 24 * 60 * 60_000);
-  const [webhooks, sessions] = await Promise.all([
+  const [webhooks, sessions, errors] = await Promise.all([
     deleteWebhookDeliveries(cutoff),
     deleteExpiredSessions(onlineCutoff, now),
+    deleteOldErrors(cutoff),
   ]);
-  return { webhooks, sessions };
+  return { webhooks, sessions, errors };
+}
+
+async function deleteOldErrors(cutoff: Date): Promise<number> {
+  const records = await prisma.errorIncident.findMany({
+    where: { status: { in: ["RESOLVED", "IGNORED"] }, lastSeenAt: { lt: cutoff } },
+    select: { id: true }, take: DELETE_BATCH,
+  });
+  if (!records.length) return 0;
+  return (await prisma.errorIncident.deleteMany({ where: { id: { in: records.map(({ id }) => id) } } })).count;
 }
 
 async function deleteWebhookDeliveries(cutoff: Date): Promise<number> {

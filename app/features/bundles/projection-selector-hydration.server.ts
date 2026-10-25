@@ -49,13 +49,25 @@ interface MediaNode { image?: { url: string } | null }
 
 interface VariantQuery { nodes: Array<VariantNode | null> }
 
+const PRODUCTS_QUERY = `#graphql
+  query SmartBundleComponentTitles($ids: [ID!]!) {
+    nodes(ids: $ids) { ... on Product { id title } }
+  }
+`;
+
+interface ProductsQuery { nodes: Array<{ id: string; title: string } | null> }
+
 export async function hydrateProjectionSelectors(
   admin: AdminClient,
   selectors: BundleSelectorInput[],
+  allowMissing = false,
 ): Promise<BundleSelectorInput[]> {
   const ids = [...new Set(selectors.flatMap(({ options }) => options.map(({ id }) => id)))];
   const variants = await loadVariants(admin, ids);
-  return selectors.map((selector) => hydratedSelector(selector, variants));
+  const productIds = [...new Set(selectors.map(({ productId }) => productId))];
+  const products = await adminRequest<ProductsQuery>(admin, PRODUCTS_QUERY, { ids: productIds });
+  const titles = new Map(products.nodes.flatMap((product) => product ? [[product.id, product.title] as const] : []));
+  return selectors.map((selector) => hydratedSelector(selector, { variants, titles, allowMissing }));
 }
 
 async function loadVariants(
@@ -69,11 +81,11 @@ async function loadVariants(
 
 function hydratedSelector(
   selector: BundleSelectorInput,
-  variants: Map<string, VariantNode>,
+  context: { variants: Map<string, VariantNode>; titles: Map<string, string>; allowMissing: boolean },
 ): BundleSelectorInput {
-  const options = selector.options.map(({ id }) => hydratedOption(id, selector.productId, variants));
-  const product = variants.get(options[0].id)?.product;
-  const productTitle = product?.title ?? selector.productTitle;
+  const source = context.allowMissing ? selector.options.filter(({ id }) => context.variants.has(id)) : selector.options;
+  const options = source.map(({ id }) => hydratedOption(id, selector.productId, context.variants));
+  const productTitle = context.titles.get(selector.productId) ?? "Unavailable product";
   return { ...selector, label: productTitle, productTitle, options };
 }
 

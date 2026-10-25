@@ -1,10 +1,8 @@
 import prisma from "../../db.server";
 import { unauthenticated } from "../../shopify.server";
 import { draftDeletedParents } from "../bundles/storefront/deleted-bundle.server";
-import {
-  draftBundle,
-  syncActiveBundle,
-} from "../bundles/bundle-projection.server";
+import { syncActiveBundle } from "../bundles/bundle-projection.server";
+import { errorManager } from "../errors/error-manager.server";
 
 export async function handleUninstalled(shop: string): Promise<void> {
   await prisma.$transaction([
@@ -33,8 +31,22 @@ export async function handleProductWebhook(
   const bundles = await relatedBundles(shop, productGid);
   if (!bundles.length) return;
   const { admin } = await unauthenticated.admin(shop);
-  const operation = deleted ? draftBundle : syncActiveBundle;
-  await Promise.all(bundles.map(({ id, shopId }) => operation(admin, shopId, id)));
+  const results = await Promise.allSettled(bundles.map((bundle) => syncRelatedBundle(admin, bundle)));
+  if (results.some(({ status }) => status === "rejected")) throw new Error("Some related bundles could not be synchronized.");
+}
+
+async function syncRelatedBundle(
+  admin: Awaited<ReturnType<typeof unauthenticated.admin>>["admin"],
+  bundle: { id: string; shopId: string },
+): Promise<void> {
+  try {
+    await syncActiveBundle(admin, bundle.shopId, bundle.id);
+    await errorManager.resolve(bundle.shopId, "BUNDLE_SYNC_FAILED", bundle.id);
+  } catch (error) {
+    await errorManager.report(error, { code: "BUNDLE_SYNC_FAILED", source: "bundle", shopId: bundle.shopId,
+      context: { bundleId: bundle.id } });
+    throw error;
+  }
 }
 
 function productId(payload: unknown): string | undefined {

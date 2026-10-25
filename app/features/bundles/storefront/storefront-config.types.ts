@@ -2,7 +2,7 @@ import type { StorefrontTexts } from "../../settings/storefront-text.types";
 import type { BundleSelectorInput } from "../bundle.types";
 
 export interface StorefrontSelector extends Pick<BundleSelectorInput,
-  "key" | "productId" | "quantity" | "discountPercent"> {
+  "key" | "productId" | "productTitle" | "quantity" | "discountPercent"> {
   options: Array<{ id: string }>;
 }
 

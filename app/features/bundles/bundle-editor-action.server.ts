@@ -24,6 +24,7 @@ import { validateContentPatch } from "./content/content-validation.server";
 import { updateProductContent } from "./content/shopify-product-content.server";
 import { saveBundleProductMedia } from "./content/shopify-product-media.server";
 import type { ShopifyProductImage } from "./content/content.types";
+import { errorManager } from "../errors/error-manager.server";
 
 interface ActionContext {
   admin: AdminClient;
@@ -45,6 +46,8 @@ export async function bundleEditorAction(request: Request, bundleId: string | nu
     const shopId = await getBundleShopId(session.shop);
     return await saveNew({ admin, shopId, shopDomain: session.shop, bundleId }, parsed.data);
   } catch (error) {
+    await errorManager.report(error, { code: "BUNDLE_SAVE_FAILED", source: "bundle", shopDomain: session.shop,
+      severity: error instanceof BundleComponentValidationError ? "warning" : "error", context: { bundleId: bundleId ?? undefined } });
     return knownError(error);
   }
 }

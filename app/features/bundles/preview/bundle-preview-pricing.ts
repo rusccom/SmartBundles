@@ -7,6 +7,7 @@ export function previewPricing(
   draft: BundleEditorDraft,
   currencyCode: string,
 ): PresentationPricing | null {
+  if (draft.pricingMode === "DYNAMIC") return { mode: "dynamic", currencyCode, discountPercent: draft.discountPercent };
   try {
     const prices = bundlePrice.calculate({ ...draft, selectors });
     return draft.pricingMode === "FIXED"

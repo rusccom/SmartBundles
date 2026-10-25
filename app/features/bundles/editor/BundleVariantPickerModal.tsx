@@ -16,6 +16,6 @@ export function BundleVariantPickerModal(props: BundleVariantPickerModalProps) {
       <BundleComponentDetails {...props} detailsId={`${props.modalId}-options`} />
     </div>
     <s-button slot="primary-action" variant="primary" command="--hide"
-      commandFor={props.modalId} disabled={!selectedCount}>Done</s-button>
+      commandFor={props.modalId}>Done</s-button>
   </s-modal>;
 }

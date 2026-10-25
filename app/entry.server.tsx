@@ -6,6 +6,7 @@ import { ServerRouter } from "react-router";
 import { isbot } from "isbot";
 import { startMaintenanceWorker } from "./features/operations/maintenance-worker.server";
 import { addDocumentResponseHeaders } from "./shopify.server";
+import { reportRequestError } from "./features/errors/request-error.server";
 
 startMaintenanceWorker();
 
@@ -66,5 +67,9 @@ function resolveStream(
 
 function recordRenderError(error: unknown, input: RenderInput): void {
   input.status = 500;
-  console.error(error);
+  reportRequestError(error, input.url);
+}
+
+export function handleError(error: unknown, { request }: { request: Request }): void {
+  if (!request.signal.aborted) reportRequestError(error, request.url);
 }

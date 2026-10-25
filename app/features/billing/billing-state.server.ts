@@ -9,6 +9,7 @@ import type {
 } from "./billing.types";
 import { fetchActiveSubscription } from "./partner-api.server";
 import { PartnerApiError } from "./partner-api-error";
+import { errorManager } from "../errors/error-manager.server";
 
 const NORMAL_CACHE_MS = 5 * 60_000;
 const QUOTA_CACHE_MS = 60_000;
@@ -58,6 +59,7 @@ async function verifyBilling(
     const saved = await saveEntitlement(shopId, values);
     return stateFromRecord(saved, "partner");
   } catch (error) {
+    await errorManager.report(error, { code: "BILLING_VERIFICATION_FAILED", source: "billing", shopId });
     const grace = graceState(previous, error, now);
     if (grace) return grace;
     const restricted = await restrictExpiredPro(shopId, previous, error, now);

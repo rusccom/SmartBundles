@@ -15,6 +15,10 @@ export function hydrateHost(host) {
   }
   Object.assign(host.dataset, markup.dataset);
   host.replaceChildren(markup.fragment);
+  if (config.selectors.some(({ options }) => !options.length)) {
+    host.ownerDocument.defaultView?.SmartBundleErrors?.report(
+      "BUNDLE_COMPONENT_VARIANTS_MISSING", config.texts.bundleUnavailable, { bundleId: config.b });
+  }
   return markup.status;
 }
 

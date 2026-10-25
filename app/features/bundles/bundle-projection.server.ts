@@ -18,6 +18,8 @@ import {
 import { hydrateProjectionSelectors } from "./projection-selector-hydration.server";
 import { variantReferenceFields } from "./storefront/variant-references.server";
 import { syncBundleMemberships } from "./storefront/bundle-membership.server";
+import { recordComponentHealth } from "./component-health.server";
+import { writeUnavailableProjection } from "./unavailable-projection.server";
 
 export async function syncActiveBundle(
   admin: AdminClient,
@@ -36,6 +38,10 @@ export async function syncBundlePresentation(
 ): Promise<void> {
   const bundle = await getBundleForProjection(shopId, bundleId);
   const draft = await projectionDraft(admin, bundle);
+  if (draft.selectors.some(({ options }) => !options.length)) {
+    await writeUnavailableProjection(admin, bundle, draft);
+    return recordComponentHealth(shopId, bundleId, draft.selectors);
+  }
   const projection = buildProjection(bundle, draft);
   await writeProductMetafields(
     admin, bundle.parentProductGid, [projection.presentation, ...variantReferenceFields(draft.selectors)],
@@ -48,7 +54,19 @@ async function writeProjection(
   submitted?: BundleDraftInput,
 ): Promise<void> {
   const draft = await projectionDraft(admin, bundle, submitted);
+  if (draft.selectors.some(({ options }) => !options.length)) {
+    await writeUnavailableProjection(admin, bundle, draft);
+    return recordComponentHealth(bundle.shopId, bundle.id, draft.selectors);
+  }
   const projection = buildProjection(bundle, draft);
+  await writeValidProjection(admin, bundle, draft, projection);
+  await recordComponentHealth(bundle.shopId, bundle.id, draft.selectors);
+}
+
+async function writeValidProjection(
+  admin: AdminClient, bundle: ProjectionBundle, draft: BundleDraftInput,
+  projection: ReturnType<typeof buildProjection>,
+): Promise<void> {
   await Promise.all([
     updateParentVariant(admin, {
       productId: bundle.parentProductGid,
@@ -142,7 +160,7 @@ async function projectionDraft(
   if (submitted) return hydrateSubmittedDraft(admin, submitted);
   const source = storedDraft(bundle);
   const [selectors, fixedPrice] = await Promise.all([
-    hydrateProjectionSelectors(admin, source.selectors),
+    hydrateProjectionSelectors(admin, source.selectors, true),
     storedFixedPrice(admin, bundle),
   ]);
   return { ...source, fixedPrice, selectors };

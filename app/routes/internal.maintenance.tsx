@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import type { ActionFunctionArgs } from "react-router";
 import { runMaintenance } from "../features/operations/maintenance.server";
+import { errorManager } from "../features/errors/error-manager.server";
 
 export async function action({ request }: ActionFunctionArgs): Promise<Response> {
   if (request.method !== "POST") return response({ error: "Method not allowed" }, 405);
@@ -9,7 +10,8 @@ export async function action({ request }: ActionFunctionArgs): Promise<Response>
   if (!authorized(request, secret)) return unauthorized();
   try {
     return response(await runMaintenance(), 200);
-  } catch {
+  } catch (error) {
+    await errorManager.report(error, { code: "MAINTENANCE_FAILED", source: "maintenance", context: { operation: "manual" } });
     return response({ error: "Maintenance failed" }, 500);
   }
 }

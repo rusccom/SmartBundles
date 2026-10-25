@@ -9,6 +9,8 @@ export interface EditorOption extends BundleVariantInput {
 
 export interface EditorSelector extends Omit<BundleSelectorInput, "options"> {
   productImageUrl?: string;
+  productMissing?: boolean;
+  missingVariantCount?: number;
   options: EditorOption[];
 }
 

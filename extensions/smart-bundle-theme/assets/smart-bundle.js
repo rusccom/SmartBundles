@@ -12,7 +12,7 @@ class SmartBundle extends HTMLElement {
     this.collectParts();
     this.priceValid = this.price.validContract(this.inputs);
     this.contractValid = this.validContract();
-    this.state = this.contractValid ? "incomplete" : "unavailable";
+    this.state = this.contractValid && this.inputs.every((input) => input.value) ? "incomplete" : "unavailable";
     this.bindEvents();
     this.guardForm();
     this.bindImageErrors();
@@ -34,11 +34,13 @@ class SmartBundle extends HTMLElement {
   }
   collectParts() {
     this.components = [...this.querySelectorAll("[data-component]")];
+    this.missingComponents = this.components.some((component) => component.dataset.unavailable === "true");
     this.inputs = [...this.querySelectorAll("[data-selector]")];
     this.button = this.querySelector("[data-add-button]");
     this.price = window.SmartBundlePrice.mount(this);
   }
   mountUnavailable() {
+    this.reportError("BUNDLE_UNAVAILABLE", this.textContent);
     this.guardForm();
     this.hidden = false;
   }
@@ -75,6 +77,7 @@ class SmartBundle extends HTMLElement {
     this.mountTimer = setTimeout(() => this.showMountFailure(), 5000);
   }
   showMountFailure() {
+    this.reportError("BUNDLE_FORM_MISSING", this.dataset.bundleUnavailable);
     this.dataset.state = "unavailable";
     this.querySelector("[data-hint]").textContent = this.dataset.bundleUnavailable;
     this.querySelector("[data-add-button]").disabled = true;
@@ -110,7 +113,8 @@ class SmartBundle extends HTMLElement {
     if (!event.target.matches('input[type="radio"][data-selector]')) return;
     this.updateImage(event.target.closest("[data-component]"), event.target);
     this.clearMessages();
-    this.state = this.contractValid ? (this.complete() ? "complete" : "incomplete") : "unavailable";
+    this.state = this.contractValid && this.inputs.every((input) => input.value)
+      ? (this.complete() ? "complete" : "incomplete") : "unavailable";
     this.render();
   }
   validContract() {
@@ -187,6 +191,7 @@ class SmartBundle extends HTMLElement {
     this.setAttribute("aria-busy", String(this.state === "submitting"));
   }
   hintText(complete, unavailable, total) {
+    if (this.missingComponents) return this.dataset.bundleUnavailable;
     if (unavailable) return !this.priceValid || total === null ? this.dataset.priceUnavailable : this.dataset.bundleUnavailable;
     if (complete) return "";
     const remaining = this.components.length - this.selectionCount();
@@ -218,6 +223,7 @@ class SmartBundle extends HTMLElement {
       await this.sendCartRequest();
       this.handleSuccess();
     } catch (error) {
+      this.reportError("BUNDLE_ADD_TO_CART_FAILED", error instanceof Error ? error.message : this.dataset.addError);
       this.state = "error";
       this.showError(error instanceof Error ? error.message : this.dataset.addError);
       this.renderFooter(true);
@@ -263,6 +269,9 @@ class SmartBundle extends HTMLElement {
     const error = this.querySelector("[data-error]");
     error.textContent = message;
     error.hidden = false;
+  }
+  reportError(code, message) {
+    window.SmartBundleErrors?.report(code, message, { bundleId: this.dataset.bundleId });
   }
 }
 

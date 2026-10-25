@@ -1,5 +1,6 @@
 import { enforceConfirmedFreeQuota } from "./free-quota-maintenance.server";
 import { runRetentionMaintenance } from "./retention.server";
+import { errorManager } from "../errors/error-manager.server";
 
 const INITIAL_DELAY_MS = 5_000;
 const QUOTA_INTERVAL_MS = 60 * 60_000;
@@ -45,7 +46,7 @@ async function runWorker(name: string, operation: () => Promise<unknown>): Promi
   try {
     await operation();
   } catch (error) {
-    console.error(`[maintenance-worker] ${name} failed.`, error);
+    await errorManager.report(error, { code: "MAINTENANCE_FAILED", source: "maintenance", context: { operation: name } });
   } finally {
     running.delete(name);
   }

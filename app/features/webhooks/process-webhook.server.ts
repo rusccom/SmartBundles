@@ -4,6 +4,7 @@ import {
   failWebhook,
   renewWebhook,
 } from "./webhook-delivery.server";
+import { errorManager } from "../errors/error-manager.server";
 
 const HEARTBEAT_MS = 30_000;
 
@@ -34,6 +35,8 @@ async function processClaimed(input: ProcessWebhookInput, token: string): Promis
     await completeWebhook(input.webhookId, token);
     return success();
   } catch (error) {
+    await errorManager.report(error, { code: "WEBHOOK_PROCESSING_FAILED", source: "webhook", shopDomain: input.shop,
+      context: { webhookId: input.webhookId, topic: input.topic } });
     await failWebhook(input.webhookId, token, error);
     return new Response(null, { status: 500 });
   } finally {
@@ -43,7 +46,9 @@ async function processClaimed(input: ProcessWebhookInput, token: string): Promis
 
 function startHeartbeat(webhookId: string, token: string): ReturnType<typeof setInterval> {
   const timer = setInterval(() => {
-    void renewWebhook(webhookId, token).catch(() => undefined);
+    void renewWebhook(webhookId, token).catch((error) => errorManager.report(error, {
+      code: "WEBHOOK_HEARTBEAT_FAILED", source: "webhook", context: { webhookId },
+    }));
   }, HEARTBEAT_MS);
   timer.unref();
   return timer;

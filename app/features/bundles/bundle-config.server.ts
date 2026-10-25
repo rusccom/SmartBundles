@@ -75,8 +75,8 @@ export function buildPresentationConfig(
     sv: 5, en: 1, b: identity.publicId,
     parentVariantId: identity.parentVariantId,
     pricing: { mode: identity.pricingMode === "FIXED" ? "fixed" : "dynamic", discountPercent: identity.discountPercent },
-    selectors: selectors.map(({ key, productId, quantity, discountPercent, options }) => ({
-      key, productId, quantity, discountPercent, options: options.map(({ id }) => ({ id })),
+    selectors: selectors.map(({ key, productId, productTitle, quantity, discountPercent, options }) => ({
+      key, productId, productTitle, quantity, discountPercent, options: options.map(({ id }) => ({ id })),
     })),
     texts: textSource.texts,
   };

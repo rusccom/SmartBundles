@@ -102,10 +102,12 @@ function hydrateSelector(selector: BundleSelectorInput, products: Map<string, Ed
   const product = products.get(selector.productId);
   if (!product) return missingProductSelector(selector);
   const allowedIds = new Set(selector.options.map(({ id }) => id));
+  const currentIds = new Set(product.variants.map(({ id }) => id));
   return {
     ...selector,
     productTitle: product.title,
     productImageUrl: product.imageUrl,
+    missingVariantCount: selector.options.filter(({ id }) => !currentIds.has(id)).length,
     options: product.variants.map((variant) => editorOption(variant, allowedIds.has(variant.id), product.imageUrl)),
   };
 }
@@ -113,7 +115,10 @@ function hydrateSelector(selector: BundleSelectorInput, products: Map<string, Ed
 function missingProductSelector(selector: BundleSelectorInput): EditorSelector {
   return {
     ...selector,
-    options: selector.options.map((option) => ({ ...option, available: false, allowed: true })),
+    productTitle: selector.productTitle || "Unavailable product",
+    productMissing: true,
+    missingVariantCount: selector.options.length,
+    options: [],
   };
 }
 

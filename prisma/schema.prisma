@@ -85,6 +85,7 @@ model Shop {
   entitlement               ShopEntitlement?
   bundles                   Bundle[]
   webhookDeliveries         WebhookDelivery[]
+  errorIncidents            ErrorIncident[]
 }
 
 model ShopEntitlement {
@@ -175,4 +176,31 @@ model WebhookDelivery {
 
   @@index([state, updatedAt])
   @@index([shopDomain])
+}
+
+enum ErrorIncidentStatus {
+  OPEN
+  RESOLVED
+  IGNORED
+}
+
+model ErrorIncident {
+  id             String              @id @default(uuid()) @db.Uuid
+  fingerprint    String              @unique
+  shopId         String?             @db.Uuid
+  code           String
+  source         String
+  severity       String
+  message        String
+  context        Json
+  status         ErrorIncidentStatus @default(OPEN)
+  occurrences    Int                 @default(1)
+  firstSeenAt    DateTime            @default(now())
+  lastSeenAt     DateTime            @default(now())
+  resolvedAt     DateTime?
+  lastNotifiedAt DateTime?
+  shop           Shop?               @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, status, lastSeenAt])
+  @@index([status, lastSeenAt])
 }

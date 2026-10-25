@@ -1,4 +1,5 @@
 import coreScript from "../../../../extensions/smart-bundle-theme/assets/smart-bundle-core.js?raw";
+import errorsScript from "../../../../extensions/smart-bundle-theme/assets/smart-bundle-errors.js?raw";
 // eslint-disable-next-line import/default
 import moneyScript from "../../../../extensions/smart-bundle-theme/assets/smart-bundle-money.js?raw";
 import formGuardScript from "../../../../extensions/smart-bundle-theme/assets/smart-bundle-form-guard.js?raw";
@@ -14,5 +15,5 @@ import pageStyles from "./bundle-preview-page.css?raw";
 export const PREVIEW_STYLES = `${pageStyles}\n${storefrontStyles}`;
 
 export const PREVIEW_SCRIPTS = [
-  moneyScript, coreScript, priceScript, pricingScript, formGuardScript, cartScript, bundleScript,
+  errorsScript, moneyScript, coreScript, priceScript, pricingScript, formGuardScript, cartScript, bundleScript,
 ];

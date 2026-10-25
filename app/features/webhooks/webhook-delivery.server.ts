@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
+import { safeErrorText } from "../errors/error-sanitize";
 
 const WEBHOOK_LEASE_MS = 2 * 60_000;
 
@@ -116,7 +117,7 @@ export function completeWebhook(webhookId: string, token: string) {
 }
 
 export function failWebhook(webhookId: string, token: string, error: unknown) {
-  const message = error instanceof Error ? error.message.slice(0, 1_000) : "Unknown webhook error";
+  const message = error instanceof Error ? safeErrorText(error.message).slice(0, 1_000) : "Unknown webhook error";
   return prisma.webhookDelivery.updateMany({
     where: { webhookId, processingToken: token, state: "PENDING" },
     data: { state: "FAILED", processingToken: null, lastError: message },

@@ -19,6 +19,7 @@ import { ensureShopContext } from "../features/installation/shop-context.server"
 import { getShopStorefrontSettings } from "../features/settings/storefront-settings-repository.server";
 import { isShopifyPricingEnabled } from "../features/billing/billing-config.server";
 import { authenticate } from "../shopify.server";
+import { recordComponentHealth } from "../features/bundles/component-health.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
@@ -29,6 +30,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     hydrateEditorSelectors(admin, bundle.selectors),
     getShopStorefrontSettings(shop.id),
   ]);
+  await recordComponentHealth(shop.id, bundle.id, display.selectors.map((selector) => ({
+    ...selector, options: selector.options.filter(({ allowed }) => allowed),
+  })));
   return {
     initial: {
       id: bundle.id, title: content.title, descriptionHtml: content.descriptionHtml, image: content.image,

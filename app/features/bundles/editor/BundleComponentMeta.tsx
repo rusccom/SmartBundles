@@ -8,6 +8,7 @@ export interface BundleComponentMetaProps {
 
 export function BundleComponentMeta(props: BundleComponentMetaProps) {
   const selectedCount = props.selector.options.filter(({ allowed }) => allowed).length;
+  if (!props.selector.options.length) return <s-badge tone="critical">No variants available</s-badge>;
   if (isSimpleBundleComponent(props.selector)) return <span className="sb-component-meta">
     {props.selector.options[0].available === false
       ? <s-badge tone="warning">Sold out</s-badge> : <s-badge>Available</s-badge>}

@@ -3,6 +3,7 @@ import { unauthenticated } from "../../shopify.server";
 import { refreshBillingState } from "../billing/index.server";
 import { draftBundle } from "../bundles/bundle-projection.server";
 import { FREE_ACTIVE_BUNDLE_LIMIT } from "../bundles/bundle-quota.server";
+import { errorManager } from "../errors/error-manager.server";
 
 const SHOP_BATCH_SIZE = 20;
 const DRAFT_BATCH_SIZE = 5;
@@ -47,7 +48,8 @@ async function draftShopExtras(
 async function bundleAdmin(domain: string): Promise<AdminClient | null> {
   try {
     return (await unauthenticated.admin(domain)).admin;
-  } catch {
+  } catch (error) {
+    await errorManager.report(error, { code: "MAINTENANCE_AUTH_FAILED", source: "maintenance", shopDomain: domain });
     return null;
   }
 }
@@ -66,7 +68,8 @@ async function draftExtra(
   try {
     await draftBundle(admin, shopId, bundleId);
     summary.drafted += 1;
-  } catch {
+  } catch (error) {
+    await errorManager.report(error, { code: "QUOTA_ENFORCEMENT_FAILED", source: "maintenance", shopId, context: { bundleId } });
     summary.failed += 1;
   }
 }

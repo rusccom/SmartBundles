@@ -9,10 +9,11 @@ const OPTION_MEDIA = {
 };
 
 export function componentSection(selector, context) {
-  const first = selector.options[0] ?? {};
-  const simple = selector.options.length === 1;
+  const first = selector.options[0] ?? { available: false };
+  const simple = selector.options.length <= 1;
   const summary = summaryContent(selector, first, context, initialLabel(selector, simple, context));
   const section = componentHost(selector, first);
+  if (!selector.options.length) section.dataset.unavailable = "true";
   section.append(...(simple
     ? staticSummary(summary, first)
     : disclosure(summary, selector, context)));
@@ -30,6 +31,7 @@ function componentHost(selector, first) {
 }
 
 function initialLabel(selector, simple, context) {
+  if (!selector.options.length) return context.texts.optionUnavailable;
   if (!simple) return context.texts.chooseVariant;
   return selector.options[0].available === false ? context.texts.optionUnavailable : null;
 }
