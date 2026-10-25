@@ -20,6 +20,7 @@ import { getShopStorefrontSettings } from "../features/settings/storefront-setti
 import { isShopifyPricingEnabled } from "../features/billing/billing-config.server";
 import { authenticate } from "../shopify.server";
 import { recordComponentHealth } from "../features/bundles/component-health.server";
+import type { AdminClient } from "../features/shopify/admin-api.server";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
@@ -27,12 +28,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const bundle = await getBundleForEditor(shop.id, requiredId(params.bundleId));
   const [content, display, settings] = await Promise.all([
     readProductContent(admin, bundle.parentProductGid, bundle.publicId),
-    hydrateEditorSelectors(admin, bundle.selectors),
+    loadHealthySelectors(admin, bundle),
     getShopStorefrontSettings(shop.id),
   ]);
-  await recordComponentHealth(shop.id, bundle.id, display.selectors.map((selector) => ({
-    ...selector, options: selector.options.filter(({ allowed }) => allowed),
-  })));
   return {
     initial: {
       id: bundle.id, title: content.title, descriptionHtml: content.descriptionHtml, image: content.image,
@@ -43,6 +41,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     pricingEnabled: isShopifyPricingEnabled(), productGid: bundle.parentProductGid,
     storefrontUrl: content.onlineStoreUrl ?? content.onlineStorePreviewUrl,
   };
+}
+
+async function loadHealthySelectors(admin: AdminClient, bundle: Awaited<ReturnType<typeof getBundleForEditor>>) {
+  const display = await hydrateEditorSelectors(admin, bundle.selectors);
+  await recordComponentHealth(bundle.shopId, bundle.id, display.selectors.map((selector) => ({
+    ...selector, options: selector.options.filter(({ allowed }) => allowed),
+  })));
+  return display;
 }
 
 export function action({ request, params }: ActionFunctionArgs) {
