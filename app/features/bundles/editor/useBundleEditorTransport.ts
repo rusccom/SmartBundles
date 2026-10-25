@@ -75,7 +75,10 @@ function savedDraft(
   submitted: BundleEditorDraft,
   result: Extract<BundleEditorActionData, { outcome: "accepted" }>,
 ): BundleEditorDraft {
-  const draft = { ...submitted, desiredStatus: result.status };
+  const selectors = result.configurationSaved
+    ? submitted.selectors.map((selector) => ({ ...selector, missingVariantCount: 0, productMissing: false }))
+    : submitted.selectors;
+  const draft = { ...submitted, desiredStatus: result.status, selectors };
   return "image" in result
     ? { ...draft, media: { kind: "keep", image: result.image ?? null } }
     : draft;

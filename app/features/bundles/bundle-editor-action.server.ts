@@ -25,6 +25,8 @@ import { updateProductContent } from "./content/shopify-product-content.server";
 import { saveBundleProductMedia } from "./content/shopify-product-media.server";
 import type { ShopifyProductImage } from "./content/content.types";
 import { errorManager } from "../errors/error-manager.server";
+import { hydrateProjectionSelectors } from "./projection-selector-hydration.server";
+import { recordComponentHealth } from "./component-health.server";
 
 interface ActionContext {
   admin: AdminClient;
@@ -61,11 +63,16 @@ async function saveExisting(
   await saveContent(context.admin, bundle, submission);
   const image = await saveBundleProductMedia(context.admin, bundle.parentProductGid, submission.media);
   await saveBundleState(context, bundle.status, submission);
-  if (submission.storedConfigurationDirty) {
-    await saveBundleConfiguration(context.shopId, bundle.id, submission.draft);
-  }
+  await saveConfiguration(context, bundle.id, submission);
   const message = submission.desiredStatus === "ACTIVE" ? "Bundle saved and active." : "Bundle saved as draft.";
-  return accepted(bundle.id, submission.desiredStatus, message, image);
+  return accepted(bundle.id, submission.desiredStatus, message, image, submission.storedConfigurationDirty);
+}
+
+async function saveConfiguration(context: ActionContext, bundleId: string, submission: BundleEditorSubmission) {
+  if (!submission.storedConfigurationDirty) return;
+  const selectors = await hydrateProjectionSelectors(context.admin, submission.draft.selectors);
+  await saveBundleConfiguration(context.shopId, bundleId, { ...submission.draft, selectors });
+  await recordComponentHealth(context.shopId, bundleId, selectors);
 }
 
 async function saveContent(
@@ -129,7 +136,7 @@ async function saveNew(context: ActionContext, submission: BundleEditorSubmissio
   } else {
     await saveDraftPrice(context.admin, context.shopId, bundle.id, submission.draft);
   }
-  return accepted(bundle.id, submission.desiredStatus, "Bundle created.", image);
+  return accepted(bundle.id, submission.desiredStatus, "Bundle created.", image, true);
 }
 
 function creationContent(submission: BundleEditorSubmission): BundleContentSubmission {
@@ -174,9 +181,10 @@ function accepted(
   status: "DRAFT" | "ACTIVE",
   message: string,
   image?: ShopifyProductImage | null,
+  configurationSaved = false,
 ) {
   const result: BundleEditorActionData = {
-    source: "bundle-editor", outcome: "accepted", bundleId, status, message,
+    source: "bundle-editor", outcome: "accepted", bundleId, status, message, configurationSaved,
     ...(image !== undefined ? { image } : {}),
   };
   return data<BundleEditorActionData>(result);

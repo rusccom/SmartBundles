@@ -9,6 +9,7 @@ export type BundleEditorActionData =
       bundleId: string;
       status: "DRAFT" | "ACTIVE";
       message: string;
+      configurationSaved: boolean;
       image?: ShopifyProductImage | null;
     }
   | {
