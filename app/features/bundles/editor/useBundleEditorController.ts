@@ -13,7 +13,7 @@ export function useBundleEditorController(initial: BundleEditorInitial) {
   const transport = useBundleEditorTransport({
     initial, acceptCanonical: canonical.accept, allowNavigation: permitNavigation,
   });
-  const actions = useBundleDraftActions(canonical.setDraft);
+  const actions = useBundleDraftActions(canonical.setDraft, canonical.draft.selectors);
   const dirty = !bundleEditorDraftEqual(canonical.draft, canonical.baseline);
   useUnsavedWarning(dirty, allowNavigation, canonical.discard);
   return controllerValue(canonical, transport, actions, dirty);

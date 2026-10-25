@@ -8,15 +8,16 @@ import {
 } from "./editor-state";
 import type {
   BundleEditorDraft,
+  EditorSelector,
   SetSelectors,
 } from "./editor.types";
 import { useProductPicker } from "./useProductPicker";
 
-export function useBundleDraftActions(
-  setDraft: React.Dispatch<React.SetStateAction<BundleEditorDraft>>,
-) {
+type SetDraft = React.Dispatch<React.SetStateAction<BundleEditorDraft>>;
+
+export function useBundleDraftActions(setDraft: SetDraft, selectors: EditorSelector[]) {
   const setSelectors = useSelectorSetter(setDraft);
-  const addComponent = useProductPicker(setSelectors);
+  const addComponent = useProductPicker(selectors, setSelectors);
   const patch = useCallback((value: Partial<BundleEditorDraft>) =>
     setDraft((current) => ({ ...current, ...value })), [setDraft]);
   const remove = useCallback((index: number) => setSelectors((items) =>
@@ -33,18 +34,14 @@ export function useBundleDraftActions(
     changePricingMode: usePricingModeChange(setDraft) };
 }
 
-function useSelectorSetter(
-  setDraft: React.Dispatch<React.SetStateAction<BundleEditorDraft>>,
-): SetSelectors {
+function useSelectorSetter(setDraft: SetDraft): SetSelectors {
   return useCallback((update) => setDraft((current) => ({
     ...current,
     selectors: typeof update === "function" ? update(current.selectors) : update,
   })), [setDraft]);
 }
 
-function usePricingModeChange(
-  setDraft: React.Dispatch<React.SetStateAction<BundleEditorDraft>>,
-) {
+function usePricingModeChange(setDraft: SetDraft) {
   return useCallback((pricingMode: BundleEditorDraft["pricingMode"]) => {
     setDraft((current) => ({
       ...current,

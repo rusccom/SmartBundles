@@ -4,24 +4,34 @@ import type { EditorSelector, SetSelectors } from "./editor.types";
 
 const MAX_SELECTORS = 150;
 
-export function useProductPicker(setSelectors: SetSelectors) {
+export function useProductPicker(selectors: EditorSelector[], setSelectors: SetSelectors) {
   const shopify = useAppBridge();
   return useCallback(async () => {
+    const selectionIds = [...new Set(selectors.map(({ productId }) => productId))].map((id) => ({ id }));
     const selected = await shopify.resourcePicker({
       type: "product",
       action: "select",
-      multiple: true,
-      filter: { archived: false, draft: false, variants: true },
+      multiple: MAX_SELECTORS,
+      selectionIds,
+      filter: { variants: false, query: selectableProductsQuery(selectionIds) },
     });
-    if (selected?.length) setSelectors((current) => appendProducts(current, selected));
-  }, [setSelectors, shopify]);
+    if (selected) setSelectors((current) => reconcileProducts(current, selected));
+  }, [selectors, setSelectors, shopify]);
 }
 
-function appendProducts(current: EditorSelector[], products: PickedProduct[]): EditorSelector[] {
-  const availableSlots = Math.max(0, MAX_SELECTORS - current.length);
+function selectableProductsQuery(selectionIds: Array<{ id: string }>): string {
+  const existing = selectionIds.map(({ id }) => `id:${id.split("/").pop()}`);
+  return ["status:active,unlisted", ...existing].join(" OR ");
+}
+
+function reconcileProducts(current: EditorSelector[], products: PickedProduct[]): EditorSelector[] {
+  const remaining = new Map(products.map((product) => [product.id, product]));
+  const retained = current.filter(({ productId }) => remaining.delete(productId));
+  const availableSlots = Math.max(0, MAX_SELECTORS - retained.length);
   const firstKey = nextKey(current);
-  const added = products.slice(0, availableSlots).map((product, index) => selectedProduct(product, firstKey + index));
-  return [...current, ...added];
+  const added = [...remaining.values()].slice(0, availableSlots)
+    .map((product, index) => selectedProduct(product, firstKey + index));
+  return [...retained, ...added];
 }
 
 function nextKey(selectors: EditorSelector[]): number {

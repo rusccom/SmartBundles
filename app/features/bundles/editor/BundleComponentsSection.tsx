@@ -14,7 +14,7 @@ export function BundleComponentsSection(props: BundleComponentsSectionProps) {
   return <BundleEditorSection heading="Components">
     {error ? <s-banner tone="critical">{error}</s-banner> : null}
     <BundleSortableList controller={controller} currencyCode={currencyCode} locale={locale} />
-    <s-button disabled={controller.busy || controller.draft.selectors.length >= 150}
+    <s-button disabled={controller.busy}
       onClick={controller.addComponent}>Add components</s-button>
   </BundleEditorSection>;
 }
