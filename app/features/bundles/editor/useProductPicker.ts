@@ -13,22 +13,26 @@ export function useProductPicker(selectors: EditorSelector[], setSelectors: SetS
       action: "select",
       multiple: MAX_SELECTORS,
       selectionIds,
-      filter: { variants: true, query: selectableProductsQuery(selectionIds) },
+      filter: { variants: true, query: selectableProductsQuery(selectors) },
     });
     if (selected) setSelectors((current) => reconcileProducts(current, selected));
   }, [selectors, setSelectors, shopify]);
 }
 
 function selectedResources(selectors: EditorSelector[]) {
-  const products = selectors.map((selector) => ({
+  const products = selectors.filter(hasSelectedVariants).map((selector) => ({
     id: selector.productId,
     variants: selector.options.filter(({ allowed }) => allowed).map(({ id }) => ({ id })),
   }));
   return [...new Map(products.map((product) => [product.id, product])).values()];
 }
 
-function selectableProductsQuery(selectionIds: Array<{ id: string }>): string {
-  const existing = selectionIds.map(({ id }) => `id:${id.split("/").pop()}`);
+function hasSelectedVariants(selector: EditorSelector): boolean {
+  return selector.options.some(({ allowed }) => allowed);
+}
+
+function selectableProductsQuery(selectors: EditorSelector[]): string {
+  const existing = selectors.map(({ productId }) => `id:${productId.split("/").pop()}`);
   return ["status:active,unlisted", ...existing].join(" OR ");
 }
 
@@ -36,7 +40,7 @@ function reconcileProducts(current: EditorSelector[], products: PickedProduct[])
   const remaining = new Map(products.map((product) => [product.id, product]));
   const retained = current.flatMap((selector) => {
     const product = remaining.get(selector.productId);
-    if (!product) return [];
+    if (!product) return hasSelectedVariants(selector) ? [] : [selector];
     remaining.delete(selector.productId);
     return [updateSelectedVariants(selector, product)];
   });
