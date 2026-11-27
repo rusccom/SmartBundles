@@ -70,8 +70,6 @@
 .sb__option-media img { height: 100%; object-fit: cover; width: 100%; }
 .sb__image-placeholder,
 .sb__option-placeholder { background: linear-gradient(135deg, rgba(18, 18, 18, 0.06), rgba(18, 18, 18, 0.14)); height: 100%; width: 100%; }
-.sb__component[data-state="selected"] .sb__media::before,
-.sb__component[data-state="selected"] .sb__media::after,
 .sb__option:has(.sb__option-input:checked)::before,
 .sb__option:has(.sb__option-input:checked)::after {
   border-radius: 50%;
@@ -82,12 +80,8 @@
   width: 18px;
   z-index: 1;
 }
-.sb__component[data-state="selected"] .sb__media::before,
 .sb__option:has(.sb__option-input:checked)::before { background: var(--sb-ink); border: 2px solid var(--sb-surface); }
-.sb__component[data-state="selected"] .sb__media::after,
 .sb__option:has(.sb__option-input:checked)::after { -webkit-mask: var(--sb-check) center / 10px no-repeat; background: var(--sb-surface); mask: var(--sb-check) center / 10px no-repeat; }
-.sb__component[data-state="selected"] .sb__media::before,
-.sb__component[data-state="selected"] .sb__media::after { bottom: 0; right: 0; }
 .sb__option:has(.sb__option-input:checked)::before,
 .sb__option:has(.sb__option-input:checked)::after { right: 8px; top: 8px; }
 .sb__summary-copy {
