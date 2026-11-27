@@ -26,6 +26,7 @@ export function bootstrapPreviewFrame(frame: HTMLIFrameElement): boolean {
   const view = frame.contentWindow;
   const frameDocument = frame.contentDocument;
   if (!view || !frameDocument?.head) return false;
+  if ("SmartBundleMarkup" in view) return true;
   Object.assign(view, {
     SmartBundleDom: smartBundleDom,
     SmartBundleMarkup: smartBundleMarkup,

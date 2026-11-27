@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { StorefrontTexts } from "../../settings/storefront-text.types";
 import type { ShopifyProductImage } from "../content/content.types";
 import type { BundleEditorDraft } from "../editor/editor.types";
@@ -25,8 +25,12 @@ export function useBundlePreview(
 ) {
   const [ready, setReady] = useState(false);
   const source = useMemo(() => previewDocument(input.locale, mode), [input.locale, mode]);
-  const load = useCallback(() => {
-    setReady(frame.current ? bootstrapPreviewFrame(frame.current) : false);
+  const load = () => setReady(frame.current ? bootstrapPreviewFrame(frame.current) : false);
+  useEffect(() => {
+    const node = frame.current;
+    if (!node || !previewSlot(node, "[data-preview-bundle]")) return;
+    const timer = setTimeout(() => setReady(bootstrapPreviewFrame(node)));
+    return () => clearTimeout(timer);
   }, [frame]);
   usePreviewProduct(frame, ready, input.draft.title, input.image);
   useBundleHost(frame, ready, input, previewConfigKey(input));
