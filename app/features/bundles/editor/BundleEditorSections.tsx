@@ -19,9 +19,9 @@ export function BundleEditorSections(props: BundleEditorSectionsProps) {
     {controller.issue === "quota"
       ? <BundleQuotaNotice pricingEnabled={props.pricingEnabled} />
       : null}
-    <BundleDetailsFields controller={controller} />
-    <BundlePricingFields currencyCode={initial.currencyCode} controller={controller} />
     <BundleComponentsSection controller={controller} currencyCode={initial.currencyCode}
       locale={initial.locale} error={controller.errors.selectors} />
+    <BundlePricingFields currencyCode={initial.currencyCode} controller={controller} />
+    <BundleDetailsFields controller={controller} />
   </>;
 }
