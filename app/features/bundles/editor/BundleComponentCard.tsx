@@ -12,7 +12,7 @@ export interface BundleComponentCardProps {
   index: number;
   currencyCode: string;
   locale: string;
-  discountDisabled: boolean;
+  showDiscount: boolean;
   onOptions: (index: number, ids: string[]) => void;
   onQuantity: (index: number, quantity: number) => void;
   onDiscount: (index: number, discountPercent: string) => void;

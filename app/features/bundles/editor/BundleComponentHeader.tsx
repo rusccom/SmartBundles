@@ -18,7 +18,7 @@ export function BundleComponentHeader(props: BundleComponentHeaderProps) {
       <BundleProductThumbnail imageUrl={imageUrl} title={props.selector.productTitle} />
     </div>
     <BundleComponentHeading selector={props.selector} currencyCode={props.currencyCode} locale={props.locale} />
-    <BundleComponentControls selector={props.selector} modalId={props.modalId} discountDisabled={props.discountDisabled}
+    <BundleComponentControls selector={props.selector} modalId={props.modalId} showDiscount={props.showDiscount}
       onQuantity={(value) => props.onQuantity(props.index, value)}
       onDiscount={(value) => props.onDiscount(props.index, value)} />
     <BundleComponentRemoveAction index={props.index} productTitle={props.selector.productTitle}

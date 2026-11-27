@@ -10,17 +10,11 @@ export function BundleComponentMeta(props: BundleComponentMetaProps) {
   const selectedCount = props.selector.options.filter(({ allowed }) => allowed).length;
   if (!props.selector.options.length) return <s-badge tone="critical">No variants available</s-badge>;
   if (isSimpleBundleComponent(props.selector)) return <span className="sb-component-meta">
-    {props.selector.options[0].available === false
-      ? <s-badge tone="warning">Sold out</s-badge> : <s-badge>Available</s-badge>}
+    {props.selector.options[0].available === false ? <s-badge tone="warning">Sold out</s-badge> : null}
   </span>;
+  const label = `${selectedCount} of ${props.selector.options.length} variants`;
   return <span className="sb-component-meta">
-    <span aria-live="polite"
-      aria-label={`${selectedCount} of ${props.selector.options.length} variants selected`}>
-      <s-number tone={selectedCount ? "auto" : "critical"}>
-        {selectedCount} / {props.selector.options.length}
-      </s-number>
-    </span>
-    <s-button command="--show" commandFor={props.modalId}
-      accessibilityLabel={`Choose variants for ${props.selector.productTitle}`}>Variants</s-button>
+    <s-button command="--show" commandFor={props.modalId} tone={selectedCount ? "auto" : "critical"}
+      accessibilityLabel={`Choose variants for ${props.selector.productTitle}, ${label} selected`}>{label}</s-button>
   </span>;
 }

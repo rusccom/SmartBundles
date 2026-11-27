@@ -8,5 +8,5 @@ export interface BundleProductThumbnailProps {
 export function BundleProductThumbnail({ imageUrl, title }: BundleProductThumbnailProps) {
   const [failedUrl, setFailedUrl] = useState<string>();
   return <s-thumbnail src={failedUrl === imageUrl ? undefined : imageUrl}
-    alt={`Image of ${title}`} size="large" onError={() => setFailedUrl(imageUrl)} />;
+    alt={`Image of ${title}`} size="base" onError={() => setFailedUrl(imageUrl)} />;
 }

@@ -6,7 +6,7 @@ import type { EditorSelector } from "./editor.types";
 export interface BundleComponentControlsProps {
   selector: EditorSelector;
   modalId: string;
-  discountDisabled: boolean;
+  showDiscount: boolean;
   onQuantity: (quantity: number) => void;
   onDiscount: (discountPercent: string) => void;
 }
@@ -15,7 +15,8 @@ export function BundleComponentControls(props: BundleComponentControlsProps) {
   return <div className="sb-component-controls">
     <BundleComponentMeta selector={props.selector} modalId={props.modalId} />
     <BundleComponentQuantityField quantity={props.selector.quantity} onChange={props.onQuantity} />
-    <BundleComponentDiscountField value={props.selector.discountPercent}
-      disabled={props.discountDisabled} onChange={props.onDiscount} />
+    {props.showDiscount
+      ? <BundleComponentDiscountField value={props.selector.discountPercent} onChange={props.onDiscount} />
+      : null}
   </div>;
 }

@@ -23,7 +23,7 @@ export function BundleSortableList({ controller, currencyCode, locale }: BundleS
       {selectors.length ? <s-box border="base" borderRadius="base" overflow="hidden">{selectors.map((selector, index) =>
         <BundleComponentCard key={selector.key} selector={selector} index={index}
           currencyCode={currencyCode} locale={locale}
-          discountDisabled={controller.draft.pricingMode === "FIXED"}
+          showDiscount={controller.draft.pricingMode === "DYNAMIC"}
           onOptions={controller.options} onQuantity={controller.quantity}
           onDiscount={controller.discount} onRemove={controller.remove} />
       )}</s-box> : null}
