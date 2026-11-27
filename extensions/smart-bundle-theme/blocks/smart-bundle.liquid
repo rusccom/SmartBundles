@@ -52,7 +52,7 @@
               "title": {{ variant.title | json }},
               "available": {{ variant.available | json }},
               "unitPrice": {{ variant.price | divided_by: 100.0 | json }},
-              "imageUrl": {% if component_image %}{{ component_image | image_url: width: 160 | json }}{% else %}null{% endif %}
+              "imageUrl": {% if component_image %}{{ component_image | image_url: width: 320 | json }}{% else %}null{% endif %}
             }
             {%- assign variant_written = true -%}
           {%- endfor -%}

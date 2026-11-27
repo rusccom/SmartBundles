@@ -131,7 +131,8 @@ class SmartBundle extends HTMLElement {
   renderComponent(component) {
     const input = selectedInput(component);
     const available = component.querySelector('[data-selector]:not(:disabled):not([value=""])');
-    const fallback = available ? this.dataset.chooseVariant : this.dataset.optionUnavailable;
+    const count = component.querySelectorAll('input[type="radio"][data-selector]').length;
+    const fallback = available ? `${this.dataset.chooseVariant} · ${count}` : this.dataset.optionUnavailable;
     const label = component.querySelector("[data-selection-label]");
     if (label) label.textContent = input?.dataset.optionTitle || fallback;
     component.dataset.state = input ? "selected" : (available ? "required" : "unavailable");

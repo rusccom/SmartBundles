@@ -5,7 +5,7 @@ const SUMMARY_MEDIA = {
   size: 48, wrap: true, tagImage: true,
 };
 const OPTION_MEDIA = {
-  className: "sb__option-media", placeholderClass: "sb__option-placeholder", size: 40,
+  className: "sb__option-media", placeholderClass: "sb__option-placeholder", size: 160,
 };
 
 export function componentSection(selector, context) {
@@ -57,23 +57,15 @@ function summaryCopy(selector, label) {
 function summaryMeta(selector, context) {
   const { texts } = context;
   const meta = element("span", "sb__summary-meta");
-  meta.append(linePrice(context.priceMode), summaryQuantity(texts.quantityTemplate, selector.quantity));
+  meta.append(linePrice(context.priceMode));
+  if (selector.quantity > 1) {
+    meta.append(element("span", "sb__quantity", fillTemplate(texts.quantityTemplate, { quantity: selector.quantity })));
+  }
   if (Number(selector.discountPercent) > 0) {
     meta.append(element("span", "sb__component-discount",
       fillTemplate(texts.discountBadgeTemplate, { discount: selector.discountPercent })));
   }
-  if (selector.options.length > 1) meta.append(chevron());
   return meta;
-}
-
-function summaryQuantity(template, quantity) {
-  const node = element("span", "sb__quantity");
-  String(template ?? "").split(/(__quantity__)/).forEach((part) => {
-    node.append(part === "__quantity__"
-      ? element("span", "sb__quantity-value", quantity)
-      : part);
-  });
-  return node;
 }
 
 function linePrice(priceMode) {
@@ -83,7 +75,7 @@ function linePrice(priceMode) {
 }
 
 function staticSummary(summary, first) {
-  const box = element("div", "sb__summary sb__summary--static");
+  const box = element("div", "sb__summary");
   box.append(...summary);
   return [box, staticInput(first)];
 }
@@ -102,18 +94,18 @@ function disclosure(summary, selector, context) {
     type: "button", "data-disclosure": true,
     "aria-expanded": "false", "aria-controls": panelId,
   });
-  button.append(...summary);
+  button.append(...summary, chevron());
   return [button, optionsPanel(selector, context, panelId)];
 }
 
 function chevron() {
   const namespace = "http://www.w3.org/2000/svg";
   const node = attributes(document.createElementNS(namespace, "svg"), {
-    class: "sb__chevron", viewBox: "0 0 64 64", "aria-hidden": "true", focusable: "false",
+    class: "sb__chevron", viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false",
   });
   node.append(attributes(document.createElementNS(namespace, "path"), {
-    d: "M17 28 L32 40 L47 28", fill: "none", stroke: "currentColor",
-    "stroke-width": 8, "stroke-linecap": "round", "stroke-linejoin": "round",
+    d: "M6 9l6 6 6-6", fill: "none", stroke: "currentColor",
+    "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round",
   }));
   return node;
 }
@@ -131,20 +123,21 @@ function optionsFieldset(selector, context) {
   fieldset.setAttribute("aria-required", "true");
   fieldset.append(element("legend", "sb__visually-hidden",
     fillTemplate(context.texts.chooseVariantForTemplate, { product: selector.productTitle })));
-  selector.options.forEach((option) => fieldset.append(optionLabel(option, selector, context)));
+  selector.options.forEach((option) => fieldset.append(optionTile(option, selector, context)));
   return fieldset;
 }
 
-function optionLabel(option, selector, context) {
+function optionTile(option, selector, context) {
   const soldOut = option.available === false;
-  const label = element("label", soldOut ? "sb__option sb__option--sold-out" : "sb__option");
-  label.append(
+  const tile = element("label", soldOut ? "sb__option sb__option--sold-out" : "sb__option");
+  tile.append(
     optionInput(option, `${context.idPrefix}-${selector.key}`, soldOut),
     mediaBox({ ...OPTION_MEDIA, url: option.imageUrl }),
-    optionCopy(option, soldOut, context.texts),
+    element("span", "sb__option-title", option.title),
     optionPrice(),
   );
-  return label;
+  if (soldOut) tile.append(element("span", "sb__option-badge", context.texts.soldOut));
+  return tile;
 }
 
 function optionInput(option, name, soldOut) {
@@ -153,13 +146,6 @@ function optionInput(option, name, soldOut) {
     "data-option-title": option.title, "data-image-url": option.imageUrl ?? "",
     "data-unit-price": option.unitPrice ?? "", disabled: soldOut,
   });
-}
-
-function optionCopy(option, soldOut, texts) {
-  const copy = element("span", "sb__option-copy");
-  copy.append(element("span", undefined, option.title));
-  if (soldOut) copy.append(element("small", undefined, texts.soldOut));
-  return copy;
 }
 
 function optionPrice() {
