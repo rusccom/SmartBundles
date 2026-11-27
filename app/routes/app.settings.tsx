@@ -16,11 +16,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
   const shop = await ensureShopContext(admin, session.shop);
   const settings = await getShopStorefrontSettings(shop.id);
-  const params = new URL(request.url).searchParams;
-  return {
-    settings,
-    savedMessage: savedMessage(params.get("saved"), params.get("failed")),
-  };
+  const saved = new URL(request.url).searchParams.has("saved");
+  return { settings, savedMessage: saved ? "Storefront texts saved." : undefined };
 }
 
 export function action({ request }: ActionFunctionArgs) {
@@ -37,21 +34,6 @@ export default function SettingsRoute() {
       message={actionData?.message}
     />
   );
-}
-
-function savedMessage(saved: string | null, failed: string | null): string | undefined {
-  const synced = countParam(saved);
-  const failures = countParam(failed);
-  if (synced === undefined || failures === undefined) return undefined;
-  if (failures) return `Texts saved. Updated ${synced} bundles; ${failures} could not be updated.`;
-  if (!synced) return "Texts saved. There are no active bundles to update.";
-  return `Texts saved and applied to ${synced} active ${synced === 1 ? "bundle" : "bundles"}.`;
-}
-
-function countParam(value: string | null): number | undefined {
-  if (value === null || !/^\d+$/.test(value)) return undefined;
-  const count = Number(value);
-  return Number.isSafeInteger(count) ? count : undefined;
 }
 
 export const headers: HeadersFunction = (args) => boundary.headers(args);

@@ -1,6 +1,5 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
-import { parseStoredStorefrontTexts } from "../settings/storefront-text-validation.server";
 import type { BundleDraftInput, BundleSelectorInput } from "./bundle.types";
 import type { ParentProductIds } from "./shopify-product.server";
 
@@ -8,7 +7,7 @@ const BUNDLE_PAGE_SIZE = 50;
 
 const selectorInclude = {
   orderBy: { position: "asc" as const },
-  include: { options: { orderBy: { position: "asc" as const } } },
+  include: { options: { orderBy: { variantGid: "asc" as const } } },
 };
 
 const bundleListSelect = {
@@ -148,17 +147,13 @@ export async function getBundleForProjection(shopId: string, bundleId: string) {
     where: { id: bundleId, shopId },
     include: {
       selectors: selectorInclude,
-      shop: { select: {
-        currencyCode: true, onlineStorePublicationGid: true,
-        storefrontTexts: true, storefrontTextVersion: true,
-      } },
+      shop: { select: { onlineStorePublicationGid: true } },
     },
   });
   if (!bundle) throw new Error("Bundle not found.");
   return {
     ...bundle,
     discountPercent: bundle.discountPercent.toString(),
-    storefrontTexts: parseStoredStorefrontTexts(bundle.shop.storefrontTexts),
     selectors: bundle.selectors.map(storedSelector),
   };
 }
@@ -171,8 +166,8 @@ function selectorCreate(selector: BundleSelectorInput, position: number) {
   };
 }
 
-function optionCreate(option: BundleSelectorInput["options"][number], position: number) {
-  return { position, variantGid: option.id };
+function optionCreate(option: BundleSelectorInput["options"][number]) {
+  return { variantGid: option.id };
 }
 
 interface StoredSelector {
@@ -186,8 +181,8 @@ interface StoredSelector {
 function storedSelector(selector: StoredSelector): BundleSelectorInput {
   return {
     key: selector.selectorKey, productId: selector.productGid,
-    productTitle: "", quantity: selector.quantity,
+    quantity: selector.quantity,
     discountPercent: selector.discountPercent.toString(),
-    options: selector.options.map(({ variantGid }) => ({ id: variantGid, title: "" })),
+    options: selector.options.map(({ variantGid }) => ({ id: variantGid })),
   };
 }

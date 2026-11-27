@@ -1,9 +1,14 @@
 import type { StorefrontTexts } from "../../settings/storefront-text.types";
-import type { BundleSelectorInput, BundleVariantInput } from "../bundle.types";
+import type { BundleSelectorInput } from "../bundle.types";
 import type { ShopifyProductImage } from "../content/content.types";
 import type { BundleMediaDraft } from "./bundle-media.types";
 
-export interface EditorOption extends BundleVariantInput {
+export interface EditorOption {
+  id: string;
+  title: string;
+  imageUrl?: string;
+  available?: boolean;
+  unitPrice?: string;
   allowed: boolean;
 }
 
@@ -15,6 +20,7 @@ export interface EditorProductCatalog {
 }
 
 export interface EditorSelector extends Omit<BundleSelectorInput, "options"> {
+  productTitle: string;
   productImageUrl?: string;
   productMissing?: boolean;
   missingVariantCount?: number;

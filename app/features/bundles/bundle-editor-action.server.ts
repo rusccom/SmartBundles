@@ -11,8 +11,10 @@ import {
 import type { BundleEditorActionData } from "./bundle-editor-action.types";
 import type {
   BundleContentSubmission,
+  BundleDraftInput,
   BundleEditorSubmission,
 } from "./bundle.types";
+import { bundlePrice } from "./bundle-pricing";
 import { parseBundleForm } from "./bundle-validation.server";
 import { BundleComponentValidationError } from "./bundle-component-validation-error";
 import { activateBundle, draftBundle, saveDraftPrice, syncActiveBundle } from "./bundle-projection.server";
@@ -40,17 +42,37 @@ export async function bundleEditorAction(request: Request, bundleId: string | nu
   const parsed = parseBundleForm(await request.formData(), bundleId === null);
   if (!parsed.data || Object.keys(parsed.errors).length) return rejected(400, parsed.errors);
   try {
+    const submission = await hydratedSubmission(admin, parsed.data);
     if (bundleId) {
       const bundle = await getBundleForActionByDomain(session.shop, bundleId);
       const context = { admin, shopId: bundle.shopId, shopDomain: session.shop, bundleId };
-      return await saveExisting(context, parsed.data, bundle);
+      return await saveExisting(context, submission, bundle);
     }
     const shopId = await getBundleShopId(session.shop);
-    return await saveNew({ admin, shopId, shopDomain: session.shop, bundleId }, parsed.data);
+    return await saveNew({ admin, shopId, shopDomain: session.shop, bundleId }, submission);
   } catch (error) {
     await errorManager.report(error, { code: "BUNDLE_SAVE_FAILED", source: "bundle", shopDomain: session.shop,
       severity: error instanceof BundleComponentValidationError ? "warning" : "error", context: { bundleId: bundleId ?? undefined } });
     return knownError(error);
+  }
+}
+
+async function hydratedSubmission(
+  admin: AdminClient,
+  submission: BundleEditorSubmission,
+): Promise<BundleEditorSubmission> {
+  if (!submission.configurationDirty) return submission;
+  const selectors = await hydrateProjectionSelectors(admin, submission.draft.selectors);
+  const draft = { ...submission.draft, selectors };
+  assertSupportedPrice(draft);
+  return { ...submission, draft };
+}
+
+function assertSupportedPrice(draft: BundleDraftInput): void {
+  try {
+    bundlePrice.calculate(draft);
+  } catch {
+    throw new BundleComponentValidationError("The maximum bundle total exceeds the supported price limit.");
   }
 }
 
@@ -70,9 +92,8 @@ async function saveExisting(
 
 async function saveConfiguration(context: ActionContext, bundleId: string, submission: BundleEditorSubmission) {
   if (!submission.storedConfigurationDirty) return;
-  const selectors = await hydrateProjectionSelectors(context.admin, submission.draft.selectors);
-  await saveBundleConfiguration(context.shopId, bundleId, { ...submission.draft, selectors });
-  await recordComponentHealth(context.shopId, bundleId, selectors);
+  await saveBundleConfiguration(context.shopId, bundleId, submission.draft);
+  await recordComponentHealth(context.shopId, bundleId, submission.draft.selectors);
 }
 
 async function saveContent(

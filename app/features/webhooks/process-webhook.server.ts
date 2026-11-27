@@ -12,7 +12,6 @@ export interface ProcessWebhookInput {
   webhookId: string;
   topic: string;
   shop: string;
-  payload: unknown;
   handler: () => Promise<void>;
 }
 
@@ -21,7 +20,6 @@ export async function processWebhook(input: ProcessWebhookInput): Promise<Respon
     webhookId: input.webhookId,
     topic: input.topic,
     shopDomain: input.shop,
-    payload: input.payload,
   });
   if (claim.status === "PROCESSED") return success();
   if (claim.status === "IN_FLIGHT") return retryLater();

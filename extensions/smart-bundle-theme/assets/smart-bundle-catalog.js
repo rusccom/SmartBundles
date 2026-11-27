@@ -9,6 +9,5 @@ export function resolveCatalog(config) {
 function resolveSelector(selector, catalog, texts) {
   const options = selector.options.map(({ id }) => catalog.get(id))
     .filter((option) => option && option.productId === selector.productId);
-  const productTitle = options[0]?.productTitle || selector.productTitle || texts?.optionUnavailable || "Unavailable component";
-  return { ...selector, productTitle, options, unavailable: !options.length };
+  return { ...selector, productTitle: options[0]?.productTitle ?? texts.optionUnavailable, options };
 }

@@ -1,4 +1,5 @@
 {%- assign bundle = product.metafields["$app"].bundle_presentation.value -%}
+{%- assign texts = app.metafields.smartbundle.storefront_texts.value -%}
 <script src="{{ 'smart-bundle-cart-recovery.js' | asset_url }}" defer="defer"></script>
 
 {%- if bundle != blank -%}
@@ -35,7 +36,7 @@
         "originalAmount": {{ original_price | divided_by: 100.0 | json }}
       },
       "selectors": {{ bundle.selectors | json }},
-      "texts": {{ bundle.texts | json }},
+      "texts": {{ texts | json }},
       "catalog": [
         {%- assign variant_written = false -%}
         {%- for batch in (1..4) -%}
@@ -73,7 +74,7 @@
       {{- presentation | replace: '</', '<\/' -}}
     </script>
   </smart-bundle>
-  <noscript><p class="sb sb__editor-note">{{ bundle.texts.javascriptRequired | escape }}</p></noscript>
+  <noscript><p class="sb sb__editor-note">{{ texts.javascriptRequired | escape }}</p></noscript>
 {%- elsif request.design_mode -%}
   <div class="sb sb__editor-note" {{ block.shopify_attributes }}>{{ 'smart_bundle.editor_note' | t }}</div>
 {%- endif -%}

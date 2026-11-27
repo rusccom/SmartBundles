@@ -1,6 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "../../db.server";
 import { defaultStorefrontTexts } from "../settings/storefront-text-defaults";
+import { parseStoredStorefrontTexts } from "../settings/storefront-text-validation.server";
+import { writeStorefrontTexts } from "../settings/storefront-texts-metafield.server";
 import type { AdminClient } from "../shopify/admin-api.server";
 import { adminRequest, assertNoUserErrors } from "../shopify/admin-api.server";
 
@@ -9,13 +11,15 @@ const SHOP_QUERY = `#graphql
     shop {
       id
       myshopifyDomain
-      currencyCode
       features {
         bundles { eligibleForBundles ineligibilityReason sellsBundles }
       }
     }
     publications(first: 20) { nodes { id name } }
     cartTransforms(first: 10) { nodes { id } }
+    currentAppInstallation {
+      storefrontTexts: metafield(namespace: "smartbundle", key: "storefront_texts") { id }
+    }
   }
 `;
 
@@ -32,11 +36,11 @@ interface ShopQuery {
   shop: {
     id: string;
     myshopifyDomain: string;
-    currencyCode: string;
     features: { bundles: { eligibleForBundles: boolean; ineligibilityReason?: string | null } };
   };
   publications: { nodes: Array<{ id: string; name: string }> };
   cartTransforms: { nodes: Array<{ id: string }> };
+  currentAppInstallation: { storefrontTexts: { id: string } | null };
 }
 
 interface TransformMutation {
@@ -51,7 +55,11 @@ export async function ensureShopContext(admin: AdminClient, domain: string) {
   if (cached) return cached;
   const context = await adminRequest<ShopQuery>(admin, SHOP_QUERY);
   const transform = await ensureTransform(admin, context);
-  return persistContext(context, transform);
+  const shop = await persistContext(context, transform);
+  if (!context.currentAppInstallation.storefrontTexts) {
+    await writeStorefrontTexts(admin, parseStoredStorefrontTexts(shop.storefrontTexts));
+  }
+  return shop;
 }
 
 async function freshContext(domain: string) {
@@ -59,7 +67,6 @@ async function freshContext(domain: string) {
   return prisma.shop.findFirst({
     where: {
       domain,
-      currencyCode: { not: null },
       installationStatus: "INSTALLED",
       updatedAt: { gt: threshold },
       cartTransformGid: { not: null },
@@ -101,7 +108,6 @@ function updateData(context: ShopQuery, transform: string | null, publication?: 
   const bundles = context.shop.features.bundles;
   return {
     shopGid: context.shop.id,
-    currencyCode: context.shop.currencyCode,
     installationStatus: "INSTALLED" as const,
     eligibleForBundles: bundles.eligibleForBundles,
     ineligibilityReason: bundles.ineligibilityReason,

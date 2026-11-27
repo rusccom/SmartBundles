@@ -4,7 +4,7 @@ import { ensureShopContext } from "../installation/shop-context.server";
 import type { AdminClient } from "../shopify/admin-api.server";
 import { StorefrontSettingsConflictError } from "./StorefrontSettingsConflictError.server";
 import { saveShopStorefrontTexts } from "./storefront-settings-repository.server";
-import { syncActiveBundleTexts } from "./storefront-text-sync.server";
+import { writeStorefrontTexts } from "./storefront-texts-metafield.server";
 import { parseStorefrontTextsForm } from "./storefront-text-validation.server";
 
 export interface StorefrontSettingsActionData {
@@ -33,8 +33,8 @@ async function saveSettings(
 ) {
   try {
     await saveShopStorefrontTexts({ shopId, expectedTextVersion, texts });
-    const result = await syncActiveBundleTexts(admin, shopId);
-    return redirect(`/app/settings?saved=${result.synced}&failed=${result.failed}`);
+    await writeStorefrontTexts(admin, texts);
+    return redirect("/app/settings?saved");
   } catch (error) {
     if (error instanceof StorefrontSettingsConflictError) return conflict();
     throw error;

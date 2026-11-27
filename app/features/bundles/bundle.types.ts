@@ -2,16 +2,12 @@ import type { StorefrontTexts } from "../settings/storefront-text.types";
 
 export interface BundleVariantInput {
   id: string;
-  title: string;
-  imageUrl?: string;
-  available?: boolean;
   unitPrice?: string;
 }
 
 export interface BundleSelectorInput {
   key: number;
   productId: string;
-  productTitle: string;
   quantity: number;
   discountPercent: string;
   options: BundleVariantInput[];
@@ -69,6 +65,16 @@ export interface RuntimeConfig {
   s: Array<{ k: number; o: number[]; d: string }>;
 }
 
+export interface CatalogVariant {
+  id: string;
+  title: string;
+  imageUrl?: string;
+  available?: boolean;
+  unitPrice?: string;
+  productId: string;
+  productTitle: string;
+}
+
 export interface PresentationConfig {
   sv: 5;
   en: 0 | 1;
@@ -78,7 +84,7 @@ export interface PresentationConfig {
   selectors: BundleSelectorInput[];
   texts: StorefrontTexts;
   moneySample: string;
-  catalog: Array<BundleVariantInput & { productId: string; productTitle: string }>;
+  catalog: CatalogVariant[];
 }
 
 export type PresentationPricing =

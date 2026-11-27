@@ -124,7 +124,7 @@ function hydrateSelector(selector: BundleSelectorInput, products: Map<string, Ed
 function missingProductSelector(selector: BundleSelectorInput): EditorSelector {
   return {
     ...selector,
-    productTitle: selector.productTitle || "Unavailable product",
+    productTitle: "Unavailable product",
     productMissing: true,
     missingVariantCount: selector.options.length,
     options: [],

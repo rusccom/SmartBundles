@@ -4,22 +4,11 @@ export function serializedSelectors(selectors: EditorSelector[]): string {
   const clean = selectors.map((selector) => ({
     key: selector.key,
     productId: selector.productId,
-    productTitle: selector.productTitle,
     quantity: selector.quantity,
     discountPercent: selector.discountPercent,
-    options: selector.options.filter((option) => option.allowed).map(serializedOption),
+    variantIds: selector.options.filter(({ allowed }) => allowed).map(({ id }) => id),
   }));
   return JSON.stringify(clean);
-}
-
-function serializedOption(option: EditorSelector["options"][number]) {
-  return {
-    id: option.id,
-    title: option.title,
-    imageUrl: option.imageUrl,
-    available: option.available,
-    unitPrice: option.unitPrice,
-  };
 }
 
 export function reorderSelectors(items: EditorSelector[], activeKey: number, overKey: number) {

@@ -1,8 +1,6 @@
 import type { StorefrontTexts } from "../../settings/storefront-text.types";
-import type {
-  BundleSelectorInput, BundleVariantInput, PresentationConfig,
-} from "../bundle.types";
-import type { BundleEditorDraft, EditorOption, EditorSelector } from "../editor/editor.types";
+import type { BundleSelectorInput, CatalogVariant, PresentationConfig } from "../bundle.types";
+import type { BundleEditorDraft, EditorSelector } from "../editor/editor.types";
 import { previewPricing } from "./bundle-preview-pricing";
 
 const PREVIEW_VARIANT_GID = "gid://shopify/ProductVariant/1";
@@ -13,7 +11,7 @@ export function bundlePreviewConfig(
   texts: StorefrontTexts,
   locale: string,
 ): PresentationConfig | null {
-  const selectors = previewSelectors(draft.selectors);
+  const selectors = draft.selectors.map(previewSelector);
   const pricing = previewPricing(selectors, draft, currencyCode);
   if (!pricing || !selectors.length) return null;
   return {
@@ -21,9 +19,7 @@ export function bundlePreviewConfig(
     parentVariantId: PREVIEW_VARIANT_GID,
     pricing, selectors, texts,
     moneySample: previewMoneySample(currencyCode, locale),
-    catalog: selectors.flatMap((selector) => selector.options.map((option) => ({
-      ...option, productId: selector.productId, productTitle: selector.productTitle,
-    }))),
+    catalog: draft.selectors.flatMap(previewCatalog),
   };
 }
 
@@ -35,20 +31,20 @@ function previewMoneySample(currency: string, locale: string): string {
   } catch { return `1,234,567.89 ${currency}`; }
 }
 
-function previewSelectors(selectors: EditorSelector[]): BundleSelectorInput[] {
-  return selectors.map((selector) => ({
+function previewSelector(selector: EditorSelector): BundleSelectorInput {
+  return {
     key: selector.key,
     productId: selector.productId,
-    productTitle: selector.productTitle,
     quantity: selector.quantity,
     discountPercent: selector.discountPercent,
-    options: selector.options.filter((option) => option.allowed).map(previewOption),
-  }));
+    options: selector.options.filter(({ allowed }) => allowed).map(({ id, unitPrice }) => ({ id, unitPrice })),
+  };
 }
 
-function previewOption(option: EditorOption): BundleVariantInput {
-  return {
+function previewCatalog(selector: EditorSelector): CatalogVariant[] {
+  return selector.options.filter(({ allowed }) => allowed).map((option) => ({
     id: option.id, title: option.title, imageUrl: option.imageUrl,
     available: option.available, unitPrice: option.unitPrice,
-  };
+    productId: selector.productId, productTitle: selector.productTitle,
+  }));
 }

@@ -69,7 +69,6 @@ model Shop {
   id                        String             @id @default(uuid()) @db.Uuid
   shopGid                   String?            @unique
   domain                    String             @unique
-  currencyCode              String?
   storefrontTexts           Json
   storefrontTextVersion     Int                @default(1)
   installationStatus        InstallationStatus @default(INSTALLED)
@@ -150,7 +149,6 @@ model BundleSelector {
 model BundleVariantOption {
   id         String         @id @default(uuid()) @db.Uuid
   selectorId String         @db.Uuid
-  position   Int
   variantGid String
   selector   BundleSelector @relation(fields: [selectorId], references: [id], onDelete: Cascade)
 
@@ -164,7 +162,6 @@ model WebhookDelivery {
   webhookId       String       @unique
   topic           String
   shopDomain      String
-  payload         Json
   state           WebhookState @default(PENDING)
   attempts        Int          @default(0)
   processingToken String?

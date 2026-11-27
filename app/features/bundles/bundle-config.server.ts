@@ -4,7 +4,6 @@ import type {
   BundleSelectorInput,
   RuntimeConfig,
 } from "./bundle.types";
-import type { StorefrontTextSource } from "../settings/storefront-text.types";
 import type { StorefrontConfig } from "./storefront/storefront-config.types";
 
 const MAX_RUNTIME_BYTES = 9_500;
@@ -69,16 +68,14 @@ function variantToken(id: string): string {
 export function buildPresentationConfig(
   identity: BundleProjectionIdentity,
   selectors: BundleSelectorInput[],
-  textSource: StorefrontTextSource,
 ): StorefrontConfig {
   return {
     sv: 5, en: 1, b: identity.publicId,
     parentVariantId: identity.parentVariantId,
     pricing: { mode: identity.pricingMode === "FIXED" ? "fixed" : "dynamic", discountPercent: identity.discountPercent },
-    selectors: selectors.map(({ key, productId, productTitle, quantity, discountPercent, options }) => ({
-      key, productId, productTitle, quantity, discountPercent, options: options.map(({ id }) => ({ id })),
+    selectors: selectors.map(({ key, productId, quantity, discountPercent, options }) => ({
+      key, productId, quantity, discountPercent, options: options.map(({ id }) => ({ id })),
     })),
-    texts: textSource.texts,
   };
 }
 

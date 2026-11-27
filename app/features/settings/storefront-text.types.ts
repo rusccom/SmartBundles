@@ -20,11 +20,6 @@ export interface StorefrontTexts {
 export type StorefrontTextKey = keyof StorefrontTexts;
 export type StorefrontTextGroup = "Main" | "Selection" | "Pricing" | "Errors and availability";
 
-export interface StorefrontTextSource {
-  version: number;
-  texts: StorefrontTexts;
-}
-
 export interface StorefrontTextFieldDefinition {
   key: StorefrontTextKey;
   label: string;

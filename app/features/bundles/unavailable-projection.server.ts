@@ -11,9 +11,7 @@ type ProjectionBundle = Awaited<ReturnType<typeof getBundleForProjection>>;
 export async function writeUnavailableProjection(admin: AdminClient, bundle: ProjectionBundle, draft: BundleDraftInput) {
   const identity = { publicId: bundle.publicId, parentVariantId: bundle.parentVariantGid,
     pricingMode: draft.pricingMode, discountPercent: draft.discountPercent };
-  const presentation = buildPresentationConfig(identity, draft.selectors, {
-    version: bundle.shop.storefrontTextVersion, texts: bundle.storefrontTexts,
-  });
+  const presentation = buildPresentationConfig(identity, draft.selectors);
   await writeProductMetafields(admin, bundle.parentProductGid, [
     { key: "bundle_runtime", value: JSON.stringify(disabledRuntime(bundle.publicId, bundle.parentVariantGid)) },
     { key: "bundle_presentation", value: JSON.stringify(presentation) },

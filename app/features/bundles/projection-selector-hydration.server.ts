@@ -8,18 +8,12 @@ const VARIANTS_QUERY = `#graphql
     nodes(ids: $ids) {
       ... on ProductVariant {
         id
-        title
         price
-        availableForSale
+        position
         requiresComponents
         productVariantComponents(first: 1) { nodes { id } }
-        media(first: 1) { nodes { ... on MediaImage { image { url } } } }
         product {
           id
-          title
-          media(first: 1, query: "media_type:IMAGE", sortKey: POSITION) {
-            nodes { ... on MediaImage { image { url } } }
-          }
           bundleComponents(first: 1) { nodes { componentProduct { id } } }
           bundleId: metafield(namespace: "$app", key: "bundle_id") { value }
         }
@@ -30,32 +24,18 @@ const VARIANTS_QUERY = `#graphql
 
 interface VariantNode {
   id: string;
-  title: string;
   price: string;
-  availableForSale: boolean;
+  position: number;
   requiresComponents: boolean;
   productVariantComponents: { nodes: Array<{ id: string }> };
-  media: { nodes: MediaNode[] };
   product: {
     id: string;
-    title: string;
-    media: { nodes: MediaNode[] };
     bundleComponents: { nodes: Array<{ componentProduct: { id: string } }> };
     bundleId?: { value: string } | null;
   };
 }
 
-interface MediaNode { image?: { url: string } | null }
-
 interface VariantQuery { nodes: Array<VariantNode | null> }
-
-const PRODUCTS_QUERY = `#graphql
-  query SmartBundleComponentTitles($ids: [ID!]!) {
-    nodes(ids: $ids) { ... on Product { id title } }
-  }
-`;
-
-interface ProductsQuery { nodes: Array<{ id: string; title: string } | null> }
 
 export async function hydrateProjectionSelectors(
   admin: AdminClient,
@@ -64,10 +44,7 @@ export async function hydrateProjectionSelectors(
 ): Promise<BundleSelectorInput[]> {
   const ids = [...new Set(selectors.flatMap(({ options }) => options.map(({ id }) => id)))];
   const variants = await loadVariants(admin, ids);
-  const productIds = [...new Set(selectors.map(({ productId }) => productId))];
-  const products = await adminRequest<ProductsQuery>(admin, PRODUCTS_QUERY, { ids: productIds });
-  const titles = new Map(products.nodes.flatMap((product) => product ? [[product.id, product.title] as const] : []));
-  return selectors.map((selector) => hydratedSelector(selector, { variants, titles, allowMissing }));
+  return selectors.map((selector) => hydratedSelector(selector, variants, allowMissing));
 }
 
 async function loadVariants(
@@ -81,33 +58,20 @@ async function loadVariants(
 
 function hydratedSelector(
   selector: BundleSelectorInput,
-  context: { variants: Map<string, VariantNode>; titles: Map<string, string>; allowMissing: boolean },
+  variants: Map<string, VariantNode>,
+  allowMissing: boolean,
 ): BundleSelectorInput {
-  const source = context.allowMissing ? selector.options.filter(({ id }) => context.variants.has(id)) : selector.options;
-  const options = source.map(({ id }) => hydratedOption(id, selector.productId, context.variants));
-  const productTitle = context.titles.get(selector.productId) ?? "Unavailable product";
-  return { ...selector, productTitle, options };
+  const source = allowMissing ? selector.options.filter(({ id }) => variants.has(id)) : selector.options;
+  const nodes = source.map(({ id }) => currentVariant(id, selector.productId, variants));
+  nodes.sort((first, second) => first.position - second.position);
+  return { ...selector, options: nodes.map(({ id, price }) => ({ id, unitPrice: price })) };
 }
 
-function hydratedOption(
-  id: string,
-  productId: string,
-  variants: Map<string, VariantNode>,
-) {
+function currentVariant(id: string, productId: string, variants: Map<string, VariantNode>): VariantNode {
   const variant = variants.get(id);
   if (!variant || variant.product.id !== productId) invalidComponent("A selected variant no longer exists.");
   if (isBundleVariant(variant)) invalidComponent("Nested bundle components aren't supported.");
-  return {
-    id,
-    title: variant.title,
-    imageUrl: variantImageUrl(variant),
-    available: variant.availableForSale,
-    unitPrice: variant.price,
-  };
-}
-
-function variantImageUrl(variant: VariantNode): string | undefined {
-  return variant.media.nodes[0]?.image?.url ?? variant.product.media.nodes[0]?.image?.url;
+  return variant;
 }
 
 function invalidComponent(message: string): never {

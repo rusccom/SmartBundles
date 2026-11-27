@@ -9,7 +9,6 @@ export interface WebhookInput {
   webhookId: string;
   topic: string;
   shopDomain: string;
-  payload: unknown;
 }
 
 export type WebhookClaim =
@@ -83,23 +82,11 @@ function deliveryData(input: WebhookInput, shopId?: string) {
     webhookId: input.webhookId,
     topic: input.topic,
     shopDomain: input.shopDomain,
-    payload: safePayload(input.topic, input.payload),
   };
-}
-
-function safePayload(topic: string, payload: unknown): Prisma.InputJsonValue {
-  if (topic.includes("CUSTOMERS") || topic.includes("REDACT")) return {};
-  if (!isRecord(payload)) return {};
-  const id = typeof payload.id === "number" || typeof payload.id === "string" ? payload.id : undefined;
-  return id === undefined ? {} : { id: String(id) };
 }
 
 function isDuplicate(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }
 
 export function renewWebhook(webhookId: string, token: string) {

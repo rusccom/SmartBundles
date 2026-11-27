@@ -34,7 +34,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   return {
     initial: {
       id: bundle.id, title: content.title, descriptionHtml: content.descriptionHtml, image: content.image,
-      pricingMode: bundle.pricingMode, fixedPrice: fixedPrice(content, bundle.discountPercent),
+      pricingMode: bundle.pricingMode, fixedPrice: content.compareAtPrice ?? content.price,
       discountPercent: bundle.discountPercent, status: bundle.status,
       locale: requestLocale(request), texts: settings.texts, ...display,
     },
@@ -61,15 +61,6 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs): boolean {
 
 export default function EditBundleRoute() {
   return <BundleEditorPage {...useLoaderData<typeof loader>()} />;
-}
-
-function fixedPrice(
-  content: Awaited<ReturnType<typeof readProductContent>>,
-  discountPercent: string,
-): string {
-  if (content.compareAtPrice) return content.compareAtPrice;
-  const multiplier = 1 - Number(discountPercent) / 100;
-  return multiplier > 0 ? (Number(content.price) / multiplier).toFixed(2) : content.price;
 }
 
 function requiredId(value?: string): string {
