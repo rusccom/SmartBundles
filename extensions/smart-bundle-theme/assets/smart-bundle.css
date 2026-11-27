@@ -9,7 +9,7 @@
   --sb-surface: rgb(var(--color-background, 255 255 255));
   color: var(--sb-ink);
   display: block;
-  margin-block: 0.5rem;
+  margin-block: 8px;
 }
 .sb[hidden],
 .sb__panel[hidden],
@@ -21,11 +21,11 @@
 .sb__hint,
 .sb__status,
 .sb__error { margin: 0; }
-.sb__components { display: grid; gap: 0.625rem; grid-template-columns: minmax(0, 1fr); }
+.sb__components { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
 .sb__component {
   background: var(--sb-surface);
   border: 1px solid var(--sb-border);
-  border-radius: 0.75rem;
+  border-radius: 12px;
   min-width: 0;
   overflow: hidden;
 }
@@ -36,9 +36,9 @@
   box-sizing: border-box;
   color: inherit;
   display: grid;
-  gap: 0.75rem;
+  gap: 12px;
   grid-template-columns: 48px minmax(0, 1fr) auto;
-  padding: 0.5rem 0.75rem;
+  padding: 8px 12px;
   text-align: left;
   width: 100%;
 }
@@ -52,13 +52,13 @@
 }
 .sb__summary--button:hover { background: rgba(18, 18, 18, 0.035); }
 .sb__summary--button:focus-visible,
-.sb__option:focus-within,
+.sb__option:has(.sb__option-input:focus-visible),
 .sb__button:focus-visible { outline: 3px solid var(--sb-focus); outline-offset: -3px; }
 .sb__media,
 .sb__option-media {
   align-items: center;
   background: rgba(18, 18, 18, 0.05);
-  border-radius: 0.5rem;
+  border-radius: 8px;
   display: flex;
   justify-content: center;
   overflow: hidden;
@@ -76,23 +76,23 @@
   border-radius: 50%;
   box-sizing: border-box;
   content: "";
-  height: 1.125rem;
+  height: 18px;
   position: absolute;
-  width: 1.125rem;
+  width: 18px;
   z-index: 1;
 }
 .sb__component[data-state="selected"] .sb__media::before,
 .sb__option:has(.sb__option-input:checked)::before { background: var(--sb-ink); border: 2px solid var(--sb-surface); }
 .sb__component[data-state="selected"] .sb__media::after,
-.sb__option:has(.sb__option-input:checked)::after { -webkit-mask: var(--sb-check) center / 0.625rem no-repeat; background: var(--sb-surface); mask: var(--sb-check) center / 0.625rem no-repeat; }
+.sb__option:has(.sb__option-input:checked)::after { -webkit-mask: var(--sb-check) center / 10px no-repeat; background: var(--sb-surface); mask: var(--sb-check) center / 10px no-repeat; }
 .sb__component[data-state="selected"] .sb__media::before,
 .sb__component[data-state="selected"] .sb__media::after { bottom: 0; right: 0; }
 .sb__option:has(.sb__option-input:checked)::before,
-.sb__option:has(.sb__option-input:checked)::after { right: 0.5rem; top: 0.5rem; }
+.sb__option:has(.sb__option-input:checked)::after { right: 8px; top: 8px; }
 .sb__summary-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 2px;
   min-width: 0;
 }
 .sb__product-title {
@@ -106,7 +106,7 @@
 }
 .sb__selection {
   color: var(--sb-muted);
-  font-size: 0.875rem;
+  font-size: 0.875em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -116,39 +116,39 @@
   align-items: flex-end;
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 2px;
   white-space: nowrap;
 }
 .sb__line-price { font-weight: 600; }
 .sb__quantity,
-.sb__hint { color: var(--sb-muted); font-size: 0.875rem; }
-.sb__component-discount { color: #8e1f0b; font-size: 0.75rem; font-weight: 600; }
+.sb__hint { color: var(--sb-muted); font-size: 0.875em; }
+.sb__component-discount { color: #8e1f0b; font-size: 0.75em; font-weight: 600; }
 .sb__chevron {
   color: var(--sb-muted);
   display: block;
-  height: 1.25rem;
+  height: 20px;
   transition: transform 160ms ease;
-  width: 1.25rem;
+  width: 20px;
 }
 .sb__summary--button[aria-expanded="true"] .sb__chevron { transform: rotate(180deg); }
-.sb__panel { padding: 0 0.75rem 0.75rem; }
+.sb__panel { padding: 0 12px 12px; }
 .sb__options {
   border: 0;
   display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
   margin: 0;
   padding: 0;
 }
 .sb__option {
   border: 1px solid var(--sb-border);
-  border-radius: 0.625rem;
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 6px;
   min-width: 0;
-  padding: 0.3125rem;
+  padding: 5px;
   position: relative;
 }
 .sb__option:hover { border-color: var(--sb-border-strong); }
@@ -164,12 +164,12 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   display: -webkit-box;
-  font-size: 0.8125rem;
+  font-size: 0.8125em;
   line-height: 1.25;
   overflow: hidden;
   overflow-wrap: anywhere;
 }
-.sb__option-price { color: var(--sb-muted); font-size: 0.75rem; }
+.sb__option-price { color: var(--sb-muted); font-size: 0.75em; }
 .sb__option--sold-out { cursor: not-allowed; }
 .sb__option--sold-out .sb__option-media > * { filter: grayscale(1); opacity: 0.45; }
 .sb__option--sold-out .sb__option-title,
@@ -178,30 +178,30 @@
   background: var(--sb-surface);
   border-radius: 999px;
   color: var(--sb-muted);
-  font-size: 0.6875rem;
-  left: 0.5rem;
-  padding: 0.0625rem 0.4375rem;
+  font-size: 0.6875em;
+  left: 8px;
+  padding: 1px 7px;
   position: absolute;
-  top: 0.5rem;
+  top: 8px;
 }
 .sb__error { color: var(--sb-error); }
 .sb__actions {
   background: var(--sb-surface);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  gap: 8px;
+  margin-top: 12px;
 }
 .sb__button {
   background: rgb(var(--color-button, 18 18 18));
   border: 0;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   color: rgb(var(--color-button-text, 255 255 255));
   cursor: pointer;
   font: inherit;
   font-weight: 600;
   min-height: 48px;
-  padding: 0.75rem 1rem;
+  padding: 12px 16px;
   width: 100%;
 }
 .sb__button:disabled { cursor: not-allowed; opacity: 0.5; }
@@ -217,14 +217,14 @@
   white-space: nowrap;
   width: 1px;
 }
-.sb__editor-note { border: 1px dashed var(--sb-border); border-radius: 0.5rem; padding: 1rem; }
+.sb__editor-note { border: 1px dashed var(--sb-border); border-radius: 8px; padding: 16px; }
 @media screen and (max-width: 749px) {
   .sb__actions {
     border-top: 1px solid var(--sb-border);
     bottom: 0;
     box-shadow: 0 -8px 20px rgba(18, 18, 18, 0.08);
-    margin-inline: -1rem;
-    padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom));
+    margin-inline: -16px;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
     position: sticky;
     z-index: 5;
   }
