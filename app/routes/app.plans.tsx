@@ -4,14 +4,19 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { getBillingState, getPricingUrl } from "../features/billing/index.server";
 import { PlansPage } from "../features/billing/ui/PlansPage";
 import { ensureShopContext } from "../features/installation/shop-context.server";
+import { formatDate } from "../features/shell/format-date";
+import { requestLocale } from "../features/shell/request-locale.server";
 import { authenticate } from "../shopify.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
   const shop = await ensureShopContext(admin, session.shop);
   const state = await billingState(shop.id, shop.entitlement?.plan ?? "FREE");
-  const url = new URL(request.url);
-  return { plan: state.plan, pendingEffectiveAt: state.pendingEffectiveAt?.toISOString(), pricingUrl: pricingUrl(session.shop), message: planMessage(url) };
+  const pendingEffectiveAt = state.pendingEffectiveAt?.toISOString();
+  return {
+    plan: state.plan, pricingUrl: pricingUrl(session.shop), message: planMessage(new URL(request.url)),
+    pendingDate: pendingEffectiveAt ? formatDate(pendingEffectiveAt, requestLocale(request)) : undefined,
+  };
 }
 
 async function billingState(shopId: string, fallback: "FREE" | "PRO") {

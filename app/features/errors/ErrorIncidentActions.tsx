@@ -1,14 +1,18 @@
+import type { ErrorIncidentStatus } from "@prisma/client";
 import { useFetcher } from "react-router";
 import type { ErrorListItem } from "./error-repository.server";
 
 export function ErrorIncidentActions({ incident }: { incident: ErrorListItem }) {
   const fetcher = useFetcher();
-  return <fetcher.Form method="post">
-    <input type="hidden" name="id" value={incident.id} />
-    <s-stack direction="inline" gap="base">
-      <button name="status" value={incident.status === "OPEN" ? "RESOLVED" : "OPEN"} disabled={fetcher.state !== "idle"}>
-        {incident.status === "OPEN" ? "Mark resolved" : "Reopen"}</button>
-      <button name="status" value="IGNORED" disabled={fetcher.state !== "idle"}>Ignore</button>
-    </s-stack>
-  </fetcher.Form>;
+  const busy = fetcher.state !== "idle";
+  const submit = (status: ErrorIncidentStatus) =>
+    void fetcher.submit({ id: incident.id, status }, { method: "post" });
+  return <s-stack direction="inline" gap="small">
+    {incident.status === "OPEN"
+      ? <s-button disabled={busy} onClick={() => submit("RESOLVED")}>Mark resolved</s-button>
+      : <s-button disabled={busy} onClick={() => submit("OPEN")}>Reopen</s-button>}
+    {incident.status !== "IGNORED"
+      ? <s-button variant="tertiary" disabled={busy} onClick={() => submit("IGNORED")}>Ignore</s-button>
+      : null}
+  </s-stack>;
 }

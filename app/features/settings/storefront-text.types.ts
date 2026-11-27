@@ -1,7 +1,5 @@
 export interface StorefrontTexts {
-  heading: string;
   buttonLabel: string;
-  progressTemplate: string;
   selectOneMore: string;
   selectManyMoreTemplate: string;
   chooseVariant: string;
@@ -9,10 +7,7 @@ export interface StorefrontTexts {
   quantityTemplate: string;
   soldOut: string;
   optionUnavailable: string;
-  bundlePrice: string;
-  total: string;
   discountBadgeTemplate: string;
-  fixedPriceNote: string;
   priceUnavailable: string;
   bundleUnavailable: string;
   addingLabel: string;

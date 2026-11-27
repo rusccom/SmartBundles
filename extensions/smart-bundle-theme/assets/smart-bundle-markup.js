@@ -89,7 +89,6 @@ function bundleDataset(config) {
 
 function textDataset(texts) {
   return {
-    progressTemplate: texts.progressTemplate,
     selectOne: texts.selectOneMore,
     selectMany: texts.selectManyMoreTemplate,
     chooseVariant: texts.chooseVariant,

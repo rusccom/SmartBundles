@@ -1,4 +1,4 @@
-export function EmptyBundles({ page = 0 }: { page?: number }) {
+export function EmptyBundles({ page }: { page: number }) {
   return <s-empty-state heading={page ? "No bundles on this page" : "Create your first customizable bundle"}>
     <s-icon slot="graphic" type="product" />
     <s-text slot="subheading">{page ? "Return to the first page to find your bundles."

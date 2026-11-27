@@ -86,7 +86,7 @@ function hydratedSelector(
   const source = context.allowMissing ? selector.options.filter(({ id }) => context.variants.has(id)) : selector.options;
   const options = source.map(({ id }) => hydratedOption(id, selector.productId, context.variants));
   const productTitle = context.titles.get(selector.productId) ?? "Unavailable product";
-  return { ...selector, label: productTitle, productTitle, options };
+  return { ...selector, productTitle, options };
 }
 
 function hydratedOption(

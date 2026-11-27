@@ -13,7 +13,7 @@ import { readProductContent } from "../features/bundles/content/shopify-product-
 import "../features/bundles/editor/bundle-editor.css";
 import { BundleEditorPage } from "../features/bundles/editor/BundleEditorPage";
 import { hydrateEditorSelectors } from "../features/bundles/editor/bundle-editor-variant-display.server";
-import { editorLocale } from "../features/bundles/editor/bundle-editor-locale.server";
+import { requestLocale } from "../features/shell/request-locale.server";
 import "../features/bundles/preview/bundle-preview.css";
 import { ensureShopContext } from "../features/installation/shop-context.server";
 import { getShopStorefrontSettings } from "../features/settings/storefront-settings-repository.server";
@@ -36,7 +36,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       id: bundle.id, title: content.title, descriptionHtml: content.descriptionHtml, image: content.image,
       pricingMode: bundle.pricingMode, fixedPrice: fixedPrice(content, bundle.discountPercent),
       discountPercent: bundle.discountPercent, status: bundle.status,
-      locale: editorLocale(request), texts: settings.texts, ...display,
+      locale: requestLocale(request), texts: settings.texts, ...display,
     },
     pricingEnabled: isShopifyPricingEnabled(), productGid: bundle.parentProductGid,
     storefrontUrl: content.onlineStoreUrl ?? content.onlineStorePreviewUrl,

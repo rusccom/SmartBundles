@@ -45,7 +45,7 @@ export function previewHost(
   host.setAttribute("hidden", "");
   Object.assign(host.dataset, {
     autoMount: "false", blockId: "preview", locale,
-    redirectToCart: "false", showProgress: "true",
+    redirectToCart: "false",
   });
   host.append(presentationScript(frameDocument, config));
   return host;

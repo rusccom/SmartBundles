@@ -1,4 +1,4 @@
-export function editorLocale(request: Request): string {
+export function requestLocale(request: Request): string {
   const language = request.headers.get("accept-language")?.split(",")[0]?.split(";")[0]?.trim();
   return supportedLocale(language) ?? "en";
 }

@@ -8,10 +8,16 @@ export interface PlanCardProps {
 
 export function PlanCard({ name, price, description, current, actionUrl }: PlanCardProps) {
   return <s-section heading={name}>
+    {current ? <s-badge slot="supplemental" tone="success">Current plan</s-badge> : null}
     <s-stack direction="block" gap="base">
       <s-text type="strong" fontSize="large">{price}</s-text>
       <s-paragraph>{description}</s-paragraph>
-      {current ? <s-badge tone="success">Current plan</s-badge> : actionUrl ? <s-button href={actionUrl} target="_top">Choose plan</s-button> : <s-banner tone="warning">Pro is not available yet.</s-banner>}
+      {current ? null : planAction(actionUrl)}
     </s-stack>
   </s-section>;
+}
+
+function planAction(actionUrl?: string) {
+  if (!actionUrl) return <s-paragraph color="subdued">Plan changes are not available yet.</s-paragraph>;
+  return <s-button href={actionUrl} target="_top">Choose plan</s-button>;
 }

@@ -13,8 +13,9 @@ import { getShopStorefrontSettings } from "../features/settings/storefront-setti
 import { authenticate } from "../shopify.server";
 import { signCreationToken } from "../features/bundles/content/content-token.server";
 import { loadShopCurrencyCode } from "../features/bundles/editor/bundle-editor-variant-display.server";
-import { editorLocale } from "../features/bundles/editor/bundle-editor-locale.server";
+import { requestLocale } from "../features/shell/request-locale.server";
 import { isBundleEditorActionData } from "../features/bundles/bundle-editor-action.types";
+import { isShopifyPricingEnabled } from "../features/billing/billing-config.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { admin, session } = await authenticate.admin(request);
@@ -24,10 +25,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     loadShopCurrencyCode(admin),
   ]);
   const settings = await getShopStorefrontSettings(shop.id);
-  return { initial: {
-    title: "", descriptionHtml: "", image: null, creationToken,
-    pricingMode: "FIXED" as const, fixedPrice: "", discountPercent: "0", status: "DRAFT" as const, currencyCode,
-    locale: editorLocale(request), texts: settings.texts, selectors: [] } };
+  return {
+    initial: {
+      title: "", descriptionHtml: "", image: null, creationToken,
+      pricingMode: "FIXED" as const, fixedPrice: "", discountPercent: "0", status: "DRAFT" as const, currencyCode,
+      locale: requestLocale(request), texts: settings.texts, selectors: [],
+    },
+    pricingEnabled: isShopifyPricingEnabled(),
+  };
 }
 
 export function action({ request }: ActionFunctionArgs) {
@@ -39,8 +44,7 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs): boolean {
 }
 
 export default function NewBundleRoute() {
-  const { initial } = useLoaderData<typeof loader>();
-  return <BundleEditorPage initial={initial} />;
+  return <BundleEditorPage {...useLoaderData<typeof loader>()} />;
 }
 
 export const headers: HeadersFunction = (args) => boundary.headers(args);

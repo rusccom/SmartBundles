@@ -1,26 +1,27 @@
-<script src="{{ 'smart-bundle-errors.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle-money.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle-core.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle-price.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle-markup.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle-pricing.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle-form-guard.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle-cart.js' | asset_url }}" type="module"></script>
-<script src="{{ 'smart-bundle.js' | asset_url }}" type="module"></script>
+{%- assign bundle = product.metafields["$app"].bundle_presentation.value -%}
 <script src="{{ 'smart-bundle-cart-recovery.js' | asset_url }}" defer="defer"></script>
 
-{%- assign bundle = product.metafields["$app"].bundle_presentation.value -%}
+{%- if bundle != blank -%}
+  <script src="{{ 'smart-bundle-errors.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle-money.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle-core.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle-price.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle-markup.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle-pricing.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle-form-guard.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle-cart.js' | asset_url }}" type="module"></script>
+  <script src="{{ 'smart-bundle.js' | asset_url }}" type="module"></script>
 
+  {%- assign parent_variant = product.selected_or_first_available_variant -%}
+  {%- assign original_price = parent_variant.compare_at_price | default: parent_variant.price -%}
+  {%- capture money_sample -%}
+    {%- if settings.currency_code_enabled or settings.currency_code_enable -%}
+      {{- 123456789 | money_with_currency | strip_html -}}
+    {%- else -%}
+      {{- 123456789 | money | strip_html -}}
+    {%- endif -%}
+  {%- endcapture -%}
   {%- capture presentation -%}
-    {%- assign parent_variant = product.selected_or_first_available_variant -%}
-    {%- assign original_price = parent_variant.compare_at_price | default: parent_variant.price -%}
-    {%- capture money_sample -%}
-      {%- if settings.currency_code_enabled or settings.currency_code_enable -%}
-        {{- 123456789 | money_with_currency | strip_html -}}
-      {%- else -%}
-        {{- 123456789 | money | strip_html -}}
-      {%- endif -%}
-    {%- endcapture -%}
     {
       "sv": {{ bundle.sv | json }}, "en": {{ bundle.en | json }},
       "b": {{ bundle.b | json }},
@@ -58,15 +59,13 @@
       ]
     }
   {%- endcapture -%}
-{%- if bundle != blank -%}
   <smart-bundle
     class="sb"
     data-auto-mount="true"
     data-block-id="{{ block.id | escape }}"
     data-locale="{{ request.locale.iso_code | escape }}"
     data-redirect-to-cart="{{ block.settings.redirect_to_cart }}"
-    data-show-progress="{{ block.settings.show_progress }}"
-    data-theme-variant-id="{{ product.selected_or_first_available_variant.id | escape }}"
+    data-theme-variant-id="{{ parent_variant.id | escape }}"
     hidden
     {{ block.shopify_attributes }}
   >
@@ -76,7 +75,7 @@
   </smart-bundle>
   <noscript><p class="sb sb__editor-note">{{ bundle.texts.javascriptRequired | escape }}</p></noscript>
 {%- elsif request.design_mode -%}
-  <div class="sb sb__editor-note" {{ block.shopify_attributes }}>Publish a valid Smart Bundle with components to show this block.</div>
+  <div class="sb sb__editor-note" {{ block.shopify_attributes }}>{{ 'smart_bundle.editor_note' | t }}</div>
 {%- endif -%}
 
 {% schema %}
@@ -85,7 +84,6 @@
   "target": "body",
   "stylesheet": "smart-bundle.css",
   "settings": [
-    { "type": "checkbox", "id": "show_progress", "label": "Show selection progress", "default": true },
     { "type": "checkbox", "id": "redirect_to_cart", "label": "Open the cart after adding", "default": true }
   ]
 }

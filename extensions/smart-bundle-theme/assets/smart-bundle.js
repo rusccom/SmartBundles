@@ -123,10 +123,8 @@ class SmartBundle extends HTMLElement {
   }
   render() {
     this.components.forEach((component) => this.renderComponent(component));
-    const selected = this.selectionCount();
-    const complete = selected === this.components.length;
+    const complete = this.complete();
     if (this.state === "incomplete" && complete) this.state = "complete";
-    this.renderProgress(selected);
     this.renderFooter(complete);
     this.dataset.state = this.state;
   }
@@ -171,12 +169,6 @@ class SmartBundle extends HTMLElement {
     if (wrapper.querySelector("[data-image-placeholder]")) return;
     const option = wrapper.classList.contains("sb__option-media");
     wrapper.replaceChildren(placeholder(option ? "sb__option-placeholder" : "sb__image-placeholder"));
-  }
-  renderProgress(selected) {
-    const progress = this.querySelector("[data-progress]");
-    if (!progress) return;
-    const values = { selected: String(selected), total: String(this.components.length) };
-    progress.textContent = fillTemplate(this.dataset.progressTemplate, values);
   }
   renderFooter(complete) {
     const totals = this.price.render(this.components, complete);

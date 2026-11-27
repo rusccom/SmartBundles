@@ -15,4 +15,5 @@ export interface BundleListPageProps {
   activeCount: number;
   page: number;
   hasNext: boolean;
+  locale: string;
 }

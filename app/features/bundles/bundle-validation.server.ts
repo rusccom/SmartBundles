@@ -90,12 +90,10 @@ function parseSelectors(value: string): BundleSelectorInput[] {
 function parseSelector(value: unknown, position: number): BundleSelectorInput[] {
   if (!isRecord(value)) return [];
   const options = Array.isArray(value.options) ? value.options.flatMap(parseOption) : [];
-  const productTitle = shortText(value.productTitle, 255);
   return [{
     key: positiveInt(value.key) || position + 1,
-    label: productTitle,
     productId: gid(value.productId, "Product"),
-    productTitle,
+    productTitle: shortText(value.productTitle, 255),
     quantity: quantity(value.quantity),
     discountPercent: componentDiscount(value.discountPercent),
     options,
@@ -186,7 +184,7 @@ function validateSelectorCount(
   selectors: BundleSelectorInput[],
   errors: Record<string, string>,
 ): void {
-  if (selectors.length < MIN_SELECTORS) errors.selectors = `Add at least ${MIN_SELECTORS} components.`;
+  if (selectors.length < MIN_SELECTORS) errors.selectors = "Add at least one component.";
   if (selectors.length > MAX_SELECTORS) errors.selectors = `A bundle can contain up to ${MAX_SELECTORS} components.`;
   const optionCount = selectors.reduce((sum, item) => sum + item.options.length, 0);
   if (optionCount > MAX_OPTIONS) errors.selectors = `A bundle can contain up to ${MAX_OPTIONS} allowed variants.`;
@@ -199,8 +197,8 @@ function validateSelectors(
   const keys = new Set<number>();
   data.selectors.forEach((selector, index) =>
     validateSelector(selector, index, data.pricingMode, keys, errors));
-  const invalid = Object.keys(errors).some((key) => key.startsWith("selector."));
-  if (invalid && !errors.selectors) errors.selectors = "Each component needs a label and at least one allowed variant.";
+  const invalid = Object.entries(errors).find(([key]) => key.startsWith("selector."));
+  if (invalid && !errors.selectors) errors.selectors = `Component ${Number(invalid[0].split(".")[1]) + 1}: ${invalid[1]}`;
 }
 
 function validateSelector(
@@ -208,7 +206,6 @@ function validateSelector(
   keys: Set<number>, errors: Record<string, string>,
 ): void {
   if (!item.productId) errors[`selector.${index}.product`] = "Choose a product.";
-  if (!item.label) errors[`selector.${index}.label`] = "Enter a component label.";
   if (item.quantity < 1 || item.quantity > MAX_QUANTITY) {
     errors[`selector.${index}.quantity`] = `Quantity must be between 1 and ${MAX_QUANTITY}.`;
   }

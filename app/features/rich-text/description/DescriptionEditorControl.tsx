@@ -7,7 +7,7 @@ interface DescriptionEditorControlProps extends DescriptionEditorProps {
   state: ReturnType<typeof useDescriptionEditor>;
 }
 
-export function DescriptionEditorControl({ state, disabled, value, error }: DescriptionEditorControlProps) {
+export function DescriptionEditorControl({ state, disabled, value }: DescriptionEditorControlProps) {
   return <s-box border="base" borderRadius="base" background="base" overflow="hidden">
     <DescriptionToolbar editor={state.editor} htmlMode={state.htmlMode}
       disabled={disabled} onToggleMode={state.toggleMode} />
@@ -16,7 +16,7 @@ export function DescriptionEditorControl({ state, disabled, value, error }: Desc
     </div>
     {state.htmlMode ? <s-box padding="small">
       <s-text-area label="Description HTML source" rows={10} disabled={disabled}
-        value={value} error={error} onInput={(event) => state.setRawValue(event.currentTarget.value)} />
+        value={value} onInput={(event) => state.setRawValue(event.currentTarget.value)} />
     </s-box> : null}
   </s-box>;
 }

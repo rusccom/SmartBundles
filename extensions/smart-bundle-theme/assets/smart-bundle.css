@@ -17,23 +17,10 @@
 .sb__hint:empty {
   display: none !important;
 }
-.sb__heading {
-  align-items: baseline;
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-.sb__title,
 .sb__hint,
 .sb__status,
 .sb__error {
   margin: 0;
-}
-.sb__progress {
-  color: var(--sb-muted);
-  font-size: 0.875rem;
-  white-space: nowrap;
 }
 .sb__components {
   display: grid;
@@ -255,11 +242,6 @@
   padding: 1rem;
 }
 @media screen and (max-width: 749px) {
-  .sb__heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
   .sb__summary {
     padding-inline: 0.75rem;
   }

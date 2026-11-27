@@ -5,6 +5,7 @@ import { activeBundleCount, listBundles } from "../features/bundles/bundle-repos
 import { bundleProductMap } from "../features/bundles/content/bundle-titles.server";
 import { BundleListPage } from "../features/bundles/ui/BundleListPage";
 import { ensureShopContext } from "../features/installation/shop-context.server";
+import { requestLocale } from "../features/shell/request-locale.server";
 import { authenticate } from "../shopify.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -18,7 +19,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const fixedPrice = product?.compareAtPrice ?? product?.price ?? null;
     return { ...bundle, title: product?.title ?? "Unavailable bundle", fixedPrice };
   });
-  return { ...result, bundles, page, activeCount, plan: shop.entitlement?.plan ?? "FREE" };
+  return {
+    ...result, bundles, page, activeCount, plan: shop.entitlement?.plan ?? "FREE", locale: requestLocale(request),
+  };
 }
 
 function pageNumber(value: string | null): number {

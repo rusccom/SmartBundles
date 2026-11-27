@@ -1,5 +1,4 @@
 import { POLARIS_URL } from "../../features/shell/polaris";
-import { useState } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, useActionData, useLoaderData } from "react-router";
 
@@ -22,19 +21,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function Auth() {
   const loaderData = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
-  const [shop, setShop] = useState("");
-  const { errors } = actionData || loaderData;
-
+  const { errors } = useActionData<typeof action>() ?? loaderData;
   return (
     <>
       <script src={POLARIS_URL} />
       <s-page heading="Log in">
         <Form method="post">
-          <s-section heading="Log in">
-            <s-text-field name="shop" label="Shop domain" details="example.myshopify.com" value={shop}
-              onChange={(event) => setShop(event.currentTarget.value)} autocomplete="on" error={errors.shop} />
-            <s-button type="submit">Log in</s-button>
+          <s-section>
+            <s-stack gap="base">
+              <s-text-field name="shop" label="Shop domain" details="example.myshopify.com"
+                autocomplete="on" error={errors.shop} required />
+              <s-button variant="primary" type="submit">Log in</s-button>
+            </s-stack>
           </s-section>
         </Form>
       </s-page>

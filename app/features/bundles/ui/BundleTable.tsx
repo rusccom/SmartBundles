@@ -1,11 +1,10 @@
 import { useNavigate, useNavigation } from "react-router";
 import { BundleRow } from "./BundleRow";
-import { EmptyBundles } from "./EmptyBundles";
 import type { BundleListItem } from "./bundle-list.types";
 
-export interface BundleTableProps { bundles: BundleListItem[]; page: number; hasNext: boolean }
+export interface BundleTableProps { bundles: BundleListItem[]; page: number; hasNext: boolean; locale: string }
 
-export function BundleTable({ bundles, page, hasNext }: BundleTableProps) {
+export function BundleTable({ bundles, page, hasNext, locale }: BundleTableProps) {
   const navigate = useNavigate();
   const loading = useNavigation().state !== "idle";
   return <s-table paginate={page > 0 || hasNext} hasPreviousPage={page > 0} hasNextPage={hasNext}
@@ -19,7 +18,9 @@ export function BundleTable({ bundles, page, hasNext }: BundleTableProps) {
       <s-table-header listSlot="labeled">Updated</s-table-header>
       <s-table-header listSlot="inline">Actions</s-table-header>
     </s-table-header-row>
-    <s-table-body>{bundles.map((bundle) => <BundleRow key={bundle.id} bundle={bundle} />)}<EmptyBundles page={page} /></s-table-body>
+    <s-table-body>
+      {bundles.map((bundle) => <BundleRow key={bundle.id} bundle={bundle} locale={locale} />)}
+    </s-table-body>
   </s-table>;
 }
 

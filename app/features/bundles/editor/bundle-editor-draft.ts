@@ -1,4 +1,4 @@
-import { initialEditorSelectors, serializedSelectors } from "./editor-state";
+import { serializedSelectors } from "./editor-state";
 import { appendBundleMedia, mediaDraftFingerprint } from "./bundle-media-draft";
 import type { BundleEditorDraft, BundleEditorInitial } from "./editor.types";
 
@@ -11,7 +11,7 @@ export function initialBundleEditorDraft(initial: BundleEditorInitial): BundleEd
     pricingMode: initial.pricingMode,
     fixedPrice: initial.fixedPrice,
     discountPercent: initial.discountPercent,
-    selectors: initialEditorSelectors(initial.selectors),
+    selectors: initial.selectors,
   };
 }
 

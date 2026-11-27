@@ -89,11 +89,10 @@ function resolvedDynamicTotals(element, components, context, resolveInput) {
     if (source === null) return null;
     const itemPercent = componentDiscount(component);
     const current = discountedActiveMinor(source, context, itemPercent, globalPercent);
-    const original = source;
-    if (current === null || original === null) return null;
+    if (current === null) return null;
     discounted ||= itemPercent > 0;
     const quantity = Number(component.dataset.quantity);
-    values.original += original * quantity;
+    values.original += source * quantity;
     values.current += current * quantity;
   }
   return dynamicTotalResult(context, discounted, globalPercent > 0, values);

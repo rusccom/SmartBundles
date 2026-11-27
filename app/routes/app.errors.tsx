@@ -4,12 +4,13 @@ import { authenticate } from "../shopify.server";
 import { getBundleShopId } from "../features/bundles/bundle-repository.server";
 import { errorStatus, listErrorIncidents, setErrorIncidentStatus } from "../features/errors/error-repository.server";
 import { ErrorsPage } from "../features/errors/ErrorsPage";
+import { requestLocale } from "../features/shell/request-locale.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
   const shopId = await getBundleShopId(session.shop);
   const status = errorStatus(new URL(request.url).searchParams.get("status")) ?? "OPEN";
-  return { status, incidents: await listErrorIncidents(shopId, status) };
+  return { status, incidents: await listErrorIncidents(shopId, status), locale: requestLocale(request) };
 }
 
 export async function action({ request }: ActionFunctionArgs) {

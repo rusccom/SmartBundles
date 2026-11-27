@@ -185,7 +185,7 @@ interface StoredSelector {
 
 function storedSelector(selector: StoredSelector): BundleSelectorInput {
   return {
-    key: selector.selectorKey, label: "", productId: selector.productGid,
+    key: selector.selectorKey, productId: selector.productGid,
     productTitle: "", quantity: selector.quantity,
     discountPercent: selector.discountPercent.toString(),
     options: selector.options.map(({ variantGid }) => ({ id: variantGid, title: "" })),

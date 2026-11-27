@@ -41,7 +41,7 @@ function updateProduct(selector: EditorSelector, product: EditorProductCatalog):
 
 function selectedProduct(product: EditorProductCatalog, key: number): EditorSelector {
   return {
-    key, quantity: 1, discountPercent: "0", label: product.title,
+    key, quantity: 1, discountPercent: "0",
     productId: product.id, productTitle: product.title, productImageUrl: product.imageUrl,
     options: product.options,
   };

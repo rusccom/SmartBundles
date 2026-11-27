@@ -10,7 +10,6 @@ export interface BundleVariantInput {
 
 export interface BundleSelectorInput {
   key: number;
-  label: string;
   productId: string;
   productTitle: string;
   quantity: number;

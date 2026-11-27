@@ -2,7 +2,6 @@ import type { StorefrontTexts } from "../../settings/storefront-text.types";
 import type {
   BundleSelectorInput, BundleVariantInput, PresentationConfig,
 } from "../bundle.types";
-import { isSimpleBundleComponent } from "../editor/bundle-component-presentation";
 import type { BundleEditorDraft, EditorOption, EditorSelector } from "../editor/editor.types";
 import { previewPricing } from "./bundle-preview-pricing";
 
@@ -39,18 +38,12 @@ function previewMoneySample(currency: string, locale: string): string {
 function previewSelectors(selectors: EditorSelector[]): BundleSelectorInput[] {
   return selectors.map((selector) => ({
     key: selector.key,
-    label: selector.productTitle,
     productId: selector.productId,
     productTitle: selector.productTitle,
     quantity: selector.quantity,
     discountPercent: selector.discountPercent,
-    options: allowedOptions(selector).map(previewOption),
+    options: selector.options.filter((option) => option.allowed).map(previewOption),
   }));
-}
-
-function allowedOptions(selector: EditorSelector): EditorOption[] {
-  if (isSimpleBundleComponent(selector)) return selector.options;
-  return selector.options.filter((option) => option.allowed);
 }
 
 function previewOption(option: EditorOption): BundleVariantInput {

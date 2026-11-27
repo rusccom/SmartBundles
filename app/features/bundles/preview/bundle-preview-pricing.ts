@@ -9,10 +9,7 @@ export function previewPricing(
 ): PresentationPricing | null {
   if (draft.pricingMode === "DYNAMIC") return { mode: "dynamic", currencyCode, discountPercent: draft.discountPercent };
   try {
-    const prices = bundlePrice.calculate({ ...draft, selectors });
-    return draft.pricingMode === "FIXED"
-      ? fixedPricing(prices, draft.discountPercent, currencyCode)
-      : { mode: "dynamic", currencyCode, discountPercent: draft.discountPercent };
+    return fixedPricing(bundlePrice.calculate({ ...draft, selectors }), draft.discountPercent, currencyCode);
   } catch {
     return null;
   }

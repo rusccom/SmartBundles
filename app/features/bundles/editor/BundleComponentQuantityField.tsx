@@ -8,7 +8,7 @@ export function BundleComponentQuantityField({ quantity, onChange }: BundleCompo
     <span aria-hidden="true"><s-text>Quantity</s-text></span>
     <s-number-field label="Quantity" labelAccessibilityVisibility="exclusive"
       value={String(quantity)} min={1} max={2000} step={1}
-      onInput={(event) => onChange(normalizeQuantity(Number(event.currentTarget.value)))} />
+      onChange={(event) => onChange(normalizeQuantity(Number(event.currentTarget.value)))} />
   </span>;
 }
 
