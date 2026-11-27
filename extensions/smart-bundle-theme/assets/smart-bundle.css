@@ -7,6 +7,7 @@
   --sb-focus: #1f5eff;
   --sb-muted: rgba(18, 18, 18, 0.66);
   --sb-surface: rgb(var(--color-background, 255 255 255));
+  --sb-accent: #0f6e56;
   color: var(--sb-ink);
   display: block;
   margin-block: 8px;
@@ -111,7 +112,17 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.sb__component[data-state="required"] .sb__selection { color: inherit; }
+.sb__component[data-state="required"] .sb__selection {
+  background: color-mix(in srgb, var(--sb-accent) 12%, var(--sb-surface));
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--sb-accent) 65%, black);
+  font-size: 0.8125em;
+  font-weight: 600;
+  margin-top: 2px;
+  max-width: 100%;
+  padding: 3px 10px;
+  width: fit-content;
+}
 .sb__summary-meta {
   align-items: flex-end;
   display: flex;
@@ -124,12 +135,17 @@
 .sb__hint { color: var(--sb-muted); font-size: 0.875em; }
 .sb__component-discount { color: #8e1f0b; font-size: 0.75em; font-weight: 600; }
 .sb__chevron {
+  background: rgba(18, 18, 18, 0.05);
+  border-radius: 50%;
+  box-sizing: border-box;
   color: var(--sb-muted);
   display: block;
-  height: 20px;
+  height: 28px;
+  padding: 5px;
   transition: transform 160ms ease;
-  width: 20px;
+  width: 28px;
 }
+.sb__component[data-state="required"] .sb__chevron { background: var(--sb-accent); color: #fff; }
 .sb__summary--button[aria-expanded="true"] .sb__chevron { transform: rotate(180deg); }
 .sb__panel { padding: 0 12px 12px; }
 .sb__options {

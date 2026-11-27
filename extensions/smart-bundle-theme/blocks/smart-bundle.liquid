@@ -66,6 +66,7 @@
     data-block-id="{{ block.id | escape }}"
     data-locale="{{ request.locale.iso_code | escape }}"
     data-redirect-to-cart="{{ block.settings.redirect_to_cart }}"
+    style="--sb-accent: {{ block.settings.accent_color }}"
     data-theme-variant-id="{{ parent_variant.id | escape }}"
     hidden
     {{ block.shopify_attributes }}
@@ -85,7 +86,8 @@
   "target": "body",
   "stylesheet": "smart-bundle.css",
   "settings": [
-    { "type": "checkbox", "id": "redirect_to_cart", "label": "Open the cart after adding", "default": true }
+    { "type": "checkbox", "id": "redirect_to_cart", "label": "Open the cart after adding", "default": true },
+    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#0F6E56" }
   ]
 }
 {% endschema %}
